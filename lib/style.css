@@ -411,3 +411,4 @@ pre.json { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; backgr
 .arc-result.good { border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, transparent); }
 .arc-result.bad { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 7%, transparent); }
 .arc-result p { margin: 6px 0; }
+.wide-canvas { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 6px; overflow: hidden; }
