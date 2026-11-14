@@ -381,3 +381,19 @@ pre.json { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; backgr
 .agrid { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
 .acell { width: 22px; height: 22px; border-radius: 5px; }
 .acell.ok { background: var(--good); } .acell.retry { background: var(--warn); } .acell.bug { background: var(--bad); } .acell.full { background: var(--sunken); border: 1px dashed var(--ink-3); }
+
+/* frontier radar */
+.chips .chip.ok { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--ink); padding: 3px 8px; }
+.chips .chip.bad { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--ink); padding: 3px 8px; text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 60%, transparent); }
+.radar-card { margin-top: 14px; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; background: var(--surface); }
+.radar-card p { margin: 6px 0; line-height: 1.55; }
+.radar-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 4px; }
+.radar-head h3 { margin: 0; font-size: 18px; }
+.radar-meta { font: 12px var(--mono); color: var(--ink-3); }
+.patches { display: flex; flex-wrap: wrap; gap: 4px 3px; margin-top: 12px; font: 15px var(--mono); }
+.patch { display: inline-flex; border-radius: 7px; padding: 3px 4px 2px; }
+.patch.p0 { background: color-mix(in srgb, var(--accent) 13%, transparent); }
+.patch.p1 { background: color-mix(in srgb, var(--c4) 18%, transparent); }
+.pc { display: inline-flex; flex-direction: column; align-items: center; justify-content: flex-start; min-width: 10px; }
+.pch { line-height: 1.2; }
+.pbar { width: 6px; border-radius: 2px; margin-top: 2px; opacity: .85; }
