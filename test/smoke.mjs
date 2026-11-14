@@ -21,6 +21,7 @@ async function visit(path, name, poke) {
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  page.on("response", (r) => r.status() >= 400 && errors.push(`${r.status()} ${r.url()}`));
   page.on("console", (m) => m.type() === "error" && !m.text().includes("fonts.g") && errors.push(m.text()));
   await page.goto(base + path, { waitUntil: "load" });
   await page.waitForTimeout(300);
