@@ -11,6 +11,7 @@ import re
 import sys
 from pathlib import Path
 
+import hashlib
 import nbformat as nbf
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -50,6 +51,8 @@ def build(path):
     nb.cells = [nbf.v4.new_markdown_cell(badge)] + cells(path.read_text())
     nb.metadata = {"kernelspec": {"name": "python3", "display_name": "Python 3"}, "language_info": {"name": "python"},
                    "colab": {"provenance": [], "gpuType": "T4"}, "accelerator": "GPU"}
+    for i, c in enumerate(nb.cells):                    # stable ids, so rebuilding doesn't churn every file
+        c["id"] = hashlib.sha1(f"{name}:{i}".encode()).hexdigest()[:8]
     nbf.write(nb, OUT / f"{name}.ipynb")
     return name
 
