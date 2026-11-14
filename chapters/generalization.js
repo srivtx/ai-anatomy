@@ -61,7 +61,7 @@ export default function (root, { id }) {
   let train, val;
   const pl = plane({ width: 520, height: 340, xr: [-1.05, 1.05], yr: [-1.6, 1.6], label: "Training points, the true function and the fit" });
   const st = stats([{ label: "Training error" }, { label: "Validation error" }, { label: "Gap" }]);
-  const curve = xyChart({ height: 220, xLabel: "polynomial degree", yLabel: "mean squared error", yLog: true });
+  const curve = xyChart({ width: 460, height: 320, xLabel: "polynomial degree", yLabel: "mean squared error", yLog: true });
   function resample() { train = sample(nTrain, noise, seed); val = sample(200, noise, seed + 1000); }
   function draw() {
     const f = fitPoly(train, deg, lam);

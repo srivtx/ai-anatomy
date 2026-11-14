@@ -23,7 +23,7 @@ export default function (root, { id }) {
   let pts = blobs(), k = 4, C = [], lab = [], phase = "init", iter = 0, seed = 1;
   const pl = plane({ width: 460, height: 420, label: "Points coloured by cluster, with centroids", onPoint: (x, y) => { pts.push([x, y]); assign(); draw(); } });
   const st = stats([{ label: "Iteration" }, { label: "Next step" }, { label: "Inertia (sum of squared distances)" }]);
-  const elbow = xyChart({ height: 200, xLabel: "k (number of clusters)", yLabel: "inertia" });
+  const elbow = xyChart({ width: 460, height: 300, xLabel: "k (number of clusters)", yLabel: "inertia" });
   function init() {
     const r = rng(seed++);
     C = Array.from({ length: k }, () => [...pts[r.int(pts.length)]]);
