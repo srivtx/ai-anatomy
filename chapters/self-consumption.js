@@ -61,7 +61,7 @@ export default function (root, { id }) {
         ["Environment rollouts (agents, games, simulators)", "The environment's responses", "Low: the world pushes back"],
         ["Persona-driven or seed-driven generation", "Diversity of the seeds", "Medium: diversity depends on the seed pool"],
       ]),
-      callout("note", "My intuition (~70% confident)", "<p>The quantity that matters is <i>bits of external verification per synthetic token</i>. When it's near zero, every generation loses tail mass at a rate set by the sample size; when it's large, synthetic data behaves like real data. A testable consequence: for verifier-filtered synthetic math, adding more unfiltered self-samples hurts held-out diversity long before it hurts accuracy, so measure distinct-solution counts, not just accuracy. Notebook 43 lets you watch both.</p>"),
+      callout("note", "My intuition (~70% confident)", "<p>The quantity that matters is <i>bits of external verification per synthetic token</i>. When it's near zero, every generation loses tail mass at a rate set by the sample size; when it's large, synthetic data behaves like real data. A testable consequence: for verifier-filtered synthetic math, adding more unfiltered self-samples hurts held-out diversity long before it hurts accuracy, so measure distinct-solution counts, not just accuracy. </p><p><b>Tested with a trigram model on Shakespeare (notebook 43), two of my guesses failed:</b> held-out perplexity degraded faster than diversity (+98% vs −66% over ten generations), and accumulating data slowed collapse a lot but didn't stop it (+27% perplexity). Low temperature was as destructive as I expected.</p>"),
     ),
     section("In code",
       code({
