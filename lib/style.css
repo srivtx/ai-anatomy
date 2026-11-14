@@ -322,3 +322,11 @@ details.expect ul { margin: 6px 0 0; padding-left: 18px; color: var(--ink-2); }
 .idea-btns .btn { font-size: 13px; padding: 5px 10px; }
 .field-card.known { --fc: var(--c1); } .field-card.known li::before { content: "↗"; }
 .field-card.open { --fc: var(--c5); } .field-card.open li::before { content: "?"; }
+
+/* recommendation list */
+.rec-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.rec { border: 1px solid var(--line); border-left: 4px solid var(--rc); border-radius: 12px; padding: 12px 14px; background: var(--surface); }
+.rec-head { display: flex; align-items: center; gap: 10px; font-size: 16px; }
+.rec-n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--rc); color: var(--surface); flex: none; }
+.rec p { margin: 6px 0 0; color: var(--ink-2); font-size: 14.5px; }
+.rec p.rec-risk { color: var(--ink-3); font-size: 13.5px; }
