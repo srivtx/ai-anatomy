@@ -345,3 +345,11 @@ details.cut[open] summary::before { content: "−"; }
 .cut-group { margin-top: 18px; } .cut-group:first-child { margin-top: 0; }
 .cut-group .eyebrow a { color: inherit; text-decoration: none; } .cut-group .eyebrow a:hover { text-decoration: underline; }
 input.search { width: 100%; max-width: 520px; font: inherit; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+
+/* bit flipper */
+.bits { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 12px; }
+.bit { width: 30px; height: 38px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-family: var(--mono); font-size: 15px; font-weight: 600; cursor: pointer; color: var(--ink-2); }
+.bit.sgn { border-color: color-mix(in srgb, var(--bad) 50%, var(--line)); } .bit.exp { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); } .bit.man { border-color: color-mix(in srgb, var(--c3) 50%, var(--line)); }
+.bit[aria-pressed="true"].sgn { background: var(--bad); color: var(--surface); }
+.bit[aria-pressed="true"].exp { background: var(--accent); color: var(--surface); }
+.bit[aria-pressed="true"].man { background: var(--c3); color: var(--surface); }
