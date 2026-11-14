@@ -289,3 +289,5 @@ mark { background: color-mix(in srgb, var(--c4) 35%, transparent); color: inheri
 .proj .acts { display: grid; gap: 6px; justify-items: end; }
 .proj .acts a { text-decoration: none; white-space: nowrap; }
 @media (max-width: 640px) { .proj { grid-template-columns: 1fr; } .proj .acts { justify-items: start; grid-auto-flow: column; } }
+.stage-body > .canvas-box { max-width: 620px; width: 100%; justify-self: center; }
+.stage-body > .canvas-box.wide { max-width: none; }

@@ -114,7 +114,7 @@ export default function (root, { id }) {
           lrSlider,
           slider({ label: "Gradient noise (small batches)", min: 0, max: 2, step: 0.1, value: 0, fmt: (v) => (v ? v.toFixed(1) : "none"), onInput: (v) => { noise = v; reset(false); } }),
           button("Race", () => reset(true), "primary")),
-        h("div.stage-body", st.el, h("div.canvas-box", pl.el), note,
+        h("div.stage-body", st.el, h("div.canvas-box.wide", pl.el), note,
           h("div.legend", OPTS.map((o) => h("span", h("i", { style: { background: o.color } }), o.name))))),
       callout("tip", "Things to try", "<ul style='margin:0;padding-left:18px'><li><b>Narrow valley</b>: raise the learning rate until gradient descent starts to zig-zag, then a bit more until it diverges. Momentum and Adam survive longer.</li><li><b>Two valleys</b>: which optimizer escapes the shallow right-hand valley? Now add noise. Noise from small batches is a feature: it shakes you out of sharp, shallow minima.</li><li><b>Saddle</b>: plain gradient descent creeps for a long time where the slope is almost flat. In high dimensions, saddles are far more common than bad local minima.</li></ul>"),
       predict({
