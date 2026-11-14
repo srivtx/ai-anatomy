@@ -502,3 +502,15 @@ pre.json { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; backgr
 .para-sig { font-size: 13px; color: var(--ink-2); margin-top: 4px; }
 .para p { font-size: 14px; line-height: 1.5; margin: 8px 0; }
 .para-who { font: 12px var(--mono); color: var(--pc); }
+
+/* hidden curriculum */
+.rln-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 4px 0 8px; font-size: 14px; }
+.rln-key { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: 12.5px; }
+.rln-key i { display: inline-block; width: 14px; height: 8px; border-radius: 4px; }
+.rln-kb { background: color-mix(in srgb, var(--c1) 35%, transparent); }
+.rln-kn { background: var(--c2); }
+.rln-row { display: grid; grid-template-columns: minmax(110px, 160px) 1fr 92px; gap: 10px; align-items: center; padding: 3px 0; font-size: 13px; }
+.rln-track { position: relative; height: 14px; background: var(--sunken); border-radius: 7px; overflow: hidden; }
+.rln-base { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--c1) 35%, transparent); border-radius: 7px; }
+.rln-now { position: absolute; left: 0; top: 4px; bottom: 4px; background: var(--c2); border-radius: 3px; transition: width .2s; }
+.rln-val { font-family: var(--mono, ui-monospace, monospace); font-size: 12px; color: var(--ink-2); text-align: right; }
