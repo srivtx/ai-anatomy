@@ -306,3 +306,16 @@ mark { background: color-mix(in srgb, var(--c4) 35%, transparent); color: inheri
 details.expect { margin-top: 8px; font-size: 14px; }
 details.expect summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 details.expect ul { margin: 6px 0 0; padding-left: 18px; color: var(--ink-2); }
+
+/* idea cards (what survived) */
+.idea-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.idea { border: 1px solid var(--line); border-top: 3px solid var(--vc); border-radius: 12px; padding: 12px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; transition: border-color .2s; }
+.idea h3 { margin: 0; font-size: 15.5px; line-height: 1.3; }
+.idea p { margin: 0; font-size: 14px; color: var(--ink-2); line-height: 1.5; }
+.idea p.idea-ev { font-size: 12.5px; color: var(--ink-3); font-style: italic; }
+.idea-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.idea-area { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
+.idea-pill { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: color-mix(in srgb, currentColor 14%, transparent); }
+.idea-guess { font-size: 13px; font-weight: 600; }
+.idea-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
+.idea-btns .btn { font-size: 13px; padding: 5px 10px; }
