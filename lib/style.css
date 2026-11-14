@@ -376,3 +376,8 @@ input.search { width: 100%; max-width: 520px; font: inherit; padding: 9px 12px; 
 .spec-t.ok { background: var(--good); } .spec-t.no { background: var(--bad); } .spec-t.fix { background: var(--accent); }
 .spec-n { margin-left: 8px; font-size: 13px; color: var(--ink-2); }
 pre.json { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; background: var(--sunken); border-radius: 8px; padding: 10px 12px; overflow-x: auto; margin: 6px 0 10px; white-space: pre; }
+
+/* agent timelines */
+.agrid { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.acell { width: 22px; height: 22px; border-radius: 5px; }
+.acell.ok { background: var(--good); } .acell.retry { background: var(--warn); } .acell.bug { background: var(--bad); } .acell.full { background: var(--sunken); border: 1px dashed var(--ink-3); }
