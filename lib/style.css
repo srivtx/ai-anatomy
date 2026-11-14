@@ -490,3 +490,15 @@ pre.json { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; backgr
 .vz-score { font: 600 14px var(--mono); color: var(--accent); }
 .th-hist { height: 90px; gap: 2px; }
 .th-card .code, .th-card pre { margin-top: 10px; }
+.icl-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 760px) { .icl-top { grid-template-columns: 1fr; } }
+.icl-mat { display: grid; gap: 14px; }
+.icl-grid { display: grid; gap: 4px; margin-top: 6px; justify-content: start; }
+.icl-cell { height: 38px; border-radius: 7px; display: grid; place-items: center; font: 600 12px var(--mono); border: 1px solid var(--line); transition: background .3s; }
+.icl-h { font: 600 11px var(--mono); color: var(--ink-3); display: grid; place-items: center; padding: 0 4px; }
+.para-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.para { border-radius: 14px; padding: 14px 16px; background: linear-gradient(160deg, color-mix(in srgb, var(--pc) 16%, var(--surface)), var(--surface) 70%); border: 1px solid color-mix(in srgb, var(--pc) 35%, var(--line)); }
+.para-name { font-weight: 700; font-size: 16px; color: var(--ink); }
+.para-sig { font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+.para p { font-size: 14px; line-height: 1.5; margin: 8px 0; }
+.para-who { font: 12px var(--mono); color: var(--pc); }
