@@ -21,7 +21,7 @@ export default function (root, { id }) {
   }
   const cl = loop(() => {
     const t0 = performance.now();
-    while (queue.length && performance.now() - t0 < 30) { const [p, w, s] = queue.shift(); (res[p][w] ??= []).push(coordCheck(w, p, { seed: s }).dHidden); }
+    while (queue.length && performance.now() - t0 < 14) { const [p, w, s] = queue.shift(); (res[p][w] ??= []).push(coordCheck(w, p, { seed: s }).dHidden); }
     drawCC();
     const total = WIDTHS.length * 2 * 3;
     cprog.textContent = queue.length ? `Training ${total - queue.length} of ${total} networks…` : "30 networks, 4 Adam steps each, same learning rate. Each point is the mean of 3 seeds.";

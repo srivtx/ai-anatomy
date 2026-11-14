@@ -60,8 +60,8 @@ export default function (root, { id }) {
     paintNet(P.mid, mN); paintNet(P.midP, mP);
   }
   const lp = loop(() => {
-    const k = width >= 128 ? 1 : width >= 64 ? 2 : 4;
-    for (let i = 0; i < k && ep < EPOCHS; i++) { trainEpoch(A, data, 0.01); trainEpoch(B, data, 0.01); ep++; }
+    const t0 = performance.now();
+    for (let i = 0; ep < EPOCHS && (i === 0 || performance.now() - t0 < 12); i++) { trainEpoch(A, data, 0.01); trainEpoch(B, data, 0.01); ep++; }
     draw();
     if (ep >= EPOCHS) { lp.stop(); finish(); }
   }, pc.el);

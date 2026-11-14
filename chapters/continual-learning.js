@@ -86,7 +86,7 @@ export default function (root, { id }) {
   let tq = [];
   const tl = loop(() => {
     const t0 = performance.now();
-    while (tq.length && performance.now() - t0 < 30) {
+    while (tq.length && performance.now() - t0 < 14) {
       const job = tq[0];
       job.L ??= learner({ ...job.cfg, seed: 1 });
       job.L.run(60);

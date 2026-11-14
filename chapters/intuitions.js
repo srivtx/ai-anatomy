@@ -47,7 +47,7 @@ export default function (root, { id }) {
     sc.update([{ name: k.label, points: T.map((t) => [k.log ? Math.log10(t.c[k.key]) : t.c[k.key], t.loss]), color: "var(--c2)", dots: true, line: false, r: 3.5 }], { xDomain: k.log ? [k.lo, k.hi] : k.pow2 ? [2 ** k.lo, 2 ** k.hi] : [k.lo, k.hi] });
   }
   const scWrap = h("div", h("div.eyebrow", "Each dot is one trial. Click a knob's bar to plot against it"), sc.el);
-  const lp = loop(() => { for (let i = 0; i < 2 && T.length < N; i++) { const c = sample(r); T.push({ c, loss: trial(c, T.length + 1, kind) }); } draw(); if (T.length >= N) lp.stop(); }, sc.el);
+  const lp = loop(() => { const t0 = performance.now(); for (let i = 0; T.length < N && (i === 0 || performance.now() - t0 < 10); i++) { const c = sample(r); T.push({ c, loss: trial(c, T.length + 1, kind) }); } draw(); if (T.length >= N) lp.stop(); }, sc.el);
 
   // ---------- intuition deck ----------
   let filter = "all";

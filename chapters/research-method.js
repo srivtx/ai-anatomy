@@ -27,7 +27,7 @@ function runner(el, onProgress, onDone) {
   let queue = [], done = 0, total = 0;
   const lp = loop(() => {
     const t0 = performance.now();
-    while (queue.length && performance.now() - t0 < 28) { queue.shift()(); done++; }
+    while (queue.length && performance.now() - t0 < 14) { queue.shift()(); done++; }
     onProgress(done, total);
     if (!queue.length) { lp.stop(); onDone(); }
   }, el);

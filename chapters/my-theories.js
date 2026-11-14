@@ -95,10 +95,19 @@ export default function (root, { id }) {
   const gc = xyChart({ width: 640, height: 260, xLog: true, xLabel: "n: best of n samples, picked by the reward model", yLabel: "true quality of the pick", xDomain: [1, 16384], yDomain: [-0.5, 3.5] });
   const Ns = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384];
   const cache = {};
+  let gTimer = 0;
   function drawG() {
     const key = String(nu);
-    if (!cache[key]) cache[key] = Ns.map((n) => [n, bestOfN(n, nu, Math.max(48, Math.round(60000 / n)), 1)]);
-    if (!cache.g) cache.g = Ns.map((n) => [n, bestOfN(n, Infinity, Math.max(48, Math.round(60000 / n)), 1)]);
+    // fill the curves one n at a time between frames, so the page never freezes
+    for (const [k, v] of [["g", Infinity], [key, nu]]) {
+      cache[k] ??= [];
+      if (cache[k].length < Ns.length) {
+        const n = Ns[cache[k].length];
+        cache[k].push([n, bestOfN(n, v, Math.max(48, Math.round(60000 / n)), 1)]);
+        clearTimeout(gTimer); gTimer = setTimeout(drawG, 0);
+        break;
+      }
+    }
     gc.update(isFinite(nu) ? [{ name: "Gaussian errors", points: cache.g, color: "var(--c1)", dash: true }, { name: `heavy-tailed errors (ν = ${nu})`, points: cache[key], color: "var(--c2)", dots: true }]
       : [{ name: "Gaussian errors", points: cache.g, color: "var(--c1)", dots: true }]);
   }
