@@ -1,6 +1,6 @@
 # AI Anatomy
 
-How machines learn, from one neuron to the frontier. 76 interactive chapters that train real models in your browser, and 40 Colab projects where you build each idea yourself.
+How machines learn, from one neuron to the frontier. 81 interactive chapters that train real models in your browser, and 53 Colab projects where you build each idea yourself.
 
 ![The home page](docs/img/home.png)
 
@@ -12,6 +12,8 @@ Every chapter runs a live simulation in plain JavaScript (no build step, no serv
 | **The hidden laws of training.** Sharpness climbs until it hits 2/η, then stays there. | **Every way machines learn now.** Train an attention layer on regression tasks and watch it become one step of gradient descent. |
 | ![Permutation alignment](docs/img/converging-minds.png) | ![Puzzles vision models fail](docs/img/vlm-puzzles.png) |
 | **Different networks, same mind.** Two seeds look unrelated until their neurons are re-ordered. | **How machines see (and don't).** Puzzles a child solves that vision-language models still miss. |
+| ![pass@k before and after RL](docs/img/rl-narrows.png) | ![Thirty generations of models trained on models](docs/img/self-consumption.png) |
+| **What RL really does to a model.** pass@1 rises while pass@k falls: RL sharpens more than it teaches. | **Models eating their own outputs.** Each generation forgets more of the tail of the distribution. |
 
 ## The curriculum
 
@@ -45,10 +47,13 @@ Every chapter runs a live simulation in plain JavaScript (no build step, no serv
 
 **14. Frontier notebook: laws, theories and bets**: The hidden laws of training · Different networks, same mind · How humans decide what models do · Every way machines learn now · How machines see (and don't) · Intuitions from many runs · Theories I'd test with a cluster · Bets: predictions nobody has tested
 
+**15. The hidden curriculum: notes from inside the models**: What RL really does to a model · Models eating their own outputs · Is that +2% real? · How long should a model think? · Notes from inside a language model
+
 ## Colab projects
 
 | Phase | Projects | |
 |---|---|---|
+| Model zoo, step by step | 8 | Zoo 1: the words and the data, Zoo 2: the linear family, Zoo 3: classic machine learning, Zoo 4: learning without labels, Zoo 5: neural networks by architecture, Zoo 6: generative models, Zoo 7: the ways a model can learn, Zoo 8: picking a model, and the dilemmas |
 | Foundations by hand | 4 | Linear regression three ways, Write an autograd engine, MNIST: MLP vs CNN, with ablations, Trees and gradient boosting from scratch |
 | Representations and generation | 5 | Autoencoder and VAE on MNIST, Diffusion and flow matching, GANs and mode collapse, Graph neural network from scratch, Hopfield networks to attention |
 | Build a GPT | 4 | Byte-level BPE tokenizer, GPT from scratch, Measure your own scaling law, Mixture-of-experts layer |
@@ -57,6 +62,7 @@ Every chapter runs a live simulation in plain JavaScript (no build step, no serv
 | Agents, interpretability and research | 6 | Agent loop and Ralph loop with Claude, Superposition and sparse autoencoders, Grokking modular addition, Ablation lab: what matters in a small GPT, Data vs model size, Catastrophic forgetting |
 | Lab notebook | 5 | GPU kernels step by step, Hyperparameters that transfer: μP, A scaling ladder, A sleeper-agent model organism, Reward hacking and the monitor |
 | Capstones | 3 | Train a reasoning model with GRPO, GPT-2 speedrun: Muon vs AdamW, Find the features inside GPT-2 |
+| Hidden curriculum | 5 | Does RL teach, or only sharpen?, Model collapse with a real language model, Error bars on evals, with real models, How long should a model think?, Test what a model says about itself |
 
 Every notebook runs end to end on a CPU in a quick mode (`QUICK=1`), with offline fallbacks when Hugging Face or an API key isn't available. The expected results quoted on the site were measured from these notebooks; where a run needs a GPU we didn't have, the result is labelled as a prediction.
 
