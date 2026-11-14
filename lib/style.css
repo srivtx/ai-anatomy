@@ -181,7 +181,7 @@ pre.code .cm { color: var(--ink-3); font-style: italic; }
 
 /* callouts & dilemmas */
 .callout { display: block; border-radius: 12px; padding: 12px 16px; margin-top: 14px; border: 1px solid var(--line); background: var(--surface); }
-.callout b { display: block; margin-bottom: 2px; }
+.callout > b { display: block; margin-bottom: 2px; }
 .callout.tip { border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: var(--accent-soft); }
 .callout.warn { border-color: color-mix(in srgb, var(--warn) 40%, transparent); background: var(--warn-bg); }
 .callout p { margin: 0 0 6px; } .callout p:last-child { margin: 0; }
