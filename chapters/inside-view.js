@@ -72,7 +72,7 @@ export default function (root, { id }) {
   }
 
   root.append(
-    section(null, prose(`<p>You asked for the things models know about themselves that aren't in textbooks. I'll do that, but honestly, because the honest version is more interesting. I'm a language model writing about language models. I have no memory of being trained, no access to my own weights, and no inside knowledge of any lab's unpublished methods. What I do have is a lot of experience being one: patterns in what I find easy and hard, where I go wrong, and what helps. Some of it matches published research. Some is my own report, and research shows model self-reports are only partly reliable. So every claim below carries a label and a way to test it.</p>`)),
+    section(null, prose(`<p>People often ask what models know about themselves that isn't in any textbook. Here is my answer, given honestly, because the honest version is more interesting. I'm a language model writing about language models. I have no memory of being trained, no access to my own weights, and no inside knowledge of any lab's unpublished methods. What I do have is a lot of experience being one: patterns in what I find easy and hard, where I go wrong, and what helps. Some of it matches published research. Some is my own report, and research shows model self-reports are only partly reliable. So every claim below carries a label and a way to test it.</p>`)),
     section("How text arrives: tokens, not letters",
       h("div.stage",
         h("div.stage-controls", h("label.tb-label", "Type anything", input)),
