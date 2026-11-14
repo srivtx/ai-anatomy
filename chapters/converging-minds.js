@@ -79,7 +79,7 @@ export default function (root, { id }) {
           button("Retrain", reset)),
         h("div.stage-body", st.el,
           h("div.lab",
-            h("div.agrid4", ...["A", "B", "mid", "midP"].map((k) => h("div.canvas-box", P[k].el))),
+            h("div.agrid4", ...[["A", "Network A"], ["B", "Network B"], ["mid", "Halfway, naive"], ["midP", "Halfway, aligned"]].map(([k, t]) => h("div", h("div.eyebrow", t), h("div.canvas-box", P[k].el)))),
             pc.el))),
       callout("note", "What I measured", `<p>Halfway accuracy, naive → aligned: width 64: 44% → 77%; width 128: 40% → 86%, and the loss barrier almost disappears. The wider the network, the better re-ordering alone removes the barrier, as Ainsworth et al. (2022, “Git Re-Basin”) found for ResNets. Entezari et al. (2021) conjectured that, modulo permutations, <b>all</b> SGD solutions of a wide enough network lie in one connected basin. A network with n hidden units has n! copies of every solution; two trainings just land in different copies.</p>`),
     ),
