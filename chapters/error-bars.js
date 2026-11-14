@@ -39,7 +39,7 @@ export default function (root, { id }) {
         ),
         h("div.stage-body", st.el, chart.el),
       ),
-      callout("tip", "Things to try", "<p>At 500 questions and a true gain of 2 points, B looks <i>worse</i> in about one rerun in four, and a significance test agrees with the truth less than a tenth of the time. Push questions to 5,000 or sample 16 answers per question: the bell narrows around the truth. Now set the true gain to zero and try 8 prompt formats for B, reporting the best: B “wins” by several points with no real difference. That's how many leaderboard gaps are made.</p>"),
+      callout("tip", "Things to try", "<p>At 500 questions and a true gain of 2 points, B looks <i>worse</i> in about one rerun in five, and a significance test agrees with the truth less than a tenth of the time. Push questions to 5,000 or sample 16 answers per question: the bell narrows around the truth. Now set the true gain to zero and try 8 prompt formats for B, reporting the best: B “wins” by several points with no real difference. That's how many leaderboard gaps are made.</p>"),
       predict({
         chapter: id,
         question: "A benchmark has 500 questions and a model scores around 60%. Roughly how big is the 95% confidence interval on its score?",
