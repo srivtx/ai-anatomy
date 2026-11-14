@@ -55,8 +55,10 @@ o = torch.optim.Adam(rm.parameters(), 1e-3)
 for ep in range(300 if not QUICK else 100):
     loss = -F.logsigmoid(rm(train_c) - rm(train_r)).mean(); o.zero_grad(); loss.backward(); o.step()
 with torch.no_grad():
-    acc = (rm(test_c) > rm(test_r)).float().mean(); truth_acc = (true_reward(test_c) > true_reward(test_r)).float().mean()
-print(f"reward model agrees with held-out human choices {acc:.0%} of the time (labels are noisy: even the true reward agrees only {truth_acc:.0%})")
+    d = true_reward(test_c) != true_reward(test_r)                     # skip ties: nothing to rank
+    rm_says = rm(test_c[d]).squeeze(-1) > rm(test_r[d]).squeeze(-1); truth_says = true_reward(test_c[d]) > true_reward(test_r[d])
+    print(f"reward model picks the truly better sequence {(rm_says == truth_says).float().mean():.0%} of the time; "
+          f"the noisy human labels themselves agree with the truth only {truth_says.float().mean():.0%}")
 
 # %% [markdown]
 # ## DPO: no reward model, no sampling during training

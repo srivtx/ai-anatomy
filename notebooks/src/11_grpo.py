@@ -13,7 +13,9 @@ torch.manual_seed(0); random.seed(0)
 chars = list("0123456789+=\n"); stoi = {c: i for i, c in enumerate(chars)}; V = len(chars)
 enc = lambda s: [stoi[c] for c in s]
 problems = [(a, b) for a in range(10, 50) for b in range(10, 50)]
-random.shuffle(problems); sft_set, rl_set = problems[:300], problems[300:]
+random.shuffle(problems); sft_set, rl_set = problems[:400], problems[400:]
+REVERSE = True     # write the answer least-significant digit first: the carry then flows the way the model writes
+ans = lambda a, b: str(a + b)[::-1] if REVERSE else str(a + b)
 
 class LM(nn.Module):
     def __init__(self, d=128):
@@ -21,10 +23,10 @@ class LM(nn.Module):
     def forward(self, x, h=None): o, h = self.rnn(self.emb(x), h); return self.out(o), h
 
 model = LM(); opt = torch.optim.Adam(model.parameters(), 2e-3)
-# brief supervised warm-up on 300 sums, so RL starts from a non-zero success rate
+# brief supervised warm-up on 400 sums, so RL starts from a non-zero success rate
 for step in range(300 if QUICK else 1500):
     batch = random.sample(sft_set, 64)
-    seqs = [enc(f"{a}+{b}={a + b}\n") for a, b in batch]; n = max(map(len, seqs))
+    seqs = [enc(f"{a}+{b}={ans(a, b)}\n") for a, b in batch]; n = max(map(len, seqs))
     x = torch.tensor([s + [stoi["\n"]] * (n - len(s)) for s in seqs])
     logits, _ = model(x[:, :-1]); loss = F.cross_entropy(logits.reshape(-1, V), x[:, 1:].reshape(-1))
     opt.zero_grad(); loss.backward(); opt.step()
@@ -46,15 +48,15 @@ def sample(prompts, n_per, max_new=4):
 def accuracy(probs_set, k=200):
     sub = random.sample(probs_set, k)
     with torch.no_grad(): texts, _ = sample([f"{a}+{b}=" for a, b in sub], 1)
-    return sum(t == str(a + b) for t, (a, b) in zip(texts, sub)) / k
+    return sum(t == ans(a, b) for t, (a, b) in zip(texts, sub)) / k
 
 print(f"after warm-up: accuracy on unseen sums {accuracy(rl_set):.0%}")
 G, hist = 8, []
-opt = torch.optim.Adam(model.parameters(), 5e-4)
+opt = torch.optim.Adam(model.parameters(), 1e-3)
 for step in range(60 if QUICK else 400):
     batch = random.sample(rl_set, 16)
     texts, logp = sample([f"{a}+{b}=" for a, b in batch], G)
-    r = torch.tensor([float(t == str(a + b)) for t, (a, b) in zip(texts, [p for p in batch for _ in range(G)])]).view(16, G)
+    r = torch.tensor([float(t == ans(a, b)) for t, (a, b) in zip(texts, [p for p in batch for _ in range(G)])]).view(16, G)
     adv = (r - r.mean(1, keepdim=True)) / (r.std(1, keepdim=True) + 1e-6)     # ← the group replaces the critic
     loss = -(adv.flatten() * logp).mean()
     opt.zero_grad(); loss.backward(); opt.step()
@@ -68,3 +70,7 @@ plt.plot(s, a, label="accuracy"); plt.plot(s, z, label="share of groups all-righ
 # **What to expect.** Accuracy rises from the warm-up level. Watch the second curve: a group where all 8
 # answers are right (or all wrong) has zero advantage everywhere and contributes no gradient. As the model
 # improves, more groups saturate. This is why GRPO recipes filter for problems of intermediate difficulty.
+#
+# **Try it:** set `REVERSE = False`. Same model, same data, but writing the most significant digit first means
+# the model must know the carry before it has computed it. The warm-up lands far lower, most groups are
+# all-wrong, and RL has little to climb on. Output format is part of the learning problem.
