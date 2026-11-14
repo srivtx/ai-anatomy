@@ -375,3 +375,4 @@ input.search { width: 100%; max-width: 520px; font: inherit; padding: 9px 12px; 
 .spec-t { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--surface); }
 .spec-t.ok { background: var(--good); } .spec-t.no { background: var(--bad); } .spec-t.fix { background: var(--accent); }
 .spec-n { margin-left: 8px; font-size: 13px; color: var(--ink-2); }
+pre.json { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; background: var(--sunken); border-radius: 8px; padding: 10px 12px; overflow-x: auto; margin: 6px 0 10px; white-space: pre; }
