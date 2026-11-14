@@ -134,8 +134,8 @@ for tname, *_ in TASKS[:1]:
 #
 # | Your data | Try first | Then | Why |
 # |---|---|---|---|
-# | Tabular, thousands to millions of rows | gradient boosting (LightGBM, XGBoost, CatBoost) | linear model as a sanity check |
-| Tabular, a few hundred clean rows | regularised linear model or SVM | boosting, compared by cross-validation | little data favours simple models | trees handle mixed types, missing values, interactions |
+# | Tabular, thousands to millions of rows | gradient boosting (LightGBM, XGBoost, CatBoost) | linear model as a sanity check | trees handle mixed types, missing values, interactions |
+# | Tabular, a few hundred clean rows | regularised linear model or SVM | boosting, compared by cross-validation | little data favours simple models |
 # | Tabular, must explain | logistic/linear or a shallow tree | boosting + SHAP if allowed | readable weights and rules |
 # | Images | a pretrained CNN or ViT, fine-tuned | train from scratch only with lots of data | transfer beats from-scratch on small data |
 # | Text | a pretrained transformer (embeddings + linear head, or fine-tune, or prompt an LLM) | TF-IDF + logistic as a baseline | language needs pretraining |
