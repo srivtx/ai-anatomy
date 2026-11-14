@@ -488,3 +488,5 @@ pre.json { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; backgr
 .vz-opts { display: flex; flex-wrap: wrap; gap: 6px; } .vz-opts .pz-opt { padding: 5px 12px; font-weight: 600; }
 .vz-ans { font-size: 13px; color: var(--ink-2); min-height: 18px; margin-top: 6px; }
 .vz-score { font: 600 14px var(--mono); color: var(--accent); }
+.th-hist { height: 90px; gap: 2px; }
+.th-card .code, .th-card pre { margin-top: 10px; }
