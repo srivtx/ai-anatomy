@@ -412,3 +412,5 @@ pre.json { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; backgr
 .arc-result.bad { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 7%, transparent); }
 .arc-result p { margin: 6px 0; }
 .wide-canvas { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 6px; overflow: hidden; }
+.cols { display: flex; align-items: flex-end; gap: 4px; height: 150px; padding: 8px 2px 0; border-bottom: 1px solid var(--line); margin-top: 8px; }
+.cols span { flex: 1; border-radius: 4px 4px 0 0; transition: height .2s; }
