@@ -1345,3 +1345,10 @@ pre.code.tw-code .ln.on { opacity: 1; background: color-mix(in srgb, var(--accen
   .tw-svg svg { max-width: min(100%, 40vw); }
   .tw-key { display: none; }
 }
+.tw-t figcaption small { flex-basis: 100%; text-align: center; margin-top: -2px; }
+.tw-t { max-width: 100%; }
+@media (min-width: 761px) {
+  .tw-stage { flex-wrap: nowrap; }
+  .tw-t { flex: 0 1 auto; }
+  .tw-op { flex: none; }
+}
