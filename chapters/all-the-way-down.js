@@ -75,7 +75,7 @@ const LEVELS = [
 ];
 
 // ---------------------------------------------------------------------------------------------
-// The eight bedrocks from the level, and the GPU features each one forces
+// The nine bedrocks from the level, and the GPU features each one forces
 // ---------------------------------------------------------------------------------------------
 const AX = [
   ["thermo", "Energy is conserved; heat jiggles electrons", "ai-physics"],
@@ -86,6 +86,7 @@ const AX = [
   ["second", "Heat only flows downhill", "power-wall"],
   ["little", "Little's law: in flight = rate × delay", "gpu-design"],
   ["dead", "Circular waiting never ends", "cuda"],
+  ["rice", "Rice: no algorithm decides what all programs do", "software-stack"],
 ];
 const FEAT = [
   ["cmos", "80 billion silicon CMOS switches"],
@@ -98,6 +99,7 @@ const FEAT = [
   ["hbm", "HBM stacked millimetres from the die"],
   ["flight", "Tens of thousands of threads in flight"],
   ["blocks", "Independent blocks; sync between kernels"],
+  ["libs", "Hand-tuned libraries and autotuners"],
 ];
 const EDGES = {
   thermo: [["volt", "every multiply-add ends as heat, so the chip is sized to a power budget"], ["lowp", "fewer bits flipped per number means less energy per number"]],
@@ -108,6 +110,7 @@ const EDGES = {
   second: [["volt", "heat must flow out through the lid, at most ~100 W/cm²"], ["wide", "the only way to use more transistors is to run many of them slowly"]],
   little: [["flight", "to keep 3.35 TB/s flowing through ~500 ns of delay, ~1.7 MB must be in flight"], ["smem", "a 256 KB register file per SM holds all those waiting threads, so switching is free"]],
   dead: [["blocks", "a block waiting for one that isn't scheduled would wait forever, so blocks never wait for each other"]],
+  rice: [["libs", "a compiler can't prove the best schedule for every program, so experts hand-tune the kernels that matter (cuBLAS, FlashAttention) and autotuners search the rest"]],
 };
 
 export default function (root, { id }) {
@@ -175,7 +178,7 @@ export default function (root, { id }) {
 
   // ---------- 3. the eight bedrocks ----------
   const ax = { k: "cv2" };
-  const gc = canvas(880, 420, "Eight laws of physics and logic, and the GPU features they force");
+  const gc = canvas(880, 420, "Nine laws of physics, logic and computation, and the GPU features they force");
   const gtext = h("div.ax-text");
   const axBtns = AX.map(([k, t]) => h("button.btn.small", { type: "button", "aria-pressed": k === ax.k ? "true" : "false", onclick: () => { ax.k = k; drawG(); } }, t.split(":")[0].replace(/ e\^.*/, "")));
   function drawG() {
@@ -183,7 +186,7 @@ export default function (root, { id }) {
     const on = new Set((EDGES[ax.k] || []).map(([f]) => f)), axis = AX.find((a) => a[0] === ax.k);
     gtext.innerHTML = `<p><b>${axis[1]}</b> forces:</p><ul>${EDGES[ax.k].map(([f, why]) => `<li><b>${FEAT.find((x) => x[0] === f)[1]}</b>: ${why}.</li>`).join("")}</ul><p class="muted">Where it came from: <a href="/learn?c=${axis[2]}">the ${axis[2].replace("-", " ")} chapter</a>'s “why?” chain.</p>`;
     gc.paint(() => {
-      gc.clear(); const c = gc.colors, ay = (i) => 18 + i * 49, fy = (i) => 14 + i * 40.5;
+      gc.clear(); const c = gc.colors, ay = (i) => 16 + i * 44, fy = (i) => 12 + i * 36.6;
       gc.text("BEDROCK", 20, 8, { size: 10, color: c["ink-3"] }); gc.text("WHAT IT FORCES IN A GPU", 520, 8, { size: 10, color: c["ink-3"] });
       for (const [k, list] of Object.entries(EDGES)) {
         const a = AX.findIndex((x) => x[0] === k);
@@ -207,7 +210,7 @@ export default function (root, { id }) {
 
   root.append(
     section(null,
-      goal("<p>You've dug down eight times, one layer per chapter. Now go back up in one go. We follow <b>one multiply-add</b> from a line of Python to the electrons that carry it, with real numbers for an H100 at every step: how big, how fast, how much energy, how many at once. The goal is to see the whole machine as one thing, and to see which law of physics shaped each part.</p>",
+      goal("<p>You've dug down one layer per chapter. Now go back up in one go. We follow <b>one multiply-add</b> from a line of Python to the electrons that carry it, with real numbers for an H100 at every step: how big, how fast, how much energy, how many at once. The goal is to see the whole machine as one thing, and to see which law of physics shaped each part.</p>",
         ["See every layer at its real scale", "Know what one token really costs, and where the energy goes", "Name the law behind each part of a GPU"]),
       h("div.vx-row",
         sticker("package", { title: "The package", caption: "level 1: ~5 cm", px: 3 }),
@@ -244,7 +247,7 @@ export default function (root, { id }) {
         explain: "<p>Each token needs every weight once: 140 GB in bf16. Split across 2 H100s at 3.35 TB/s each, that's ~21 ms per token, ~48 tokens/s. The arithmetic for that token (140 GFLOP) would take the tensor cores ~0.07 ms. The math units are idle >99% of the time; memory bandwidth is the speed limit. Batching, quantisation and speculative decoding all attack this.</p>",
       }),
     ),
-    section("Eight laws, one machine",
+    section("Nine laws, one machine",
       prose("<p>Each chapter's “why?” chain ended at a law nobody can engineer around. Here they are side by side, with the GPU features each one forces. Pick a law to light up its consequences. Notice how many arrows leave <b>C·V²</b>: most of a GPU is a machine for not moving data.</p>"),
       h("div.stage",
         h("div.stage-controls", h("div.btn-row", axBtns)),
@@ -258,6 +261,7 @@ export default function (root, { id }) {
         ["The constraint", "Why did clocks stop at ~4 GHz?", "Heat only flows downhill, through a finite path"],
         ["The machine", "Why does a GPU need 50,000 threads?", "Little's law: in flight = rate × delay"],
         ["The program", "Why can't blocks wait for each other?", "Circular waiting never ends"],
+        ["The layers", "Why can't a compiler write the best kernel?", "Rice's theorem: what programs do is undecidable in general"],
       ]),
       predict({
         chapter: id,
