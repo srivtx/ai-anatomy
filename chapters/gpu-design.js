@@ -11,6 +11,126 @@ function canvas(width, height, label) {
 }
 
 export default function (root, { id }) {
+  // ---------- 0. the design, decision by decision: one SM fills up ----------
+  let bstep = 0;
+  const bd = canvas(760, 290, "One GPU chip of 132 SMs, and one SM gaining a part with each design decision");
+  const CAP = [
+    "132 identical SMs, each a block of simple lanes: no branch predictor, no out-of-order engine",
+    "one instruction is fetched once and drives 32 lanes: a warp",
+    "64 warps wait in each SM; every cycle the scheduler issues from one that's ready",
+    "a 256 KB register file: every resident thread keeps its own registers, so switching costs nothing",
+    "256 KB of SRAM the program fills itself: load a tile once, reuse it many times",
+    "a tensor core per quarter: a small matrix multiply in one instruction",
+    "a 50 MB L2 shared by every SM, and HBM stacks right beside the die",
+  ];
+  bd.paint(() => {
+    bd.clear(); const c = bd.colors, s = bstep, ac = c.accent;
+    const hl = (k) => (k === s ? { stroke: ac, lw: 2.5 } : {});
+    // chip panel
+    bd.box(10, 10, 236, 244, { fill: c.surface, stroke: c.line, r: 10 }); bd.text("the chip", 20, 24, { size: 10.5, color: c["ink-3"], mono: true });
+    const gx = 50, gy = 42, cs = 13.2;
+    for (let r = 0; r < 11; r++) for (let q = 0; q < 12; q++) {
+      const x = gx + q * cs, y = gy + r * cs + (s >= 6 && r >= 6 ? 16 : 0);
+      bd.box(x, y, cs - 2.5, cs - 2.5, { fill: r === 2 && q === 9 ? ac : `color-mix(in srgb, ${c.c3} 45%, ${c.surface})`, stroke: "transparent", r: 2 });
+    }
+    if (s >= 6) {
+      bd.box(gx, gy + 6 * cs - 1, 12 * cs - 2.5, 14, { fill: `color-mix(in srgb, ${c.c6} 35%, ${c.surface})`, ...hl(6), r: 3 });
+      bd.text("L2  50 MB", gx + 6 * cs, gy + 6 * cs + 6, { size: 9.5, align: "center" });
+      for (const xx of [18, 214]) for (let k = 0; k < 3; k++) bd.box(xx, 44 + k * 58, 22, 50, { fill: `color-mix(in srgb, ${c.c4} ${k === 2 && xx > 100 ? 15 : 45}%, ${c.surface})`, ...hl(6), r: 3 });
+      bd.text("HBM", 29, 228, { size: 9, color: c["ink-2"], align: "center" }); bd.text("HBM", 225, 228, { size: 9, color: c["ink-2"], align: "center" });
+    }
+    bd.text("132 SMs", 128, 240, { size: 11, align: "center", color: s === 0 ? ac : c.ink });
+    bd.line(gx + 9 * cs + 11, gy + 2 * cs + 5, 268, 40, { color: ac, lw: 1.2, dash: [3, 3] });
+    // SM panel
+    const sx = 268, sy = 10, sw = 482, sh = 244;
+    bd.box(sx, sy, sw, sh, { fill: c.surface, stroke: c.line, r: 10 }); bd.text("one SM", sx + 10, sy + 14, { size: 10.5, color: c["ink-3"], mono: true });
+    if (s >= 2) { bd.box(sx + sw - 128, sy + 9, 9, 9, { fill: c.good, stroke: "transparent", r: 2 }); bd.text("warp ready to issue", sx + sw - 114, sy + 14, { size: 9.5, color: c["ink-3"] }); }
+    const qw = 230, qh = 84;
+    for (let qi = 0; qi < 4; qi++) {
+      const x = sx + 8 + (qi % 2) * (qw + 6), y = sy + 26 + Math.floor(qi / 2) * (qh + 6);
+      bd.box(x, y, qw, qh, { fill: c.sunken, stroke: c.line, r: 7 });
+      // lanes: 2 rows of 16
+      const lx = x + 58, ly = y + 8;
+      for (let k = 0; k < 32; k++) bd.box(lx + (k % 16) * 9, ly + Math.floor(k / 16) * 9, 7, 7, { fill: `color-mix(in srgb, ${c.c3} ${s === 0 ? 75 : 50}%, ${c.surface})`, stroke: "transparent", r: 1.5 });
+      if (qi === 0) bd.text("32 lanes", lx + 72, ly + 25, { size: 9, color: c["ink-3"], align: "center" });
+      if (s >= 1) {   // one instruction fans out to the lanes
+        bd.box(x + 6, y + 6, 46, 18, { fill: `color-mix(in srgb, ${c.c2} 30%, ${c.surface})`, ...hl(1), r: 4 });
+        bd.text("instr", x + 29, y + 15, { size: 9, align: "center", mono: true });
+        bd.line(x + 52, y + 15, lx - 2, y + 15, { color: s === 1 ? ac : c["ink-3"], lw: s === 1 ? 2 : 1 });
+      }
+      if (s >= 2) {   // 16 warp slots per quarter
+        for (let k = 0; k < 16; k++) { const rdy = (k * 7 + qi * 3) % 5 === 0; bd.box(x + 6 + (k % 4) * 11.5, y + 30 + Math.floor(k / 4) * 12, 9.5, 9, { fill: rdy ? c.good : `color-mix(in srgb, ${c["ink-3"]} 35%, ${c.surface})`, stroke: "transparent", r: 2 }); }
+        if (s === 2) bd.box(x + 3, y + 27, 50, 52, { fill: "transparent", stroke: ac, lw: 2, r: 4 });
+      }
+      if (s >= 3) { bd.box(lx, y + 30, 142, 22, { fill: `color-mix(in srgb, ${c.c1} 30%, ${c.surface})`, ...hl(3), r: 4 }); bd.text("registers 64 KB", lx + 71, y + 41, { size: 9.5, align: "center" }); }
+      if (s >= 5) { bd.box(x + 204, y + 8, 22, 70, { fill: `color-mix(in srgb, ${c.c5} 40%, ${c.surface})`, ...hl(5), r: 4 }); bd.text("TC", x + 215, y + 43, { size: 9.5, align: "center" }); }
+    }
+    if (s >= 4) { bd.box(sx + 8, sy + 208, sw - 16, 28, { fill: `color-mix(in srgb, ${c.c4} 30%, ${c.surface})`, ...hl(4), r: 6 }); bd.text("shared memory / L1: 256 KB", sx + sw / 2, sy + 222, { size: 11, align: "center" }); }
+    bd.text(`${s + 1}. ${CAP[s]}`, 380, 274, { size: 11.5, align: "center", color: c.ink });
+  });
+
+  // ---------- 0b. the H100 floor plan ----------
+  const PARTS = [["sm", "SMs"], ["tc", "Tensor cores"], ["rf", "Registers"], ["smem", "Shared memory"], ["l2", "L2"], ["hbm", "HBM"]];
+  const NOTE = {
+    sm: "144 SMs on the die, 132 switched on: a defect in any one just turns it off, so more chips pass (yield)",
+    tc: "4 tensor cores per SM × 132 = 528: they do nearly all of the 989 TFLOP/s",
+    rf: "64 KB per quarter, 256 KB per SM, about 34 MB across the chip: two-thirds the size of the L2",
+    smem: "256 KB per SM of SRAM, up to 228 KB usable as shared memory, about 34 MB across the chip",
+    l2: "50 MB in two halves across the middle, shared by every SM",
+    hbm: "5 active stacks of DRAM beside the die: 80 GB, 5,120 wires wide, 3.35 TB/s",
+  };
+  const hp = { part: "sm" };
+  const hc = canvas(880, 400, "Floor plan of an H100: 8 GPCs of SMs, the L2 across the middle, HBM stacks on both sides, and one SM in detail");
+  const OFF = new Set([3, 16, 22, 37, 49, 58, 71, 85, 96, 104, 121, 139]);   // 12 of 144: an illustrative pattern, real chips differ
+  hc.paint(() => {
+    hc.clear(); const c = hc.colors, P = hp.part, ac = c.accent, on = (k) => P === k;
+    const dim = (col, k) => (P === k ? `color-mix(in srgb, ${col} 70%, ${c.surface})` : `color-mix(in srgb, ${col} 45%, ${c.surface})`);
+    // package
+    hc.box(10, 10, 540, 352, { fill: c.sunken, stroke: c.line, r: 12 });
+    for (const xx of [20, 482]) for (let k = 0; k < 3; k++) {
+      const spare = xx > 100 && k === 2;
+      hc.box(xx, 30 + k * 108, 58, 96, { fill: spare ? c.surface : dim(c.c4, "hbm"), stroke: on("hbm") && !spare ? ac : c.line, lw: on("hbm") && !spare ? 2.5 : 1, r: 5 });
+      hc.text(spare ? "unused" : "HBM3", xx + 29, 78 + k * 108, { size: 10, color: spare ? c["ink-3"] : c.ink, align: "center" });
+      if (!spare) hc.text("16 GB", xx + 29, 92 + k * 108, { size: 9, color: c["ink-2"], align: "center", mono: true });
+    }
+    // die
+    const dx = 90, dy = 26, dw = 380, dh = 320;
+    hc.box(dx, dy, dw, dh, { fill: c.surface, stroke: c["ink-3"], lw: 1.5, r: 6 });
+    hc.text("NVLink · PCIe", dx + dw / 2, dy + 9, { size: 9, color: c["ink-3"], align: "center", mono: true });
+    hc.box(dx + 8, dy + 151, dw - 16, 22, { fill: dim(c.c6, "l2"), stroke: on("l2") ? ac : "transparent", lw: 2.5, r: 4 });
+    hc.text("L2 cache  25 MB  |  25 MB", dx + dw / 2, dy + 162, { size: 10, align: "center" });
+    let n = 0;
+    for (let g = 0; g < 8; g++) {
+      const gx0 = dx + 8 + (g % 4) * 92, gy0 = dy + 20 + Math.floor(g / 4) * 160;
+      hc.box(gx0, gy0, 88, 126, { fill: "transparent", stroke: c.line, r: 5 });
+      if (g === 0) hc.text("GPC", gx0 + 44, gy0 + 132, { size: 8.5, color: c["ink-3"], align: "center", mono: true });
+      for (let k = 0; k < 18; k++, n++) {
+        const x = gx0 + 5 + (k % 3) * 27.5, y = gy0 + 5 + Math.floor(k / 3) * 20, off = OFF.has(n);
+        const f = off ? c.sunken : P === "sm" ? `color-mix(in srgb, ${c.c3} 65%, ${c.surface})` : `color-mix(in srgb, ${c.c3} 25%, ${c.surface})`;
+        hc.box(x, y, 24, 17, { fill: f, stroke: n === 56 ? ac : "transparent", lw: 2, r: 2.5 });
+        if (off) hc.text("×", x + 12, y + 8.5, { size: 10, color: c["ink-3"], align: "center" });
+        else if (P === "tc") for (let t = 0; t < 4; t++) hc.box(x + 3 + (t % 2) * 10, y + 2.5 + Math.floor(t / 2) * 6.5, 8, 5, { fill: c.c5, stroke: "transparent", r: 1 });
+        else if (P === "rf" || P === "smem") hc.box(x + 3, P === "rf" ? y + 3 : y + 10, 18, P === "rf" ? 6 : 5, { fill: P === "rf" ? c.c1 : c.c4, stroke: "transparent", r: 1 });
+      }
+    }
+    hc.line(446, 51, 446, 18, { color: ac, lw: 1.2, dash: [3, 3] }); hc.line(446, 18, 566, 18, { color: ac, lw: 1.2, dash: [3, 3] });
+    // one SM in detail
+    const sx = 566, sy = 10, sw = 304, sh = 352;
+    hc.box(sx, sy, sw, sh, { fill: c.surface, stroke: c.line, r: 10 }); hc.text("one SM", sx + 10, sy + 14, { size: 10.5, color: c["ink-3"], mono: true });
+    for (let q = 0; q < 4; q++) {
+      const x = sx + 8, y = sy + 26 + q * 66, w = sw - 16;
+      hc.box(x, y, w, 60, { fill: c.sunken, stroke: c.line, r: 6 });
+      hc.box(x + 6, y + 6, 70, 14, { fill: `color-mix(in srgb, ${c.c2} 25%, ${c.surface})`, stroke: "transparent", r: 3 }); hc.text("warp sched", x + 41, y + 13, { size: 8.5, align: "center" });
+      hc.box(x + 6, y + 24, 70, 30, { fill: dim(c.c1, "rf"), stroke: on("rf") ? ac : "transparent", lw: 2, r: 3 }); hc.text("regs 64 KB", x + 41, y + 39, { size: 8.5, align: "center" });
+      for (let k = 0; k < 32; k++) hc.box(x + 84 + (k % 16) * 9.5, y + 8 + Math.floor(k / 16) * 10, 7.5, 7.5, { fill: `color-mix(in srgb, ${c.c3} ${on("sm") ? 70 : 40}%, ${c.surface})`, stroke: "transparent", r: 1.5 });
+      hc.text("32 FP32 lanes", x + 84 + 76, y + 37, { size: 8.5, color: c["ink-3"], align: "center" });
+      hc.box(x + 242, y + 6, 40, 48, { fill: dim(c.c5, "tc"), stroke: on("tc") ? ac : "transparent", lw: 2, r: 4 }); hc.text("tensor", x + 262, y + 25, { size: 8.5, align: "center" }); hc.text("core", x + 262, y + 36, { size: 8.5, align: "center" });
+    }
+    hc.box(sx + 8, sy + 292, sw - 16, 52, { fill: dim(c.c4, "smem"), stroke: on("smem") ? ac : "transparent", lw: 2.5, r: 6 });
+    hc.text("shared memory / L1", sx + sw / 2, sy + 312, { size: 10.5, align: "center" }); hc.text("256 KB SRAM", sx + sw / 2, sy + 328, { size: 9.5, color: c["ink-2"], align: "center", mono: true });
+    hc.text(NOTE[P], 440, 384, { size: 11.5, align: "center" });
+  });
+
   // ---------- 1. SIMT and divergence ----------
   const dv = { pattern: "half", frac: 0.5, len: 6 };
   const dc = canvas(880, 250, "One warp of 32 lanes running an if/else, cycle by cycle");
@@ -101,6 +221,8 @@ export default function (root, { id }) {
       h("div.vx-row", sticker("package", { title: "What we're designing", caption: "a die of many identical SMs, with HBM stacks millimetres away", px: 3 }), sticker("sm", { title: "One SM", caption: "four tensor cores (purple) beside their register files, over shared memory (blue)", px: 3 }), sticker("tensor", { title: "A tensor core's job", caption: "a small matrix product is a cube of multiply-adds: A on one side, B on the other", px: 4 })),
     ),
     section("The design, decision by decision",
+      prose("<p>Seven decisions, each forced by a constraint from an earlier chapter. Watch one SM fill up as you step: the newest part is outlined in purple.</p>"),
+      h("div.wide-canvas", bd.el),
       stepper([
         { title: "1. Many simple cores, not a few clever ones", html: "<p><b>Constraint:</b> power (chapter 6). <b>Decision:</b> spend transistors on arithmetic, not on making one thread fast: no branch prediction, no out-of-order execution, modest clock (~1.8 GHz). Group the units into identical blocks called <b>streaming multiprocessors (SMs)</b> and copy them: an H100 has 132.</p>" },
         { title: "2. One instruction drives 32 lanes (a warp)", html: "<p><b>Constraint:</b> fetching and decoding an instruction costs tens of picojoules, far more than the add it describes. <b>Decision:</b> 32 threads share one instruction stream and run in lockstep: a <b>warp</b>. The control cost is split 32 ways. Price: when threads in a warp branch differently, both paths run one after the other (try it below).</p>" },
@@ -109,7 +231,7 @@ export default function (root, { id }) {
         { title: "5. A scratchpad the programmer controls", html: "<p><b>Constraint:</b> data must be reused many times once fetched (chapter 5: ~300 uses per byte from HBM to break even). <b>Decision:</b> up to 228 KB per SM of <b>shared memory</b>, fast SRAM that the threads of a block share and manage by hand. Tiling algorithms load a tile once and reuse it from here.</p>" },
         { title: "6. Matrix units: tensor cores", html: "<p><b>Constraint:</b> even from registers, feeding a multiplier its two operands costs more than the multiply. <b>Decision:</b> a unit that multiplies small matrices in one instruction. An n×n×n matrix multiply does n³ MACs from only 3n² numbers, so each operand is reused n times inside the unit. Most of an H100's 989 TFLOP/s come from these, at low precision (bf16, fp8) because multiplier size grows with bits².</p>" },
         { title: "7. Wide, close memory and a big L2", html: "<p><b>Constraint:</b> 132 SMs all reading at once. <b>Decision:</b> HBM stacks on an interposer (5,120 bits wide, 3.35 TB/s), a 50 MB L2 cache shared by all SMs, and a network on the chip connecting them. Then copy SMs until the die is full: 80 billion transistors, 814 mm², 700 W.</p>" },
-      ]),
+      ], { onStep: (k) => { bstep = k; bd.redraw?.(); } }),
     ),
     section("Warps: one instruction, 32 lanes",
       prose("<p>A warp runs one instruction at a time for all 32 of its threads. If they disagree at an <code>if</code>, the hardware runs the <code>if</code> path with the disagreeing lanes switched off, then the <code>else</code> path with the others off. Nothing breaks, but lanes sit idle. Pick how the 32 lanes split.</p>"),
@@ -163,6 +285,10 @@ export default function (root, { id }) {
       callout("note", "The same idea at every scale", "<p>Reuse is the theme of the whole machine: tensor cores reuse operands inside the unit, shared memory reuses tiles inside an SM, L2 reuses data across SMs, and Google's TPU takes it furthest with a <b>systolic array</b>, a 128×128 grid of multiply-add cells where numbers flow from cell to cell and each one is used 128 times without returning to a register file. On an H100 each SM's four tensor cores do about 2,048 bf16 multiply-adds per clock.</p>"),
     ),
     section("Decode an H100",
+      prose("<p>The whole chip at once. Pick a part to see where it sits on the die and inside one SM, and how many there are.</p>"),
+      h("div.stage",
+        h("div.stage-controls", segmented({ label: "Show", options: PARTS.map(([v, l]) => ({ value: v, label: l })), value: hp.part, onChange: (v) => { hp.part = v; hc.redraw(); } })),
+        h("div.stage-body", h("div.wide-canvas", hc.el))),
       table(["Spec", "Value", "Which decision explains it"], [
         ["SMs", "132 (of 144 on the die; the rest are disabled to improve yield)", "1: copy a simple block many times"],
         ["Clock", "~1.6–1.98 GHz", "1: slow and wide beats fast and narrow under a power cap"],
