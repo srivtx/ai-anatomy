@@ -164,6 +164,64 @@ export default function (root, { id }) {
     ], { xDomain: [1, 8], yDomain: [0, top], marks: [{ x: fu.k, label: `${fu.k} ops` }] });
   }
 
+  // ---------- torch.compile, drawn stage by stage ----------
+  let tstep = 0;
+  const tcv = flowCanvas({ width: 760, height: 270, label: "torch.compile on a small function: the graph Dynamo captures, the backward, the fused kernels, Triton's lowering and autotuning" });
+  tcv.paint = (fn) => { tcv.redraw = fn; fn(); };
+  tcv.paint(() => {
+    tcv.clear(); const c = tcv.colors, s = tstep, ac = c.accent, T = tcv;
+    const node = (x, y, label, col, { w = 74, dash = false, cur = false } = {}) => {
+      T.box(x - w / 2, y - 14, w, 28, { fill: `color-mix(in srgb, ${col} ${dash ? 14 : 30}%, ${c.surface})`, stroke: cur ? ac : dash ? c["ink-3"] : "transparent", lw: cur ? 2 : 1, r: 6 });
+      T.text(label, x, y, { size: 10.5, align: "center", mono: true });
+    };
+    const arrow = (x1, y1, x2, y2, col = c["ink-3"], dash = null) => { T.line(x1, y1, x2, y2, { color: col, dash }); const a = Math.atan2(y2 - y1, x2 - x1); T.ctx.beginPath(); T.ctx.moveTo(x2, y2); T.ctx.lineTo(x2 - 7 * Math.cos(a - 0.4), y2 - 7 * Math.sin(a - 0.4)); T.ctx.lineTo(x2 - 7 * Math.cos(a + 0.4), y2 - 7 * Math.sin(a + 0.4)); T.ctx.closePath(); T.ctx.fillStyle = col; T.ctx.fill(); };
+    // the Python, always shown
+    T.box(10, 12, 220, 120, { fill: c.sunken, stroke: c.line, r: 8 });
+    ["@torch.compile", "def f(x, w, b):", "    y = x @ w + b", "    y = F.gelu(y)", "    return y.sum()"].forEach((l, k) => T.text(l, 20, 30 + k * 20, { size: 10.5, mono: true, color: k === 0 ? c.accent : c.ink }));
+    const stage = ["Dynamo reads the bytecode, records a graph, adds guards", "AOTAutograd traces the backward ahead of time", "Inductor fuses: 2 forward kernels instead of 4", "Triton lowers the fused kernel through MLIR to PTX", "Autotune picks the fastest block size; CUDA Graphs cut the launches"][s];
+    T.text(`${s + 1}. ${stage}`, 380, 256, { size: 11.5, align: "center" });
+    if (s <= 2) {
+      const Y = 54, X = [266, 364, 462, 560, 658, 734], col = c.c3;
+      node(X[0], Y, "x, w, b", c.c1, { w: 64 });
+      node(X[1], Y, "matmul", col, { cur: s === 0 }); node(X[2], Y, "add", col, { w: 56, cur: s === 0 }); node(X[3], Y, "gelu", col, { w: 56, cur: s === 0 }); node(X[4], Y, "sum", col, { w: 56, cur: s === 0 });
+      for (let k = 0; k < 4; k++) arrow(X[k] + (k ? 30 : 34), Y, X[k + 1] - (k === 0 ? 39 : 30), Y);
+      T.text("FX graph", 266, 26, { size: 9.5, color: c["ink-3"], mono: true });
+      if (s === 0) {   // guards
+        T.text("guards: recompile if any of these change", 20, 160, { size: 10, color: c["ink-3"], mono: true });
+        ["x.shape == (64, 512)", "x.dtype == bfloat16", "x.device == cuda:0"].forEach((g, k) => { T.box(20 + k * 176, 172, 168, 24, { fill: `color-mix(in srgb, ${c.c4} 25%, ${c.surface})`, stroke: c.line, r: 12 }); T.text(g, 104 + k * 176, 184, { size: 10, align: "center", mono: true }); });
+        T.text("anything not a tensor op (print, .item(), data-dependent if) ends the graph: a graph break", 20, 222, { size: 10, color: c["ink-3"] });
+      }
+      if (s === 1) {   // backward graph
+        const B = 122;
+        node(X[4], B, "sum'", c.c6, { w: 56, dash: true, cur: s === 1 }); node(X[3], B, "gelu'", c.c6, { w: 56, dash: true, cur: s === 1 }); node(X[2], B, "add'", c.c6, { w: 56, dash: true, cur: s === 1 }); node(X[1], B, "matmul'", c.c6, { dash: true, cur: s === 1 });
+        for (let k = 4; k > 1; k--) arrow(X[k] - 30, B, X[k - 1] + (k - 1 === 1 ? 39 : 30), B, c["ink-3"], [3, 3]);
+        T.text("backward, traced ahead of time", X[1] - 37, B + 28, { size: 9.5, color: c["ink-3"], mono: true });
+        T.line(X[2], Y + 14, X[3], B - 14, { color: c["ink-3"], dash: [2, 3] }); T.text("save y, or recompute it?", X[2] + 2, 92, { size: 9.5, color: c["ink-3"] });
+      }
+      if (s === 2) {   // fusion groups
+        T.box(X[1] - 44, Y - 24, 88, 48, { fill: "transparent", stroke: c.c2, lw: 2, r: 9 });
+        T.box(X[2] - 36, Y - 24, X[4] - X[2] + 72, 48, { fill: "transparent", stroke: ac, lw: 2.5, r: 9 });
+        T.text("kernel 1: cuBLAS or a template", X[1], 180, { size: 10.5, align: "center", color: c.c2 });
+        T.line(X[1], Y + 24, X[1], 168, { color: c.c2, dash: [3, 3] });
+        T.text("kernel 2: one Triton kernel, y read once", X[3], 180, { size: 10.5, align: "center", color: ac });
+        T.line(X[3], 136, X[3], 168, { color: ac, dash: [3, 3] });
+        T.text("unfused: 4 kernels, y written and read 3 times  →  fused: 2 kernels", 490, 212, { size: 10.5, align: "center", color: c["ink-2"] });
+      }
+    } else if (s === 3) {
+      T.box(250, 30, 140, 44, { fill: `color-mix(in srgb, ${ac} 14%, ${c.surface})`, stroke: ac, lw: 2, r: 8 }); T.text("add + gelu + sum", 320, 52, { size: 10.5, align: "center", mono: true });
+      const L = [["Triton IR", "blocks of values, no threads"], ["TritonGPU (MLIR)", "layouts and shared memory"], ["LLVM IR", "standard optimisations"], ["PTX", "virtual GPU assembly"], ["cubin (SASS)", "ptxas: machine code"]];
+      L.forEach(([a, b], k) => { const y = 32 + k * 42; T.box(420, y, 170, 30, { fill: `color-mix(in srgb, ${[c.c1, c.c6, c.c3, c.c4, c.c2][k]} 28%, ${c.surface})`, stroke: "transparent", r: 6 }); T.text(a, 505, y + 15, { size: 10.5, align: "center", mono: true }); T.text(b, 600, y + 15, { size: 10, color: c["ink-3"] }); if (k) arrow(505, y - 12, 505, y - 2); });
+      arrow(390, 52, 418, 47);
+    } else {
+      const C = [["BLOCK 64, 4 warps", 41], ["BLOCK 128, 4 warps", 29], ["BLOCK 128, 8 warps", 31], ["BLOCK 256, 8 warps", 34]], mx = 45;
+      T.text("max-autotune: time each config on this GPU", 250, 26, { size: 10, color: c["ink-3"], mono: true });
+      C.forEach(([n, t], k) => { const y = 42 + k * 30, best = t === 29; T.text(n, 250, y + 10, { size: 10.5, mono: true }); T.bar(400, y + 4, 200, 12, t / mx, best ? c.good : c.c1); T.text(`${t} µs${best ? "  ★ kept" : ""}`, 610, y + 10, { size: 10.5, color: best ? c.good : c["ink-2"], mono: true }); });
+      T.text("reduce-overhead: record the launches once as a CUDA Graph, then replay with one call", 20, 186, { size: 10.5, color: c.ink });
+      for (let k = 0; k < 8; k++) T.box(20 + k * 30, 202, 24, 18, { fill: `color-mix(in srgb, ${c.c3} 40%, ${c.surface})`, stroke: "transparent", r: 3 });
+      T.text("→ one launch", 270, 211, { size: 10.5, color: c.good }); T.text("illustrative timings", 740, 26, { size: 9.5, color: c["ink-3"], align: "right" });
+    }
+  });
+
   root.append(
     section(null,
       goal("<p>You type <code>y = x @ W</code>. The GPU can only run its own machine code, started by writing bytes into a queue and ringing a doorbell. Between the two sit about nine layers of software, written by different people at different times. The goal is to see <b>why each layer exists</b>: each one lets somebody change one thing (the model, the library, the GPU) without rewriting everything else, and each one costs something.</p>",
@@ -265,13 +323,14 @@ nvcc add.cu -o add \\
     ),
     section("torch.compile, layer by layer",
       prose("<p><code>torch.compile(model)</code> is a whole compiler stack hidden behind one line. Each stage turns a program into a more specific one, the same pattern as the layers above.</p>"),
+      h("div.wide-canvas", tcv.el),
       stepper([
         { title: "1. Dynamo: capture the Python", html: "<p>Dynamo hooks CPython's frame evaluation and reads your function's bytecode as it is about to run. It records the tensor operations into an <b>FX graph</b> and installs <b>guards</b>: checks such as “x is bf16 on CUDA with shape 4096 × 4096”. Next call, if the guards pass, it runs the compiled version; if not, it recompiles. Python it can't follow (printing, data-dependent branches) causes a <b>graph break</b> and runs normally.</p><pre>graph():\n  %mul = call_function[target=torch.mul](args=(%x, 2))\n  %add = call_function[target=torch.add](args=(%mul, 1))\n  %relu = call_function[target=torch.relu](args=(%add,))</pre>" },
         { title: "2. AOTAutograd: the backward too", html: "<p>For training, AOTAutograd traces the backward pass ahead of time, so forward and backward become two graphs the compiler can optimise together, for example by deciding which intermediate values to save and which to recompute.</p>" },
         { title: "3. Inductor: fuse and schedule", html: "<p>TorchInductor lowers the graph to simple loops over tensors, decides which operations to fuse into the same kernel, plans memory, and picks matmuls from libraries or templates. For GPUs it writes <b>Triton</b> code; for CPUs, C++ with OpenMP.</p><pre>@triton.jit\ndef fused_mul_add_relu(x_ptr, out_ptr, n, BLOCK: tl.constexpr):\n    i = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)\n    x = tl.load(x_ptr + i, mask=i &lt; n)\n    tl.store(out_ptr + i, tl.maximum(x * 2 + 1, 0), mask=i &lt; n)</pre>" },
         { title: "4. Triton: down to PTX", html: "<p>Triton is itself a compiler. It turns that Python-looking kernel into Triton IR, then a GPU-aware dialect in <b>MLIR</b> that decides layouts, vector widths and shared-memory use, then LLVM IR, then PTX, then <code>ptxas</code> makes SASS. You wrote block-level code; Triton chose the per-thread work.</p>" },
         { title: "5. Autotune, then (optionally) CUDA Graphs", html: "<p>For each kernel Inductor can try several block sizes and keep the fastest on your GPU (<code>mode=\"max-autotune\"</code>). <code>mode=\"reduce-overhead\"</code> wraps the result in CUDA Graphs, removing the launch cost you saw above. The PyTorch 2 paper reported 2.27× faster inference and 1.41× faster training (geometric mean) across 180+ models on an A100.</p>" },
-      ]),
+      ], { onStep: (k) => { tstep = k; tcv.redraw?.(); } }),
     ),
     section("Dig down: why can't the compiler do it all?",
       whyChain({
