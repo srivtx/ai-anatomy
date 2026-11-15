@@ -66,6 +66,73 @@ export default function (root, { id }) {
   const anim = loop((dt) => { const I = Id(m.Vg, m), sp = Math.max(0, Math.min(1, (Math.log10(I) + 9) / 6)); for (const d of dots) { d.x += sp * dt * 0.6; if (d.x > 1) { d.x -= 1; d.y = Math.random(); } } mc.redraw?.(); }, mc.el);
   if (!reducedMotion()) anim.start();
 
+  // ---------- 1b. build a MOSFET, step by step ----------
+  let bstep = 0;
+  const bc = canvas(760, 270, "A MOSFET built up in five steps, in cross-section and as a circuit");
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const holes = Array.from({ length: 70 }, () => [rnd(), rnd()]), elec = Array.from({ length: 34 }, () => [rnd(), rnd()]);
+  bc.paint(() => {
+    bc.clear(); const c = bc.colors, s = bstep, x0 = 16, x1 = 476, sub = 128, bot = 256, gx = x0 + 150, gw = x1 - x0 - 300;
+    const nfill = `color-mix(in srgb, ${c.c1} 40%, ${c.surface})`;
+    bc.box(x0, sub, x1 - x0, bot - sub, { fill: `color-mix(in srgb, ${c.c5} 16%, ${c.surface})`, stroke: c.line, r: 6 });
+    // depletion zones around the islands: no free carriers there
+    const dep = s >= 3 ? 0 : 1;
+    for (const xx of [x0 + 2, x1 - 152]) bc.box(xx, sub + 1, 150, 72, { fill: `color-mix(in srgb, ${c.ink} ${dep ? 5 : 3}%, transparent)`, stroke: "transparent", r: 6 });
+    // holes, pushed down by a positive gate
+    const push = s >= 3 ? 56 : s >= 2 ? 44 : 0;
+    for (const [hx, hy] of holes) {
+      const x = x0 + 8 + hx * (x1 - x0 - 16), y = sub + 6 + hy * (bot - sub - 12);
+      const under = x > gx - 6 && x < gx + gw + 6;
+      if (x < x0 + 156 && y < sub + 74) continue; if (x > x1 - 156 && y < sub + 74) continue;
+      const yy = under && s >= 2 ? Math.max(y, sub + push + hy * 18) : y;
+      bc.ctx.beginPath(); bc.ctx.arc(x, yy, 3, 0, 7); bc.ctx.strokeStyle = c.c5; bc.ctx.lineWidth = 1.4; bc.ctx.stroke();
+    }
+    bc.box(x0, sub, 140, 64, { fill: nfill, stroke: c.line, r: 6 }); bc.box(x1 - 140, sub, 140, 64, { fill: nfill, stroke: c.line, r: 6 });
+    for (let i = 0; i < 18; i++) { bc.dot(x0 + 10 + (i % 6) * 22, sub + 12 + Math.floor(i / 6) * 18, 2.6, c.c4); bc.dot(x1 - 130 + (i % 6) * 22, sub + 12 + Math.floor(i / 6) * 18, 2.6, c.c4); }
+    bc.text("source (n)", x0 + 70, sub - 12, { size: 11.5, align: "center" }); bc.text("drain (n)", x1 - 70, sub - 12, { size: 11.5, align: "center" });
+    bc.text("p-type silicon: holes ○", (x0 + x1) / 2, bot - 9, { size: 10.5, color: c["ink-3"], align: "center" });
+    if (s >= 1) {
+      bc.box(gx - 6, sub - 10, gw + 12, 9, { fill: c.surface, stroke: c["ink-3"], r: 2 });
+      bc.box(gx - 6, sub - 60, gw + 12, 46, { fill: s >= 2 ? `color-mix(in srgb, ${c.c4} ${s >= 3 ? 55 : 25}%, ${c.sunken})` : c.sunken, stroke: c["ink-3"], r: 6 });
+      bc.text(s >= 3 ? "gate  +0.8 V" : s === 2 ? "gate  +0.2 V" : "gate  0 V", gx + gw / 2, sub - 37, { size: 12.5, align: "center" });
+      bc.text("oxide ~1 nm", gx + gw / 2, sub - 74, { size: 10, color: c["ink-3"], align: "center" });
+    }
+    if (s >= 2) {   // field lines from the gate into the silicon
+      for (let k = 0; k < 5; k++) { const x = gx + 12 + k * (gw - 24) / 4; bc.line(x, sub + 2, x, sub + 26, { color: c.c4, lw: 1.2, dash: [2, 3] }); bc.text("+", x, sub - 21, { size: 10, color: c.ink, align: "center" }); }
+      const n = s >= 3 ? elec.length : 7;
+      for (let i = 0; i < n; i++) bc.dot(gx + elec[i][0] * gw, sub + 4 + elec[i][1] * (s >= 3 ? 8 : 12), 2.6, c.c4);
+    }
+    if (s >= 3) {
+      bc.box(x0 + 140, sub + 1, x1 - x0 - 280, 12, { fill: `color-mix(in srgb, ${c.c1} 45%, transparent)`, stroke: "transparent", r: 3 });
+      bc.line(x0 + 60, sub + 80, x1 - 60, sub + 80, { color: c.good, lw: 2.5 });
+      bc.text("▶", x1 - 62, sub + 80, { size: 13, color: c.good, align: "center" });
+      bc.text("electrons flow: source → drain", (x0 + x1) / 2, sub + 96, { size: 11, color: c.good, align: "center" });
+    } else {
+      bc.text("✕  no path", (x0 + x1) / 2, sub + 92, { size: 12, color: c.bad, align: "center" });
+    }
+    // right: the same thing as a circuit
+    const rx = 510, rw = 236, cy = 150; bc.box(rx, 14, rw, 242, { fill: c.surface, stroke: c.line, r: 10 });
+    bc.text("as a circuit", rx + 12, 30, { size: 10.5, color: c["ink-3"], mono: true });
+    const S = rx + 34, D = rx + rw - 34;
+    bc.dot(S, cy, 4, c.ink); bc.dot(D, cy, 4, c.ink); bc.text("S", S, cy + 16, { size: 11, align: "center" }); bc.text("D", D, cy + 16, { size: 11, align: "center" });
+    const diode = (x, dir) => { const t = 9; bc.ctx.beginPath(); bc.ctx.moveTo(x - dir * t, cy - t); bc.ctx.lineTo(x - dir * t, cy + t); bc.ctx.lineTo(x + dir * t, cy); bc.ctx.closePath(); bc.ctx.fillStyle = c["ink-2"]; bc.ctx.fill(); bc.line(x + dir * t, cy - t, x + dir * t, cy + t, { color: c["ink-2"], lw: 2 }); };
+    if (s <= 1) {
+      bc.line(S, cy, D, cy, { color: c["ink-3"] }); diode(S + 45, -1); diode(D - 45, 1);
+      bc.text("two diodes, back to back", rx + rw / 2, cy + 44, { size: 11, align: "center" });
+      bc.text("one is always reverse-biased", rx + rw / 2, cy + 60, { size: 10.5, color: c["ink-3"], align: "center" });
+      if (s === 1) { const gxm = rx + rw / 2; bc.line(gxm - 22, cy - 46, gxm + 22, cy - 46, { color: c.ink, lw: 2.5 }); bc.line(gxm - 22, cy - 38, gxm + 22, cy - 38, { color: c.ink, lw: 2.5 }); bc.line(gxm, cy - 76, gxm, cy - 46, { color: c.ink }); bc.line(gxm, cy - 38, gxm, cy - 14, { color: c["ink-3"], dash: [3, 3] }); bc.text("G", gxm, cy - 86, { size: 11, align: "center" }); bc.text("gate + oxide = a capacitor", rx + rw / 2, 52, { size: 10.5, color: c["ink-3"], align: "center" }); }
+    } else {
+      const on = s >= 3, a = S + 50, b = D - 50, gxm = rx + rw / 2;
+      bc.line(S, cy, a, cy, { color: c.ink, lw: 2 }); bc.line(b, cy, D, cy, { color: c.ink, lw: 2 });
+      if (on) bc.line(a, cy, b, cy, { color: c.good, lw: 3 }); else bc.line(a, cy, b - 6, cy - 30, { color: c.ink, lw: 2 });
+      bc.dot(a, cy, 3.5, c.ink); bc.dot(b, cy, 3.5, c.ink);
+      bc.line(gxm, 60, gxm, cy - (on ? 6 : 22), { color: c["ink-3"], dash: [3, 3] }); bc.text(on ? "G above threshold" : "G below threshold", gxm, 50, { size: 11, align: "center" });
+      bc.text(on ? "switch closed" : "switch open", gxm, cy + 40, { size: 12, color: on ? c.good : c.ink, align: "center" });
+      if (s === 4) { bc.text("current into G: 0", gxm, cy + 64, { size: 11, color: c.accent, align: "center", mono: true }); bc.text("per 0→1→0: CV² ≈ 0.1 fJ", gxm, cy + 82, { size: 11, color: c.accent, align: "center", mono: true }); }
+      else bc.text(on ? "a channel ~1 nm deep" : "field gathers electrons", gxm, cy + 58, { size: 10.5, color: c["ink-3"], align: "center" });
+    }
+  });
+
   // ---------- 2. short channels and why the transistor changed shape ----------
   const sc = { L: 100, kind: "planar" };
   const LAMBDA = { planar: 10, fin: 5, gaa: 3.5 };
@@ -86,13 +153,15 @@ export default function (root, { id }) {
       h("div.vx-row", sticker("planar", { arg: false, title: "Gate at 0 V: off", caption: "source and drain (blue) are cut off by p-type silicon", px: 4 }), sticker("planar", { arg: true, title: "Gate at +0.8 V: on", caption: "the gate's field pulls up a thin channel of electrons (light blue)", px: 4 })),
     ),
     section("How a field becomes a switch",
+      prose("<p>Build a transistor in five steps. Left: the silicon, with holes as open circles and free electrons as dots. Right: the same thing as a circuit.</p>"),
+      h("div.wide-canvas", bc.el),
       stepper([
         { title: "Two islands that can't talk", html: "<p>Start with p-type silicon and dope two small islands n-type: the <b>source</b> and the <b>drain</b>. Between them, each island meets the p-type silicon in a p-n junction, and one of those junctions is always reverse-biased. No current flows.</p>" },
         { title: "A plate above the gap", html: "<p>Grow a very thin layer of insulating oxide over the gap and put a conductor on top: the <b>gate</b>. Gate, oxide and silicon form a capacitor. No current can flow through the oxide, ever.</p>" },
         { title: "Positive gate: pull electrons up", html: "<p>Put a positive voltage on the gate. Its field pushes holes away from the surface and draws electrons (the few that exist in p-type silicon, plus many from the source) up against the oxide.</p>" },
         { title: "Past the threshold: a channel", html: "<p>Above the <b>threshold voltage</b> (~0.3 V in modern chips) the surface has more electrons than holes: a thin n-type layer, a nanometre or two deep, now connects source to drain. Current flows. Remove the gate voltage and the channel vanishes in picoseconds.</p>" },
         { title: "Why this is the perfect switch", html: "<p>The gate draws no steady current, so one transistor's output can drive the gates of many others with no loss. The only cost of switching is <b>charging the gate's tiny capacitance</b> (and the wire to it): a fraction of a femtojoule per gate. A <b>p-channel</b> version, built the other way round, turns on when its gate is <i>low</i>. Pair the two and you get CMOS, the next chapter.</p>" },
-      ]),
+      ], { onStep: (i) => { bstep = i; bc.redraw?.(); } }),
     ),
     section("Turn the gate",
       prose("<p>Slide the gate voltage and watch the current on a log scale, where each grid line is 1,000× more. Below the threshold, current doesn't stop: it falls off as a straight line on this plot, an exponential, and the steepness of that line is the most important number in chip design.</p>"),

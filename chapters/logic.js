@@ -21,6 +21,53 @@ const GATES = {
 };
 
 export default function (root, { id }) {
+  // ---------- 0. noise: why two levels ----------
+  const nz = { sigma: 60, stages: 8, L: 2 };
+  const nc = canvas(760, 300, "Signals passing through stages that add noise: passed on as-is, or restored to the nearest level");
+  const nst = stats([{ label: "Misread, passed on as-is" }, { label: "Misread, restored every stage" }, { label: "Gap between levels" }]);
+  const VDD = 0.8, NS = 240, MAXS = 12;
+  let sd = 11; const rn = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+  const gauss = Array.from({ length: NS * MAXS }, () => Math.sqrt(-2 * Math.log(rn() + 1e-12)) * Math.cos(2 * Math.PI * rn()));
+  const restore = (v, L) => {           // a staircase of steep inverter curves, one step per level boundary (gain ~5 at each)
+    const st = VDD / (L - 1), w = 0.04 * st / VDD; let o = 0;
+    for (let k = 0; k < L - 1; k++) o += st / (1 + Math.exp(-(v - (k + 0.5) * st) / w));
+    return o;
+  };
+  function drawN() {
+    const L = nz.L, st = VDD / (L - 1), sg = nz.sigma / 1000, S = nz.stages;
+    const lev = (i) => i % L, read = (v) => Math.max(0, Math.min(L - 1, Math.round(v / st)));
+    const runs = [0, 1].map((dig) => Array.from({ length: NS }, (_, i) => {
+      let v = lev(i) * st; const tr = [v];
+      for (let k = 0; k < S; k++) { v += sg * gauss[i * MAXS + k]; if (dig) v = restore(v, L); tr.push(v); }
+      return { tr, ok: read(v) === lev(i) };
+    }));
+    const bad = runs.map((r) => r.filter((x) => !x.ok).length), pct = (b) => `${b} of ${NS} (${(100 * b / NS).toFixed(b && b < 24 ? 1 : 0)}%)`;
+    nst.set(0, pct(bad[0]), bad[0] === 0 ? "good" : bad[0] < 5 ? "warn" : "bad");
+    nst.set(1, pct(bad[1]), bad[1] === 0 ? "good" : bad[1] < 5 ? "warn" : "bad");
+    nst.set(2, `${(st * 1000).toFixed(0)} mV`, st >= 0.4 ? "good" : st >= 0.2 ? "warn" : "bad");
+    nc.paint(() => {
+      nc.clear(); const c = nc.colors, pal = [c.c1, c.c4, c.c3, c.c6, c.c5];
+      [["Passed on as-is", 14], ["Restored at every stage", 392]].forEach(([title, px], dig) => {
+        const pw = 354, py = 34, ph = 236, X = (k) => px + 44 + (k / S) * (pw - 60), Y = (v) => py + ph - 14 - ((v + 0.1) / (VDD + 0.2)) * (ph - 28);
+        nc.box(px, py - 22, pw, ph + 30, { fill: c.surface, stroke: c.line, r: 10 });
+        nc.text(title, px + 12, py - 6, { size: 12 });
+        for (let k = 0; k < L - 1; k++) nc.line(px + 40, Y((k + 0.5) * st), px + pw - 10, Y((k + 0.5) * st), { color: c["ink-3"], dash: [3, 4], lw: 1 });
+        for (let k = 0; k < L; k++) if (L <= 4 || k % 3 === 0 || k === L - 1) nc.text(`${(k * st).toFixed(L > 4 ? 2 : 1)} V`, px + 36, Y(k * st), { size: 9.5, color: c["ink-3"], align: "right", mono: true });
+        const ctx = nc.ctx; ctx.save(); ctx.beginPath(); ctx.rect(px + 1, py - 2, pw - 2, ph + 4); ctx.clip(); ctx.lineWidth = 1;
+        for (let i = 0; i < NS; i++) {
+          const r = runs[dig][i]; ctx.beginPath();
+          r.tr.forEach((v, k) => (k ? ctx.lineTo(X(k), Y(v)) : ctx.moveTo(X(k), Y(v))));
+          ctx.strokeStyle = r.ok ? `color-mix(in srgb, ${pal[lev(i) % pal.length]} 35%, transparent)` : `color-mix(in srgb, ${c.bad} 45%, transparent)`; ctx.stroke();
+        }
+        for (let i = 0; i < NS; i++) { const r = runs[dig][i]; if (!r.ok) nc.dot(X(S), Y(r.tr[S]), 3, c.bad); }
+        ctx.restore();
+        nc.text("stage →", px + pw - 12, py + ph + 2, { size: 9.5, color: c["ink-3"], align: "right", mono: true });
+        nc.text(`${bad[dig]} misread`, px + pw - 12, py - 6, { size: 11.5, color: bad[dig] ? c.bad : c.good, align: "right" });
+      });
+    });
+  }
+  drawN();
+
   // ---------- 1. CMOS gates ----------
   const g = { kind: "nand", A: 1, B: 0 };
   const gc = canvas(880, 330, "A CMOS logic gate: which transistors conduct, and the output");
@@ -122,6 +169,13 @@ export default function (root, { id }) {
         sticker("bits", { title: "A number is wires", caption: "4.125 in bf16: a standing cube is a wire at 0.75 V (a 1)", px: 4 })),
     ),
     section("Why everything is 0 or 1",
+      prose("<p>Send 240 signals through a chain of stages. Each stage adds a little random noise, like every wire on a real chip. On the left the stages just pass the voltage on. On the right each stage is a pair of inverters, which push any input back to the nearest clean level. Then try squeezing more levels onto the wire.</p>"),
+      h("div.stage",
+        h("div.stage-controls",
+          slider({ label: "Noise per stage", min: 10, max: 120, step: 5, value: nz.sigma, fmt: (v) => `${v} mV`, onInput: (v) => { nz.sigma = v; drawN(); } }),
+          slider({ label: "Stages", min: 1, max: 12, value: nz.stages, onInput: (v) => { nz.stages = v; drawN(); } }),
+          segmented({ label: "Levels per wire", options: [{ value: "2", label: "2 (a bit)" }, { value: "4", label: "4" }, { value: "10", label: "10 (a digit)" }], value: "2", onChange: (v) => { nz.L = +v; drawN(); } })),
+        h("div.stage-body", nst.el, h("div.wide-canvas", nc.el))),
       whyChain({
         claim: "Computers represent numbers with two voltage levels, not ten.",
         steps: [
