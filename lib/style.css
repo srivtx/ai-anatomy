@@ -715,9 +715,9 @@ body.is-lesson .topbar .wrap { max-width: 1480px; }
 .ix-name { font-weight: 600; font-size: 14px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ix-track { height: 22px; border-radius: 7px; background: color-mix(in srgb, var(--lc) 10%, var(--sunken)); overflow: hidden; }
 .ix-bar { display: flex; justify-content: flex-end; align-items: center; height: 100%; width: var(--w); padding-right: 8px; border-radius: 7px; color: #fff; font: 600 11px var(--mono);
-  background: linear-gradient(90deg, var(--lc) var(--f), color-mix(in srgb, var(--lc) 62%, var(--surface)) var(--f)); transition: filter .15s; }
+  background: linear-gradient(90deg, var(--lc) var(--f), color-mix(in srgb, var(--lc) 55%, var(--surface)) var(--f)); transition: filter .15s; }
 .ix-row:hover .ix-bar { filter: brightness(1.08); }
-.ix-n { text-shadow: 0 1px 1px rgba(0,0,0,.2); }
+.ix-n { color: var(--ink); }
 .ix-tag { font-size: 13.5px; line-height: 1.35; min-width: 0; }
 .ix-row:hover .ix-tag { color: var(--ink); }
 @media (max-width: 760px) { .ix-row { grid-template-columns: 26px minmax(0, 1fr) 80px; } .ix-tag { display: none; } }
