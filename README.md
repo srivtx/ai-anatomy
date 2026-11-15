@@ -1,6 +1,6 @@
 # AI Anatomy
 
-How machines learn, from one neuron to the frontier. 96 interactive chapters that train real models in your browser, and 59 Colab projects where you build each idea yourself.
+How machines learn, from one neuron to the frontier. 97 interactive chapters that train real models in your browser, and 59 Colab projects where you build each idea yourself.
 
 ![The home page](docs/img/home.png)
 
@@ -35,7 +35,7 @@ Every chapter runs a live simulation in plain JavaScript (no build step, no serv
 
 **8. Thinking, fast and slow**: Chain of thought and System 2 · Looped and recurrent-depth models · Test-time training
 
-**9. From electrons to CUDA: why AI runs on GPUs**: What AI asks of the electrons · Why sand can switch · The transistor: a switch made of a field · From switches to arithmetic · Why memory is far and slow · The power wall: why chips went wide · Design a GPU from the goal · CUDA: programming ten thousand threads
+**9. From electrons to CUDA: why AI runs on GPUs**: What AI asks of the electrons · Why sand can switch · The transistor: a switch made of a field · From switches to arithmetic · Why memory is far and slow · The power wall: why chips went wide · Design a GPU from the goal · CUDA: programming ten thousand threads · One multiply, all the way down
 
 **10. Systems: training and serving at scale**: Numbers: fp32, bf16, fp8, int4 · Distributed training · GPU kernels and the roofline · Fast inference
 
