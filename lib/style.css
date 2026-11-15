@@ -1190,3 +1190,4 @@ html.nbv-open { overflow: hidden; }
 .rm-src { margin-left: auto; font-size: 13px; color: var(--ink-3); }
 @media (max-width: 1000px) { .rm-hero { grid-template-columns: 1fr; gap: 20px; } .rm-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .rm-steps { grid-template-columns: 1fr; } .rm-ph { flex-direction: column; align-items: flex-start; gap: 8px; } .rm-card { padding: 14px; } .rm-sg a { width: 14px; height: 14px; } }
+@media (max-width: 560px) { .stage-controls { gap: 10px 12px; padding: 12px; } .stage-body { padding: 12px; } }
