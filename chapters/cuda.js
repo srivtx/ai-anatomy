@@ -71,7 +71,7 @@ export default function (root, { id }) {
       goal("<p>We have a machine with 132 SMs, each wanting 64 warps of 32 threads in flight. We need a way to <b>describe a million small, independent pieces of work</b> so the hardware can spread them over whatever SMs it has, without the programmer managing any of it. CUDA's answer: write the code for <b>one thread</b>, and launch it as a grid.</p>",
         ["Say what one piece of work is", "Map each piece to its data", "Run on any size of GPU, unchanged"]),
       stackMap(id),
-      h("div.vx-row", sticker("chip", { title: "The device", caption: "the GPU, with its own memory: your data must be copied here first", px: 4 }), sticker("package", { title: "Its memory", caption: "HBM, 80 GB at 3.35 TB/s, but ~25–60 GB/s from the CPU over PCIe", px: 3 })),
+      h("div.vx-row", sticker("chip", { title: "The device", caption: "the GPU, with its own memory: your data must be copied here first", px: 4 }), sticker("package", { title: "Its memory", caption: "HBM, 80 GB at 3.35 TB/s, but ~25–60 GB/s from the CPU over PCIe", px: 3 }), sticker("grid", { title: "Your launch", caption: "a grid of blocks, each a patch of threads: you describe it, the GPU schedules it", px: 4 })),
     ),
     section("Grid, blocks, threads",
       prose("<p>A kernel launch says: run this function in a <b>grid</b> of <b>blocks</b>, each with the same number of <b>threads</b>. Every thread gets its block number (<code>blockIdx</code>) and its number inside the block (<code>threadIdx</code>), and uses them to pick its piece of the data. Each block is placed whole on one SM; the hardware hands out blocks as SMs free up. Change the sizes.</p>"),

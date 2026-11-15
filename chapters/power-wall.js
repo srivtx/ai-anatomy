@@ -96,7 +96,7 @@ export default function (root, { id }) {
       goal("<p>For 30 years computers got faster mostly by raising the clock. Around 2005 that stopped, while transistors kept getting cheaper. We need to understand <b>why speed had to come from doing many things at once</b> instead, because that is the reason a GPU, thousands of slow simple units, beats a CPU at AI. The answer is heat.</p>",
         ["Keep getting faster as transistors multiply", "Stay below ~100 W per cm²", "Work for problems that split into many pieces"]),
       stackMap(id),
-      h("div.vx-row", sticker("chip", { title: "One chip, one heat budget", caption: "every switch costs C·V², and the heat has to leave through the top", px: 5 })),
+      h("div.vx-row", sticker("chip", { title: "One chip, one heat budget", caption: "every switch costs C·V², and the heat has to leave through the top", px: 4 }), sticker("heatsink", { title: "The only way out", caption: "die (orange) → lid → fins: heat flows downhill through every layer", px: 4 })),
     ),
     section("Push the clock",
       prose("<p>The power a chip burns switching is about <b>P = α · C · V² · f</b>: how often bits flip (α), the capacitance they charge (C), the voltage squared, and the clock frequency. Here's the catch: a faster clock needs <b>more voltage</b> (transistors must switch harder to finish sooner), so power rises much faster than speed. Push this 4-core, 150 mm² chip's clock.</p>"),

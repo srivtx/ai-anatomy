@@ -1,7 +1,7 @@
 import { h } from "../lib/core.js";
 import { slider, stats, predict, code, callout, section, prose, table, segmented, stepper } from "../lib/widgets.js";
 import { flowCanvas } from "../lib/flow.js";
-import { goal, whyChain, stackMap } from "../lib/why.js";
+import { goal, whyChain, stackMap, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 
 function canvas(width, height, label) {
@@ -117,6 +117,9 @@ export default function (root, { id }) {
       goal("<p>We have a voltage-controlled switch. We need <b>arithmetic</b>: circuits that add and multiply numbers, reliably, a billion times a second, and that keep millions of results in step. This chapter climbs from two transistors to a multiplier, and shows why the size of a multiplier grows with the square of its bits, which is the root of every low-precision trick in AI.</p>",
         ["A signal that survives noise", "One building block that makes every function", "A beat that keeps results in step"]),
       stackMap(id),
+      h("div.vx-row",
+        sticker("nand", { title: "A NAND gate", caption: "four transistors: two p-type up top, two n-type below, wired in gold", px: 4 }),
+        sticker("bits", { title: "A number is wires", caption: "4.125 in bf16: a standing cube is a wire at 0.75 V (a 1)", px: 4 })),
     ),
     section("Why everything is 0 or 1",
       whyChain({

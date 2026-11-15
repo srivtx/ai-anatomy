@@ -98,7 +98,7 @@ export default function (root, { id }) {
       goal("<p>Now design the machine. The job (chapter 1): trillions of <b>independent multiply-adds</b>. The constraints we derived: <b>heat</b> caps the clock, so go wide (chapter 6); <b>memory is far</b>, ~600 cycles and ~170× the energy of the math (chapter 5); and multipliers grow with the <b>square of their bits</b> (chapter 4). Each feature of a GPU is the cheapest answer to one of these. Build it one decision at a time.</p>",
         ["Thousands of MACs per clock within ~700 W", "Never let them wait on memory", "Spend as little energy as possible on anything that isn't arithmetic"]),
       stackMap(id),
-      h("div.vx-row", sticker("package", { title: "What we're designing", caption: "a die of many identical SMs, with HBM stacks millimetres away", px: 4 })),
+      h("div.vx-row", sticker("package", { title: "What we're designing", caption: "a die of many identical SMs, with HBM stacks millimetres away", px: 3 }), sticker("sm", { title: "One SM", caption: "four tensor cores (purple) beside their register files, over shared memory (blue)", px: 3 }), sticker("tensor", { title: "A tensor core's job", caption: "a small matrix product is a cube of multiply-adds: A on one side, B on the other", px: 4 })),
     ),
     section("The design, decision by decision",
       stepper([
