@@ -284,6 +284,8 @@ export default function (root, { id }) {
         ["Write fast kernels: tiling, coalescing, bank conflicts, roofline", "<a href='/learn?c=gpu-from-scratch'>GPU kernels from scratch</a>"],
         ["See why serving is memory-bound and how batching and KV caches work", "<a href='/learn?c=memory-physics'>Why memory is far and slow</a>, then the Systems level"],
         ["Measure all of this on a real GPU", "Colab project 60: from electrons to CUDA, measured"],
+        ["See where the walls are, and what nobody has solved yet", "<a href='/learn?c=edges'>The edges of physics</a>"],
+        ["Compare with the machine built for one thread", "<a href='/learn?c=cpu'>The CPU</a>, then <a href='/learn?c=gpu-history'>why the GPU was invented</a>"],
         ["Start again from the top with the AlexNet story", "<a href='/learn?c=ai-physics'>What AI asks of the electrons</a>"],
       ], { boldFirst: false }),
     ),
