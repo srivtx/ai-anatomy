@@ -3,6 +3,7 @@ import { slider, segmented, button, stats, predict, code, callout, section, pros
 import { flowCanvas } from "../lib/flow.js";
 import { xyChart } from "../lib/plot.js";
 import { goal, sticker } from "../lib/why.js";
+import { walk } from "../lib/walks.js";
 
 function canvas(width, height, label) {
   const fc = flowCanvas({ width, height, label });
@@ -224,6 +225,8 @@ export default function (root, { id }) {
         h("div.stage-controls", zsl, h("div.btn-row", zout, zin)),
         h("div.stage-body", zst.el, h("div.wide-canvas", zc.el), zwhat)),
       callout("tip", "Read the rulers", "<p>Going down, every level is smaller and faster, but there are vastly more of them. 80 billion transistors each switching in picoseconds is why one chip does ~10¹⁵ multiply-adds per second. And the energy column tells the real story: the arithmetic in one lane is cheap, but the chip as a whole spends ~1.4 pJ per multiply-add, mostly moving data and keeping everything clocked. That gap is why most of a GPU's design is about not moving things.</p>"),
+      prose("<p>Now slow level 6 right down. Step through one real bf16 multiply, wire by wire, in 3D:</p>"),
+      walk("all-the-way-down"),
     ),
     section("What one token costs",
       prose("<p>A language model produces each token by running every weight once: one multiply-add per weight. Pick a model and how many users share each pass over the weights. The model counts three costs: the arithmetic (~1.4 pJ per multiply-add, the chip-wide figure), reading the weights from HBM (~4 pJ per bit, a typical HBM3 figure), and the chip's power just for being on (~150 W per GPU here, an assumption: clocks, leakage, idle units).</p>"),
