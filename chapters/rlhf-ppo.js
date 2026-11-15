@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, stepper, bars } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
 import { gauss, sigmoid } from "../lib/nn.js";
@@ -111,6 +112,7 @@ export default function (root, { id }) {
         explain: "<p>Rising proxy reward with falling real quality is the signature of Goodhart's law. Check samples by hand, compare against a held-out reward model, raise the KL penalty, and fix the reward model's blind spot with new comparisons. Verifiable rewards (tests, exact answers) are much harder to hack, which is part of why they took over for reasoning training.</p>",
       }),
     ),
+    walk("rlhf-ppo"),
     section("In code",
       code({
         "Reward model loss": `def reward_loss(rm, chosen_ids, rejected_ids):

@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, button, table, toggle } from "../lib/widgets.js";
 import { plane, xyChart } from "../lib/plot.js";
 import { gauss } from "../lib/nn.js";
@@ -110,6 +111,7 @@ export default function (root, { id }) {
         ["Autoencoder", "Whatever reconstructs best (learned)", "Non-linear compression; see the autoencoder chapter"],
       ]),
     ),
+    walk("unsupervised"),
     section("In code",
       code({
         "scikit-learn": `from sklearn.cluster import KMeans

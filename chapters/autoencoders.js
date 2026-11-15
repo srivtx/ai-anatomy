@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
 import { plane } from "../lib/plot.js";
 import { MLP, gauss } from "../lib/nn.js";
@@ -116,6 +117,7 @@ export default function (root, { id }) {
         ["Masked autoencoder", "Reconstruct hidden patches", "No", "Self-supervised pretraining for vision (MAE)"],
       ]),
     ),
+    walk("autoencoders"),
     section("In code",
       code({
         PyTorch: `import torch, torch.nn as nn, torch.nn.functional as F

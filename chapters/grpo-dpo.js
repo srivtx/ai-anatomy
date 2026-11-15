@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, toggle, bars } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
 import { softmax, sigmoid } from "../lib/nn.js";
@@ -94,6 +95,7 @@ export default function (root, { id }) {
       ]),
       prose("<p><b>DeepSeek-R1-Zero</b> (2025) applied GRPO with verifiable maths and code rewards directly to a base model, with no SFT. Response length grew by itself as training went on and the model learned to re-check its work: chain-of-thought reasoning emerged from reward alone. The released R1 added a small SFT stage first, for readability. The next chapters look at why thinking longer helps.</p>"),
     ),
+    walk("grpo-dpo"),
     section("In code",
       code({
         GRPO: `def grpo_loss(logp_new, logp_old, logp_ref, rewards, eps=0.2, beta=0.04):

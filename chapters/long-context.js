@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table } from "../lib/widgets.js";
 import { xyChart, heatmap, fmtSI } from "../lib/plot.js";
 
@@ -94,6 +95,7 @@ export default function (root, { id }) {
         explain: "<p>Positions beyond the training range give attention scores the model never learned to handle, and output degrades into garbage, sometimes abruptly. Context extension needs either a position scheme designed to extrapolate or a rescaling (PI, NTK, YaRN) plus a little training at the new length.</p>",
       }),
     ),
+    walk("long-context"),
     section("In code",
       code({
         PyTorch: `import torch

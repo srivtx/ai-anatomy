@@ -1,4 +1,5 @@
 import { h, loop, rng } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, dilemma, callout, section, prose, button, table } from "../lib/widgets.js";
 import { plane, xyChart } from "../lib/plot.js";
 import { gauss } from "../lib/nn.js";
@@ -144,6 +145,7 @@ export default function (root, { id }) {
         { name: "SGD + momentum", pros: ["Minimal memory", "Well understood, generalises well on CNNs"], cons: ["Very sensitive to the learning rate", "Struggles with transformers"] },
       ], "For language models, AdamW (or a newer optimizer like Muon) and a warmup + decay schedule. Optimizer state is often bigger than the model weights in memory, which is why ZeRO and 8-bit optimizers exist."),
     ),
+    walk("gradient-descent"),
     section("In code",
       code({
         "PyTorch": `model = MyModel()

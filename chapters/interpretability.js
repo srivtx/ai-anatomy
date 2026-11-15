@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, stepper, bars } from "../lib/widgets.js";
 import { plane } from "../lib/plot.js";
 import { gauss } from "../lib/nn.js";
@@ -96,6 +97,7 @@ export default function (root, { id }) {
       ]),
       callout("note", "Why it matters", "<p>If we can read what a model represents and computes, we can check for problems that behavioural tests miss: hidden goals, deceptive reasoning, or knowledge the model shouldn't use. That's still an aspiration; current tools explain parts of the computation for particular prompts, not the whole model.</p>"),
     ),
+    walk("interpretability"),
     section("In code",
       code({
         "Toy superposition model": `class ToyModel(nn.Module):

@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button, toggle, stepper } from "../lib/widgets.js";
 import { heatmap } from "../lib/plot.js";
 import { MLP } from "../lib/nn.js";
@@ -170,6 +171,7 @@ export default function (root, { id }) {
         ["Vision Mamba", "Replace attention with state-space scans over the patch sequence (see the next chapters)"],
       ]),
     ),
+    walk("vision"),
     section("In code",
       code({
         "Patch embedding": `class PatchEmbed(nn.Module):

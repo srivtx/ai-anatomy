@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, toggle, stats, predict, code, callout, section, prose, table, dilemma } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
 import { gauss } from "../lib/nn.js";
@@ -106,6 +107,7 @@ export default function (root, { id }) {
         { name: "LayerNorm / RMSNorm", pros: ["Same in training and inference", "Works for any batch size and sequence"], cons: ["Slightly more compute per token"] },
       ], "Vision CNNs: BatchNorm. Transformers and anything sequential: LayerNorm, now usually RMSNorm in pre-norm position."),
     ),
+    walk("training-tricks"),
     section("In code",
       code({
         PyTorch: `import torch.nn as nn

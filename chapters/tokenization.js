@@ -1,4 +1,5 @@
 import { h, loop } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
 import { CORPUS } from "../lib/corpus.js";
@@ -100,6 +101,7 @@ export default function (root, { id }) {
       ]),
       prose("<p>Tokenization causes a surprising share of LLM oddities: trouble with arithmetic (numbers split inconsistently), spelling and reversing words, extra cost for some languages, and “glitch tokens” that appeared in the tokenizer's training data but almost never in the model's. Some labs now split digits one at a time to make arithmetic easier.</p>"),
     ),
+    walk("tokenization"),
     section("In code",
       code({
         Python: `from collections import Counter

@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, stepper } from "../lib/widgets.js";
 import { xyChart, plane, fmtBytes } from "../lib/plot.js";
 import { gauss } from "../lib/nn.js";
@@ -174,6 +175,7 @@ export default function (root, { id }) {
         ["xLSTM (2024)", "The LSTM revisited with exponential gating and matrix memory"],
       ]),
     ),
+    walk("ssm-mamba"),
     section("In code",
       code({
         "Selective scan (reference)": `def selective_scan(x, delta, A, B, C):

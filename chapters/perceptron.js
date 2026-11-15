@@ -1,4 +1,5 @@
 import { h, loop } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { segmented, slider, stats, predict, code, callout, section, prose, button, table } from "../lib/widgets.js";
 import { plane, xyChart } from "../lib/plot.js";
 import { dataset, sigmoid } from "../lib/nn.js";
@@ -106,6 +107,7 @@ export default function (root, { id }) {
         ["Legacy", "The neuron in every neural network", "The output layer of nearly every classifier"],
       ]),
     ),
+    walk("perceptron"),
     section("In code",
       code({
         "Perceptron": `import numpy as np

@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, toggle, stepper } from "../lib/widgets.js";
 import { fmtBytes, fmtSI } from "../lib/plot.js";
 
@@ -129,6 +130,7 @@ export default function (root, { id }) {
         { title: "Stragglers", html: "<p>In synchronous training, the slowest GPU sets the pace. Monitoring per-rank step times and replacing slow nodes keeps utilisation up.</p>" },
       ]),
     ),
+    walk("distributed"),
     section("In code",
       code({
         FSDP: `import torch.distributed as dist
