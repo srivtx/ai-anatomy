@@ -3,6 +3,7 @@ import { slider, stats, predict, code, callout, section, prose, table } from "..
 import { flowCanvas } from "../lib/flow.js";
 import { xyChart } from "../lib/plot.js";
 import { goal, whyChain, stackMap, sticker } from "../lib/why.js";
+import { walk } from "../lib/walks.js";
 
 function canvas(width, height, label) {
   const fc = flowCanvas({ width, height, label });
@@ -134,6 +135,8 @@ export default function (root, { id }) {
         ],
         axiom: { name: "The second law of thermodynamics: heat only flows downhill", html: "<p>Heat moves from hot to cold at a rate set by the temperature difference and the conductance of the path (Fourier's law). With the temperature difference capped and the voltage floored by Boltzmann statistics, the only way to use more transistors is to run them <b>slower and in parallel</b>, or to leave some of them switched off (“dark silicon”). The GPU is that answer, built for problems that are parallel by nature.</p>" },
       }),
+      prose("<p>Step through the arithmetic that broke in 2005, one generation at a time:</p>"),
+      walk("power-wall"),
     ),
     section("Two ways to spend a die",
       prose("<p>Fred Pollack, an Intel architect, observed in 1999 that making a core twice as big (deeper pipelines, bigger caches, more speculation) gives only about √2 ≈ 1.4× its speed. Split the same area into more cores and throughput grows with their number, but only if the work splits. Drag the core size.</p>"),

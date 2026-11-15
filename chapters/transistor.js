@@ -2,6 +2,7 @@ import { h, loop, reducedMotion } from "../lib/core.js";
 import { slider, stats, predict, code, callout, section, prose, table, segmented, stepper } from "../lib/widgets.js";
 import { flowCanvas } from "../lib/flow.js";
 import { goal, whyChain, stackMap, sticker } from "../lib/why.js";
+import { walk } from "../lib/walks.js";
 
 const kq = 8.617e-5;                      // k/q in volts per kelvin: kT/q = 25.85 mV at 300 K
 const I0 = 1.8e-5;                        // sets ~1 mA when fully on (per micron of width, roughly)
@@ -109,6 +110,8 @@ export default function (root, { id }) {
         answer: 2,
         explain: "<p>Two effects stack: kT grows (the Boltzmann tail gets fatter) and the threshold voltage drops by roughly 1 mV per degree. Leakage is exponential in both, so 50 °C hotter means roughly 5–10× more leakage, which makes more heat, which makes more leakage. Chips have thermal limits and throttling partly to stop this loop running away.</p>",
       }),
+      prose("<p>Now step through the subthreshold maths, one gate voltage at a time:</p>"),
+      walk("transistor"),
     ),
     section("Dig down: why 60 millivolts?",
       whyChain({

@@ -2,6 +2,7 @@ import { h, loop, rng } from "../lib/core.js";
 import { slider, stats, predict, code, callout, section, prose, table, segmented, stepper, toggle, button } from "../lib/widgets.js";
 import { flowCanvas } from "../lib/flow.js";
 import { goal, whyChain, stackMap, sticker } from "../lib/why.js";
+import { walk } from "../lib/walks.js";
 
 function canvas(width, height, label) {
   const fc = flowCanvas({ width, height, label });
@@ -136,6 +137,8 @@ export default function (root, { id }) {
         answer: 2,
         explain: "<p>Two inputs at 640 pJ each is 1,280 pJ; divide by r and compare with 4.6: r ≈ 280. Remarkably close to the H100's own balance point: 989 TFLOP/s ÷ 3.35 TB/s ≈ 295 operations per byte loaded. Below that a kernel is <b>memory-bound</b>: the multipliers wait. That's the roofline from <a href='/learn?c=kernels'>the kernels chapter</a>, and it's set by physics, not by bad engineering.</p>",
       }),
+      prose("<p>See reuse happen: count every trip to DRAM in a tiny matrix multiply, naive and tiled.</p>"),
+      walk("memory-physics"),
     ),
     section("Why far away means slow and costly",
       whyChain({

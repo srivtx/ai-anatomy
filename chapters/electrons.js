@@ -2,6 +2,7 @@ import { h, loop, reducedMotion } from "../lib/core.js";
 import { slider, stats, predict, code, callout, section, prose, table, segmented, stepper } from "../lib/widgets.js";
 import { flowCanvas } from "../lib/flow.js";
 import { goal, whyChain, stackMap, sticker } from "../lib/why.js";
+import { walk } from "../lib/walks.js";
 
 const k = 8.617e-5;                                           // Boltzmann's constant in eV per kelvin
 const sci = (x) => { if (x < 1e-3) return "≈ 0"; const e = Math.floor(Math.log10(x)), m = x / 10 ** e; return e < 4 ? x.toFixed(0) : `${m.toFixed(1)} × 10${String(e).split("").map((c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+c]).join("")}`; };
@@ -171,6 +172,8 @@ export default function (root, { id }) {
         { title: "Boron has 3: p-type", html: "<p>Swap in boron and one bond is short an electron. A neighbouring electron can hop into the gap, which leaves a gap where it came from: the missing electron moves like a positive particle, a <b>hole</b>. Silicon full of them is <b>p-type</b>.</p>" },
         { title: "Electrons and holes balance", html: "<p>Free electrons and holes meet and cancel all the time, and they settle so that n × p = n<sub>i</sub>², about 10²⁰ per cm⁶ at room temperature. Add donors and holes become rarer; add acceptors and electrons do. Real chips put n-type and p-type regions next to each other, nanometres apart, by firing dopant ions into the wafer through masks.</p>" },
       ]),
+      prose("<p>Count it for yourself, atom by atom, in 3D:</p>"),
+      walk("electrons"),
     ),
     section("The p-n junction: a one-way valve",
       prose("<p>Put p-type silicon against n-type. Electrons near the border fall into holes on the other side, which leaves a strip with no free carriers at all, the <b>depletion zone</b>, and a built-in voltage of about 0.7 V across it: a hill electrons must climb to cross. Push one way and you lower the hill; push the other way and you raise it.</p>"),
