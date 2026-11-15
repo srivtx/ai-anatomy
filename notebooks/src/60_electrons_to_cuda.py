@@ -8,8 +8,9 @@
 # 3. **Latency hiding.** Simulate a GPU scheduler with many warps and check Little's law.
 # 4. **A real GPU** (Colab T4). Your first CUDA kernel, HBM against PCIe bandwidth, launch overhead, and bandwidth
 #    against the amount of work in flight.
+# 5. **The whole trip.** Electrons per bit, distance from the Landauer limit, and what one token costs.
 #
-# **Hardware:** parts 1–3 run on any CPU in seconds. Part 4 needs a GPU (Runtime → Change runtime type → T4) and
+# **Hardware:** parts 1–3 and 5 run on any CPU in seconds. Part 4 needs a GPU (Runtime → Change runtime type → T4) and
 # is skipped without one. **You're done when** every check prints ✅.
 
 # %%
@@ -135,7 +136,7 @@ try:
 except ImportError:
     GPU = False
 if not GPU:
-    print("No GPU here, so part 4 is skipped. On Colab: Runtime → Change runtime type → T4 GPU.")
+    print("⏭ No GPU here, so part 4 is skipped (not passed). On Colab: Runtime → Change runtime type → T4 GPU.")
     ok4 = True
 else:
     from torch.utils.cpp_extension import load_inline
@@ -177,7 +178,38 @@ else:
         blocks = max(1, blocks); bw[blocks] = 3 * n * 4 / timed(lambda: ext.add(a, b, blocks), 5) / 1e9
         print(f"{blocks:>7} {bw[blocks]:>7.0f}")
     ok4 = hbm > 5 * pcie and bw[max(bw)] > 4 * bw[1]
-print("✅ the GPU's own memory is far faster than the trip to it, and needs lots of work in flight" if ok4 else "❌ check part 4")
+if GPU: print("✅ the GPU's own memory is far faster than the trip to it, and needs lots of work in flight" if ok4 else "❌ check part 4")
+
+# %% [markdown]
+# ## Part 5: the whole trip in numbers
+# The capstone chapter follows one multiply-add from Python to electrons. Recompute its key numbers from the
+# H100's published specs plus Q = CV and E = CV², then the cost of one token for a 70B model as the batch grows.
+
+# %%
+SMS, TC_PER_SM, FMA_PER_CLK, CLK, WATTS = 132, 4, 512, 1.83e9, 700
+fma_per_s = SMS * TC_PER_SM * FMA_PER_CLK * CLK
+pj_per_fma = WATTS / fma_per_s * 1e12
+print(f"peak: {2 * fma_per_s / 1e12:.0f} TFLOP/s, {pj_per_fma:.2f} pJ per multiply-add chip-wide")
+
+C, V, q, kT = 0.2e-15, 0.75, 1.602e-19, 1.380649e-23 * 300
+electrons, toggle, landauer = C * V / q, C * V * V, kT * math.log(2)
+print(f"one bit: {electrons:.0f} electrons, {toggle * 1e18:.0f} aJ, {toggle / landauer:,.0f}x the Landauer limit")
+
+def joules_per_token(params, batch, hbm_pj_per_bit=4, idle_w=150):
+    gpus = math.ceil(2 * params / 70e9)
+    step = max(2 * params / (gpus * 3.35e12), batch * 2 * params / (gpus * 989e12))
+    math_j = params * pj_per_fma * 1e-12
+    move_j = 2 * params * 8 * hbm_pj_per_bit * 1e-12 / batch
+    idle_j = gpus * idle_w * step / batch
+    return math_j + move_j + idle_j, math_j, move_j, step
+
+print(f"{'batch':>5} {'J/token':>8} {'moving':>7} {'tokens/s':>9}")
+costs = {}
+for b in [1, 4, 16, 64, 256]:
+    j, m, mv, step = joules_per_token(70e9, b); costs[b] = j
+    print(f"{b:>5} {j:>8.3f} {mv / j:>7.0%} {b / step:>9,.0f}")
+ok5 = 1.3 < pj_per_fma < 1.5 and 800 < electrons < 1100 and 1e4 < toggle / landauer < 1e5 and costs[1] > 20 * costs[256]
+print("✅ a bit is ~1,000 electrons, and batching cuts the energy per token by >20x" if ok5 else "❌ check part 5")
 
 # %% [markdown]
 # ## What you measured
@@ -188,6 +220,7 @@ print("✅ the GPU's own memory is far faster than the trip to it, and needs lot
 # | Logic | multipliers grow as bits² | part 2 |
 # | GPU design | enough warps hide memory latency (Little's law) | part 3 |
 # | CUDA | keep data on the GPU; launch enough blocks | part 4 |
+# | The whole stack | a bit is ~1,000 electrons; one token's energy is mostly moving weights | part 5 |
 #
 # ## Stretch goals
 # - Part 2: build a carry-lookahead adder from NANDs and compare its longest gate chain with the ripple adder's.
