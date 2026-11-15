@@ -60,7 +60,7 @@ export default function (root, { id }) {
     section("Hypotheses I hold about self-improvement",
       table(["Hypothesis", "Why I think so", "Confidence"], [
         ["Self-training gains are bounded by pass@K of the starting model at the K you use, on the problems you have", "You can't select what you never sample; everything after that is sharpening", "70%"],
-        ["A checker's false-accept rate matters about 10× more than its false-reject rate", "Rejected right answers only slow learning; accepted wrong ones teach errors and compound", "65%"],
+        ["A checker's false-accept rate matters about 10× more than its false-reject rate", "Rejected right answers only slow learning; accepted wrong ones teach errors and compound. Tested at toy scale (notebook 58): at a 5% error rate, false accepts did ~37× the damage", "65% → held"],
         ["Training on your own correct answers is less effective than RL at the same compute once the model is strong, but nearly as good when it's weak", "Early, the bottleneck is finding successes; late, it's which successes to reinforce, and RL's advantages carry that information", "50%"],
         ["Mixing a little ground-truth human data into every round prevents most drift", "Like fresh data in model collapse: an anchor the loop can't move", "60%"],
       ]),
