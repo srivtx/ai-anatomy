@@ -591,3 +591,6 @@ a.card:hover .t { color: color-mix(in srgb, var(--lc, var(--accent)) 70%, var(--
 .toc-chip.on { color: var(--accent-ink, #fff); background: var(--accent, var(--c1)); border-color: transparent; }
 section.block > h2 { scroll-margin-top: 64px; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+.uw-result { padding: 8px 10px; border-radius: 8px; font-size: 13.5px; }
+.uw-result.ok { background: color-mix(in srgb, var(--good, #1a7f43) 12%, var(--surface)); }
+.uw-result.no { background: color-mix(in srgb, var(--bad, #c2352d) 10%, var(--surface)); }

@@ -75,15 +75,15 @@ const CARDS = [
   { kind: "conj", area: "pre", conf: 65, text: "The last 5–10% of pretraining tokens (the cooldown) shape benchmark behaviour about as much as the first half of training.",
     why: "At a high learning rate the weights forget their recent past quickly, so early data only survives as general structure. As the learning rate falls, the weights settle into the minimum of whatever data the cooldown is seeing. Specific habits come mostly from there.",
     untested: "It needs several full pretraining runs that differ only in their cooldown mix, plus influence estimates across the whole run. Labs run the first part (annealing ablations) but don't publish the comparison with early data.",
-    test: "Train a 125M model on two corpora A and B. Swap which one dominates the first 50% and which the final 10%; measure behaviour on A-style and B-style evals.", kill: "Behaviour follows the first half much more than the cooldown." },
+    test: "Train a 125M model on two corpora A and B. Swap which one dominates the first 50% and which the final 10%; measure behaviour on A-style and B-style evals.", kill: "Behaviour follows the first half much more than the cooldown.", result: ["held at toy scale", "Notebook 48: moving 10% of tokens into the cooldown shifted a character model +0.30 nats toward that corpus; moving them early shifted it −0.10. Untested at scale."] },
   { kind: "conj", area: "pre", conf: 60, text: "A sequence repeated early in training is memorised far less than the same sequence repeated late.",
     why: "Memorisation needs the weights to hold onto specific details. Updates at a high learning rate are overwritten by later updates; updates at a low learning rate near the end aren't. So memorisation risk is concentrated at the end of training.",
     untested: "Memorisation studies mostly measure what's extractable from final checkpoints, without controlling when examples appeared. Canary insertion at controlled steps is cheap but rarely published.",
-    test: "Insert 1,000 random canary strings at different steps of a small run; measure exact extraction at the end, by insertion step.", kill: "Extraction rate is flat across insertion steps." },
+    test: "Insert 1,000 random canary strings at different steps of a small run; measure exact extraction at the end, by insertion step.", kill: "Extraction rate is flat across insertion steps.", result: ["wrong", "Notebook 58: memorisation peaked for canaries seen mid-training and was near zero for the very end, where the learning rate is tiny. Better rule: memorisation ≈ update size × how little gets overwritten later."] },
   { kind: "conj", area: "post", conf: 60, text: "Distillation gets most of its value from the teacher's uncertainty: matching the top 20 logits keeps about 90% of the gain of full logits; matching only the top answer keeps under half.",
     why: "The soft distribution says which wrong answers are nearly right, which is information the hard label doesn't carry. Most of that mass sits in a handful of tokens.",
     untested: "Large-scale distillation results compare full logits with no distillation, or with sequence-level distillation, rarely sweeping k with matched compute.",
-    test: "Distil a small char-level model from a larger one with top-k logits for k = 1, 5, 20, full; compare held-out loss (notebook 58).", kill: "Top-1 keeps more than 80% of the gain." },
+    test: "Distil a small char-level model from a larger one with top-k logits for k = 1, 5, 20, full; compare held-out loss (notebook 58).", kill: "Top-1 keeps more than 80% of the gain.", result: ["partly wrong", "Notebook 58 (65-character vocabulary): top-20 kept 76% of the gain, not 90%, and top-1 was worse than no teacher at all. The tail mattered more than I thought; large vocabularies may differ."] },
   { kind: "conj", area: "opt", conf: 45, text: "Many loss spikes come from tokens that were absent for a long time, then reappear and get oversized Adam updates.",
     why: "Adam divides by a running average of squared gradients. For an embedding row whose token hasn't appeared for thousands of steps, that average decays towards zero, so the next update is huge relative to its gradient.",
     untested: "Spike forensics at scale is rarely published in detail, and per-row update statistics aren't routinely logged.",
@@ -158,6 +158,7 @@ export default function (root) {
     if (c.untested) kids.push(h("p", h("b", "Why it's untested: "), c.untested));
     kids.push(h("p.ins-test", h("b", c.kind === "conj" ? "Cheapest test: " : "Check it: "), c.test));
     if (c.kill) kids.push(h("p.ins-test", h("b", "I'm wrong if: "), c.kill));
+    if (c.result) kids.push(h(`p.uw-result.${c.result[0].startsWith("held") ? "ok" : "no"}`, h("b", `Tested: ${c.result[0]}. `), c.result[1]));
     if (c.conf != null) {
       const mine = h("div.uw-bar", h("span", { style: { width: c.conf + "%" } }));
       kids.push(h("div.uw-conf", h("span", `My confidence ${c.conf}%`), mine));
@@ -190,7 +191,7 @@ export default function (root) {
         h("div.stage-body", st.el),
       ),
       deck,
-      callout("note", "How to read the conjectures", "<p>A conjecture here is a claim with a mechanism, a test and a way to be wrong. Confidence is my honest guess, not a measurement. Several of my earlier predictions on this site failed when tested (see notebooks 43 and 45), and some of these will too. The useful ones are those you can test cheaply: notebook 58 runs three of them at small scale. Drag your own bet on each, and the tile above shows where you disagree with me most; your bets stay in this browser.</p>"),
+      callout("note", "How to read the conjectures", "<p>A conjecture here is a claim with a mechanism, a test and a way to be wrong. Confidence is my honest guess, not a measurement. Several of my earlier predictions on this site failed when tested (see notebooks 43 and 45), and some of these will too. The useful ones are those you can test cheaply: notebooks 48 and 58 ran three of them at small scale, and two failed as I'd stated them. Their cards say so. Drag your own bet on each, and the tile above shows where you disagree with me most; your bets stay in this browser.</p>"),
     ),
     section("How this kind of knowledge forms",
       prose(`<p>Folklore forms where a failure is common, quiet and cheap to fix: an end-of-turn token missing from the loss, a space at the end of a prompt. Nobody publishes the fix, because it isn't a result. It spreads through code reviews, issue threads and the comments in training scripts, which is also where I learned it: I've read a lot of training code and the bug reports that come with it.</p>
