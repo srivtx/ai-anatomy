@@ -1,4 +1,5 @@
 import { h, rng, s } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, toggle } from "../lib/widgets.js";
 
 // Two friend groups with a few cross links (a stochastic block model), laid out by a spring simulation.
@@ -84,6 +85,7 @@ export default function (root, { id }) {
         ["Maps", "Road segments / connections", "Google Maps travel-time prediction"],
       ]),
     ),
+    walk("gnn"),
     section("In code",
       code({
         "PyTorch (no libraries)": `import torch, torch.nn as nn

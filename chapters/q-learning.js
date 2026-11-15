@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
 import { liveChart } from "../lib/widgets.js";
 
@@ -93,6 +94,7 @@ export default function (root, { id }) {
       ]),
       prose("<p>Value-based methods like DQN work well for small discrete action sets. With 100,000 possible tokens per step and sequences of thousands, LLM training uses <b>policy-gradient</b> methods instead (previous chapter, and PPO and GRPO next), though the idea of a learned value function survives as PPO's critic.</p>"),
     ),
+    walk("q-learning"),
     section("In code",
       code({
         Python: `import numpy as np

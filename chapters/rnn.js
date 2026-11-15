@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, bars } from "../lib/widgets.js";
 import { xyChart, heatmap } from "../lib/plot.js";
 import { gauss } from "../lib/nn.js";
@@ -105,6 +106,7 @@ export default function (root, { id }) {
       ]),
       prose("<p>Why attention won: an RNN must squeeze the whole past into one fixed-size vector and can only be trained one step after another. Attention lets every position look directly at every other (path length 1) and trains in parallel on GPUs. The price is cost that grows with the square of the length, which is why recurrent ideas keep returning.</p>"),
     ),
+    walk("rnn"),
     section("In code",
       code({
         PyTorch: `import torch, torch.nn as nn

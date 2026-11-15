@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, bars } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
 import { gauss } from "../lib/nn.js";
@@ -115,6 +116,7 @@ export default function (root, { id }) {
         h("div.stage-body", qst)),
       callout("note", "Rules that hold in practice", "<p>8-bit weights are almost free. 4-bit weights with group-wise scales lose a little (often around a point on benchmarks for large models, more for small ones). Below 4 bits quality drops faster unless the model is trained for it (quantisation-aware training, or BitNet-style ternary training). Activations are harder than weights because of outlier features; see the deeper cuts below.</p>"),
     ),
+    walk("precision"),
     section("In code",
       code({
         "bf16 autocast": `model = model.cuda()                         # fp32 master weights

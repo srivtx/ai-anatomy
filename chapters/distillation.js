@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, bars } from "../lib/widgets.js";
 import { plane, xyChart } from "../lib/plot.js";
 import { MLP, dataset, bceLogit, sigmoid, softmax } from "../lib/nn.js";
@@ -126,6 +127,7 @@ export default function (root, { id }) {
         ["Merging", "Not smaller: many skills in one model", "No training at all"],
       ]),
     ),
+    walk("distillation"),
     section("In code",
       code({
         "Distillation loss": `import torch.nn.functional as F

@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, stepper } from "../lib/widgets.js";
 import { xyChart, fmtBytes } from "../lib/plot.js";
 
@@ -90,6 +91,7 @@ export default function (root, { id }) {
         ["FlashAttention-3 (2024)", "Hopper features: asynchronous loads (TMA), warp specialisation, fp8", "Up to ~75% of H100 peak in fp16"],
       ]),
     ),
+    walk("kernels"),
     section("In code",
       code({
         "Triton: fused add + ReLU": `import triton, triton.language as tl
