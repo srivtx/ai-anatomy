@@ -1134,3 +1134,59 @@ html.nbv-open { overflow: hidden; }
 .ck-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .ck-btns .btn { text-decoration: none; }
 @media (max-width: 560px) { .ck-q { padding: 14px; } .ck-m { width: 64px; } }
+
+/* ======================== roadmap ======================== */
+.rm-hero { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 40px; align-items: center; padding: 44px 0 18px; }
+.rm-hero h1 { font: 500 clamp(38px, 5vw, 58px)/1.05 var(--serif); letter-spacing: -0.02em; margin: 6px 0 14px; }
+.rm-board { padding: 18px; border-radius: 20px; border: 1.5px solid var(--line); background: var(--surface); box-shadow: 5px 5px 0 color-mix(in srgb, var(--accent) 16%, transparent); }
+.rm-board-h { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
+.rm-board-h small { display: block; font: 600 11px var(--pixel); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.rm-count { font: 600 30px var(--pixel); }
+.rm-m { width: 110px; margin: -40px -4px -4px 0; }
+.rm-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.rm-sg { display: flex; flex-wrap: wrap; gap: 3px; }
+.rm-sg a { width: 16px; height: 16px; border-radius: 3px; background: color-mix(in srgb, var(--lc) 18%, var(--sunken)); border: 1.5px solid color-mix(in srgb, var(--lc) 45%, transparent); transition: transform .12s; }
+.rm-sg a:hover { transform: translateY(-2px); }
+.rm-sg a.on { background: var(--lc); border-color: color-mix(in srgb, var(--lc) 70%, #000); }
+.rm-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.rm-legend a { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); text-decoration: none; }
+.rm-legend a:hover { color: var(--ink); }
+.rm-legend i { width: 9px; height: 9px; border-radius: 2px; background: var(--lc); }
+.rm-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 14px 0 16px; }
+.rm-step { padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); }
+.rm-step span { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: #fff; font: 600 13px var(--pixel); box-shadow: inset -2px -2px 0 rgba(0,0,0,.2); }
+.rm-step b { display: block; margin: 8px 0 4px; font-size: 15px; }
+.rm-step p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+.rm-phase { margin-top: 34px; scroll-margin-top: 12px; }
+.rm-ph { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 2px solid color-mix(in srgb, var(--lc) 40%, var(--line)); }
+.rm-ph .eyebrow { color: var(--lc); }
+.rm-ph h2 { font: 500 clamp(26px, 3vw, 34px)/1.15 var(--serif); margin: 2px 0 4px; }
+.rm-ph .muted { margin: 0; max-width: 70ch; }
+.rm-pc { flex: none; font: 600 13px var(--pixel); color: var(--ink-2); padding: 5px 10px; border-radius: 8px; background: color-mix(in srgb, var(--lc) 12%, var(--surface)); }
+.rm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+.rm-card { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; border-radius: 18px; border: 1.5px solid var(--line); background: var(--surface); scroll-margin-top: 16px; transition: border-color .15s, box-shadow .15s; }
+.rm-card:hover { border-color: color-mix(in srgb, var(--lc) 45%, var(--line)); box-shadow: 4px 4px 0 color-mix(in srgb, var(--lc) 25%, transparent); }
+.rm-card.done { background: color-mix(in srgb, var(--lc) 6%, var(--surface)); border-color: color-mix(in srgb, var(--lc) 45%, var(--line)); }
+.rm-card:target { border-color: var(--lc); box-shadow: 4px 4px 0 color-mix(in srgb, var(--lc) 40%, transparent); }
+.rm-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rm-n { display: inline-grid; place-items: center; min-width: 32px; height: 28px; padding: 0 6px; border-radius: 8px; background: var(--lc); color: #fff; font: 600 13px var(--pixel); box-shadow: inset -2px -2px 0 rgba(0,0,0,.18); margin-right: 4px; }
+.rm-chip { font: 500 12px var(--pixel); color: var(--ink-2); padding: 3px 8px; border-radius: 6px; background: var(--sunken); }
+.rm-done { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.rm-done input { accent-color: var(--lc); width: 16px; height: 16px; }
+.rm-card h3 { font-size: 18px; line-height: 1.3; margin: 4px 0 0; }
+.rm-blurb { margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--ink-2); }
+.rm-when small { font: 600 11px var(--pixel); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.rm-when ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 3px; }
+.rm-when li { position: relative; padding-left: 20px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.rm-when li::before { content: ""; position: absolute; left: 1px; top: 4px; width: 10px; height: 10px; border-radius: 3px; border: 2px solid color-mix(in srgb, var(--lc) 60%, transparent); }
+.rm-card.done .rm-when li::before { background: var(--lc); border-color: var(--lc); }
+.rm-stretch { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+.rm-stretch b { color: var(--accent); }
+.rm-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.rm-links a { font-size: 12.5px; color: color-mix(in srgb, var(--lc) 70%, var(--ink)); text-decoration: none; padding: 3px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--lc) 30%, var(--line)); }
+.rm-links a:hover { background: color-mix(in srgb, var(--lc) 10%, transparent); }
+.rm-acts { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--line); }
+.rm-acts .btn { text-decoration: none; font-size: 13.5px; padding: 7px 12px; }
+.rm-src { margin-left: auto; font-size: 13px; color: var(--ink-3); }
+@media (max-width: 1000px) { .rm-hero { grid-template-columns: 1fr; gap: 20px; } .rm-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .rm-steps { grid-template-columns: 1fr; } .rm-ph { flex-direction: column; align-items: flex-start; gap: 8px; } .rm-card { padding: 14px; } .rm-sg a { width: 14px; height: 14px; } }
