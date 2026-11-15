@@ -1384,3 +1384,68 @@ pre.code.tw-code .ln.on { opacity: 1; background: color-mix(in srgb, var(--accen
   .tw-op[data-arrow] { transform: rotate(90deg); }
   .tw-svg svg { max-width: min(100%, 72vw); }
 }
+
+/* ---- electrons to CUDA: the goal box, why-chains dug down to bedrock, and the stack map ---- */
+.goal { margin: 4px 0 18px; border: 1px solid color-mix(in srgb, var(--c3) 45%, var(--line)); background: color-mix(in srgb, var(--c3) 8%, var(--surface)); border-radius: 12px; padding: 14px 16px; }
+.goal-k { display: flex; align-items: center; gap: 8px; font: 600 11.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--c3); margin-bottom: 8px; }
+.goal-ic { width: 14px; height: 14px; background: var(--c3); box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--c3) 30%, var(--surface)), inset 0 0 0 5px var(--c3); image-rendering: pixelated; }
+.goal-b p { margin: 0 0 6px; } .goal-b p:last-child { margin: 0; }
+.goal-needs { list-style: none; padding: 0; margin: 10px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.goal-needs li { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 14px; line-height: 1.45; }
+.goal-needs b { display: block; font: 600 10.5px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 3px; }
+
+.why { margin-top: 16px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 16px 18px; }
+.why-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.why-head .eyebrow { margin: 0; }
+.why-depth { font: 500 12px var(--mono); color: var(--ink-3); }
+.why-claim { font: 600 17px/1.45 var(--display); margin: 8px 0 4px; }
+.why-list { list-style: none; margin: 0; padding: 0; }
+.why-step { position: relative; margin: 10px 0 0 calc(var(--d) * 46px); padding: 10px 12px 10px 14px; border-radius: 10px;
+  background: color-mix(in srgb, var(--warm) calc(var(--d) * 14%), var(--sunken)); border-left: 4px solid color-mix(in srgb, var(--warm) calc(30% + var(--d) * 60%), var(--accent)); animation: whyIn .35s ease-out; }
+.why-q { display: flex; align-items: center; gap: 8px; font-weight: 650; color: var(--ink); }
+.why-n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 5px; background: var(--ink); color: var(--surface); font: 700 11px var(--mono); flex: none; }
+.why-a { color: var(--ink-2); margin-top: 4px; font-size: 15px; }
+.why-a p { margin: 0 0 6px; } .why-a p:last-child { margin: 0; }
+.why-axiom { display: grid; grid-template-columns: 58px 1fr; gap: 12px; margin: 12px 0 0 46px; padding: 12px; border-radius: 10px; border: 2px solid var(--ink); background: var(--surface); box-shadow: 0 3px 0 var(--ink); animation: whyIn .4s ease-out; }
+.why-rock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; align-content: start; }
+.why-rock i { aspect-ratio: 1; background: color-mix(in srgb, var(--ink-3) calc(40% + var(--k) * 15%), var(--sunken)); border-radius: 2px; }
+.why-rock i:nth-child(n+5) { background: color-mix(in srgb, var(--warm) calc(30% + var(--k) * 12%), var(--ink-3)); }
+.why-tag { display: inline-block; font: 700 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; background: var(--ink); color: var(--surface); padding: 4px 7px; border-radius: 5px; margin-bottom: 6px; }
+.why-ax > b { display: block; font-family: var(--display); font-size: 16px; margin-bottom: 2px; }
+.why-ax > div { color: var(--ink-2); font-size: 15px; }
+.why-nav { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+@keyframes whyIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+:root[data-motion="reduce"] .why-step, :root[data-motion="reduce"] .why-axiom { animation: none; }
+@media (prefers-reduced-motion: reduce) { :root:not([data-motion="full"]) .why-step, :root:not([data-motion="full"]) .why-axiom { animation: none; } }
+@media (max-width: 560px) { .why-step { margin-left: calc(var(--d) * 18px); } .why-axiom { margin-left: 18px; grid-template-columns: 40px 1fr; } }
+
+.stk { margin: 18px 0 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 14px 16px; }
+.stk-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; font-size: 13px; margin-bottom: 8px; }
+.stk-head .eyebrow { margin: 0; }
+.stk ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.stk li a { display: grid; grid-template-columns: 118px 1fr auto; gap: 10px; align-items: center; text-decoration: none; color: var(--ink-2); padding: 7px 10px; border-radius: 7px; font-size: 14px;
+  background: color-mix(in srgb, color-mix(in srgb, var(--warm) calc(var(--i) * 100%), var(--accent)) 10%, var(--surface)); border-left: 5px solid color-mix(in srgb, var(--warm) calc(var(--i) * 100%), var(--accent)); transition: transform .15s; }
+.stk li a:hover { transform: translateX(3px); color: var(--ink); }
+.stk-k { font: 600 11px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.stk li.on a { background: color-mix(in srgb, color-mix(in srgb, var(--warm) calc(var(--i) * 100%), var(--accent)) 26%, var(--surface)); color: var(--ink); font-weight: 600; box-shadow: 0 2px 0 color-mix(in srgb, var(--warm) calc(var(--i) * 100%), var(--accent)); }
+.stk-here { font: 600 10.5px/1 var(--mono); background: var(--ink); color: var(--surface); padding: 4px 6px; border-radius: 5px; }
+@media (max-width: 560px) { .stk li a { grid-template-columns: 1fr auto; } .stk-k { grid-column: 1 / -1; } }
+
+/* small voxel stickers set beside prose */
+.vx-row { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-end; justify-content: center; margin: 14px 0 4px; }
+.vx-fig { margin: 0; text-align: center; }
+.vx-fig svg { width: auto; max-width: 100%; image-rendering: pixelated; }
+.vx-fig figcaption { font: 500 12.5px/1.35 var(--body); color: var(--ink-2); margin-top: 6px; max-width: 220px; }
+.vx-fig figcaption b { display: block; color: var(--ink); }
+/* a grid of real HTML pixels you can click (the function chapter's drawing pad) */
+.pad { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; width: min(240px, 70vw); aspect-ratio: 1; padding: 4px; background: var(--sunken); border-radius: 8px; touch-action: none; }
+.pad button { border: 0; border-radius: 2px; background: var(--surface); padding: 0; cursor: pointer; }
+.pad button.on { background: var(--ink); }
+.vec { display: grid; grid-template-columns: repeat(32, 1fr); gap: 1px; margin-top: 6px; }
+.vec i { aspect-ratio: 1; border-radius: 1px; background: var(--sunken); }
+.vec i.on { background: var(--ink); }
+.vec.w i { background: var(--c, var(--sunken)); }
+.fn-row { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+.fn-row > div { flex: 1 1 260px; min-width: 0; }
+.fn-k { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 10px 0 4px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
