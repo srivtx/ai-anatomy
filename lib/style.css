@@ -1095,7 +1095,6 @@ html.nbv-open { overflow: hidden; }
 .nbv-check li::before { content: ""; position: absolute; left: 2px; top: 4px; width: 14px; height: 14px; border-radius: 4px; border: 2px solid color-mix(in srgb, var(--good, #1baf7a) 70%, transparent); }
 .nbv-stretch li::before { content: "↗"; position: absolute; left: 2px; top: 0; color: var(--accent); font-weight: 700; }
 .colab .row { display: flex; gap: 8px; flex-wrap: wrap; }
-button.btn { font: inherit; cursor: pointer; }
 @media (max-width: 760px) {
   .nbv { width: 100vw; height: 100dvh; border-radius: 0; border: 0; box-shadow: none; }
   .nbv-main { grid-template-columns: 1fr; }
