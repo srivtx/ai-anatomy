@@ -1352,3 +1352,35 @@ pre.code.tw-code .ln.on { opacity: 1; background: color-mix(in srgb, var(--accen
   .tw-t { flex: 0 1 auto; }
   .tw-op { flex: none; }
 }
+
+/* token stickers under text tensors */
+.tw-chips { display: flex; flex-wrap: wrap; gap: 5px 9px; justify-content: center; max-width: 280px; }
+.tw-word { display: inline-flex; gap: 2px; }
+.tw-chip { font: 600 11.5px/1 var(--mono); padding: 4px 5px 5px; border-radius: 4px; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .2), 0 0 0 1px rgba(20, 18, 30, .25); transition: transform .2s, opacity .2s, box-shadow .2s; }
+.tw-chip.on { transform: translateY(-2px); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .2), 0 0 0 2px #ffd84a, 0 3px 0 rgba(20, 18, 30, .25); }
+.tw-chip.dim { opacity: .45; }
+/* chapter cards: a badge for chapters with a 3D step-through */
+.ex-cube { display: inline-flex; align-items: center; gap: 4px; margin: 0 auto 0 8px; padding: 2px 6px 2px 4px; border-radius: 6px; font: 600 10px/1.2 var(--pixel); letter-spacing: .06em; color: var(--accent); background: color-mix(in srgb, var(--accent) 11%, transparent); }
+.ex-cube svg { width: 12px; height: 12px; }
+
+/* home: inside the code */
+.inside { margin: 8px 0 44px; }
+.in-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+.in-head h2 { margin: 4px 0 6px; }
+.in-head p { max-width: 64ch; margin: 0; }
+.in-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.in-chip { font: 500 12.5px/1 var(--body); padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; box-shadow: 0 2px 0 var(--line); transition: transform .15s, background .15s, color .15s; }
+.in-chip:hover { transform: translateY(-1px); color: var(--ink); }
+.in-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 60%, #000); }
+.in-stage { min-height: 520px; }
+.in-stage .tw-sec { margin: 0; padding: 0; border: 0; background: none; box-shadow: none; }
+.in-stage .tw-sec > h2 { font-size: 1.15rem; margin: 0 0 4px; }
+@media (max-width: 760px) { .in-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 14px; padding: 0 16px 4px; } .in-chip { flex: none; } }
+
+/* phones: one tensor per line, operators between them, arrows pointing down */
+@media (max-width: 560px) {
+  .tw-stage { flex-direction: column; gap: 2px; padding: 16px 8px 6px; }
+  .tw-op { margin: 0; font-size: 16px; line-height: 1.4; text-align: center; }
+  .tw-op[data-arrow] { transform: rotate(90deg); }
+  .tw-svg svg { max-width: min(100%, 72vw); }
+}
