@@ -1009,3 +1009,11 @@ a.ex-card:hover { transform: translate(-2px, -2px); border-color: color-mix(in s
   .bench-mascot > div:last-child { width: 80px; }
   .bench-mascot .bubble { flex: 1; margin-bottom: 30px; }
 }
+
+/* bench: a voxel desk that fills up as you learn */
+.bench { grid-template-columns: minmax(0, 1fr) 300px; grid-template-areas: "text mascot" "desk side" "garden garden"; }
+.desk-wrap { grid-area: desk; max-width: 560px; width: 100%; justify-self: center; filter: drop-shadow(0 14px 18px rgba(0,0,0,.12)); }
+.desk-wrap svg { width: 100%; height: auto; image-rendering: pixelated; }
+.bench-side { align-self: center; }
+.cash-i { width: 64px; }
+@media (max-width: 860px) { .bench { grid-template-areas: "text" "mascot" "desk" "side" "garden"; } }
