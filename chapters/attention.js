@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, toggle, bars } from "../lib/widgets.js";
 import { plane, heatmap } from "../lib/plot.js";
 import { softmax } from "../lib/nn.js";
@@ -117,6 +118,7 @@ export default function (root, { id }) {
         ["Memory while generating", "KV cache grows with n", "Fixed-size state"],
       ]),
     ),
+    walk("attention"),
     section("In code",
       code({
         PyTorch: `import torch, torch.nn.functional as F

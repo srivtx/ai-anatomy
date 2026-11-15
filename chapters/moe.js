@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, bars } from "../lib/widgets.js";
 import { plane, fmtSI } from "../lib/plot.js";
 import { gauss, softmax, sigmoid, dataset } from "../lib/nn.js";
@@ -158,6 +159,7 @@ export default function (root, { id }) {
         ["Batch-size-1 inference", "Efficient", "Still loads many experts' weights: memory-bandwidth bound"],
       ]),
     ),
+    walk("moe"),
     section("In code",
       code({
         "Top-k MoE layer": `class MoE(nn.Module):

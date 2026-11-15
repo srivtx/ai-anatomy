@@ -1,4 +1,5 @@
 import { h, s } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, stepper, bars } from "../lib/widgets.js";
 import { fmtSI, fmtBytes } from "../lib/plot.js";
 
@@ -105,6 +106,7 @@ export default function (root, { id }) {
       ]),
       prose("<p>Decoder-only won for general models because one objective (next token) on all text scales simply, and any task can be phrased as a continuation. Encoders still win for cheap embeddings and classification; encoder-decoders for speech recognition and some translation.</p>"),
     ),
+    walk("transformer"),
     section("In code",
       code({
         PyTorch: `import torch, torch.nn as nn, torch.nn.functional as F

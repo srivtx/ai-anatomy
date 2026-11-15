@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, bars } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
 import { CORPUS } from "../lib/corpus.js";
@@ -119,6 +120,7 @@ export default function (root, { id }) {
         ["Beam search", "Track the k best whole sequences", "Translation; rarely used for chat"],
       ]),
     ),
+    walk("next-token"),
     section("In code",
       code({
         PyTorch: `import torch

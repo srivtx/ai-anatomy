@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { stats, predict, code, callout, section, prose, table, button, segmented, slider } from "../lib/widgets.js";
 import { plane } from "../lib/plot.js";
 import { gauss, sigmoid } from "../lib/nn.js";
@@ -136,6 +137,7 @@ export default function (root, { id }) {
       ]),
       prose("<p><b>Contrastive learning</b> generalises word2vec's trick: pull matching pairs together, push everything else apart. With a batch of N pairs, you score all N × N combinations and train each row to pick its true partner (the InfoNCE loss). It's how sentence-embedding models and CLIP are trained, and it needs no labels beyond “these two belong together”.</p>"),
     ),
+    walk("embeddings"),
     section("In code",
       code({
         PyTorch: `import torch, torch.nn.functional as F

@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
 import { plane } from "../lib/plot.js";
 
@@ -111,6 +112,7 @@ export default function (root, { id }) {
       ]),
       prose("<p>Cost to remember: multiplying an (m × k) by a (k × n) matrix takes about <b>2·m·k·n</b> floating-point operations. A 4096 × 4096 layer applied to 2,048 tokens is 69 GFLOPs. Count those up across a model and you get the compute bills in the scaling-laws chapter.</p>"),
     ),
+    walk("linear-algebra"),
     section("In code",
       code({
         NumPy: `import numpy as np

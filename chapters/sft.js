@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, toggle, dilemma } from "../lib/widgets.js";
 import { fmtSI, fmtBytes } from "../lib/plot.js";
 
@@ -86,6 +87,7 @@ export default function (root, { id }) {
       ]),
       prose("<p>Quality beats quantity: the LIMA paper (Zhou et al., 2023) got strong chat behaviour from only 1,000 carefully chosen examples, suggesting SFT mostly teaches <i>format and style</i> on top of what pretraining already knows. Preferences and rewards, next chapters, push further.</p>"),
     ),
+    walk("sft"),
     section("In code",
       code({
         "PyTorch (loss masking)": `ids, labels = [], []

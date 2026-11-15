@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
 import { xyChart, fmtBytes } from "../lib/plot.js";
 
@@ -125,6 +126,7 @@ export default function (root, { id }) {
         ["Tensor parallelism at inference", "Latency for huge models", "Lower latency, at communication cost"],
       ]),
     ),
+    walk("inference"),
     section("In code",
       code({
         vLLM: `from vllm import LLM, SamplingParams

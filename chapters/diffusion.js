@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
 import { plane } from "../lib/plot.js";
 import { gauss } from "../lib/nn.js";
@@ -129,6 +130,7 @@ export default function (root, { id }) {
         ["Masked / discrete diffusion", "Unmask tokens in parallel", "Parallel text and image generation", "Newer; catching up for text (see the frontier radar)"],
       ]),
     ),
+    walk("diffusion"),
     section("In code",
       code({
         "DDPM training": `def train_step(model, x0, alphas_bar):

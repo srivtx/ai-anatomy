@@ -1,4 +1,5 @@
 import { h, s } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, stepper, table } from "../lib/widgets.js";
 
 // One neuron with a squared-error loss, as a graph of primitive operations:
@@ -90,6 +91,7 @@ export default function (root, { id }) {
       ]),
       prose("<p>When a value feeds into several places, its gradients from each <b>add up</b>. Those two facts, the chain rule and gradient accumulation, are all of autograd. PyTorch, JAX and TensorFlow build this graph as your code runs and walk it backwards when you call <code>.backward()</code>.</p>"),
     ),
+    walk("backprop"),
     section("Build it: micrograd in 40 lines",
       code({
         Python: `import math

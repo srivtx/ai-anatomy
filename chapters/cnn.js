@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button, toggle } from "../lib/widgets.js";
 
 const N = 28;
@@ -146,6 +147,7 @@ export default function (root, { id }) {
         ["ViT", "2020", "No convolutions: patches + attention (see the vision chapter)"],
       ]),
     ),
+    walk("cnn"),
     section("In code",
       code({
         PyTorch: `import torch.nn as nn
