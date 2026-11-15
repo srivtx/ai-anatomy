@@ -130,7 +130,7 @@ export default function (root, { id }) {
   }
 
   root.append(
-    section(null, prose(`<p>Most ML engineers never write a GPU kernel, and the ones who can are some of the most sought-after people in the field. The knowledge isn't secret, but it's scattered across vendor manuals, blog posts and folklore. This chapter builds it up from first principles: a GPU is thousands of slow, simple cores that only go fast when memory is accessed in the right patterns. Everything below is about memory.</p>`)),
+    section(null, prose(`<p>Most ML engineers never write a GPU kernel, and the ones who can are some of the most sought-after people in the field. The knowledge isn't secret, but it's scattered across vendor manuals, blog posts and folklore. This chapter builds it up from first principles: a GPU is thousands of slow, simple cores that only go fast when memory is accessed in the right patterns. Everything below is about memory.</p><p class='muted'>Want the why underneath, from electrons and transistors up to warps and CUDA? Start with <a href='/learn?c=ai-physics'>From electrons to CUDA</a>, then come back.</p>`)),
     section("The machine",
       stepper([
         { title: "Thread → warp", html: "<p>You write code for one <b>thread</b>. The hardware runs threads in groups of 32 called <b>warps</b>, which execute the same instruction at the same time (SIMT). If threads in a warp take different branches, both paths run one after the other: <b>warp divergence</b>.</p>" },
