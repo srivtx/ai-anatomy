@@ -1786,7 +1786,7 @@ details.as-table > :not(summary) { margin: 0; }
 .st-blocks { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 6px; }
 .st-blocks[hidden] { display: none; }
 .st-hint { left: auto; right: 60px; bottom: auto; top: 16px; font-size: 11.5px; transition: opacity .3s; }
-.st-view.touched .st-hint { opacity: 0; }
+.st-view.touched .st-hint, .st-view.deep .st-hint { opacity: 0; }
 .st-heat { position: absolute; left: 12px; top: 50px; display: grid; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; font-size: 12px; width: 210px; box-shadow: 0 2px 0 var(--line); }
 .st-heat-t { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
 .st-heat-k { display: flex; align-items: center; gap: 6px; }

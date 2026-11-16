@@ -58,7 +58,7 @@ def batch(split, g):
 # each part (`pre`, GPT-2 onward) or after the add (`post`, the 2017 original); `residual=False` makes each part
 # *replace* the stream instead of adding to it; `kv < heads` shares keys and values between heads (grouped-query);
 # a `window` block only looks back that many tokens; `pos` is a learned table, RoPE (rotating queries and keys) or
-# nothing at all.
+# nothing at all. A block whose `mlp` is `"moe"` gets `experts` MLPs and a router that sends each token to `topk` of them.
 
 # %%
 class RMSNorm(nn.Module):
@@ -110,11 +110,32 @@ class MLP(nn.Module):
         if self.act == "SwiGLU": return self.down(F.silu(self.gate(x)) * self.up(x))
         return self.down(F.relu(self.up(x)) if self.act == "ReLU" else F.gelu(self.up(x)))
 
+class MoE(nn.Module):
+    """A mixture of experts: a router scores every expert for each token, the top k run, their outputs are mixed."""
+    def __init__(self, m):
+        super().__init__(); self.k = m.get("topk", 2); E = m.get("experts", 8)
+        self.router = nn.Linear(m["d"], E, bias=False)
+        self.experts = nn.ModuleList(MLP(m) for _ in range(E))
+        self.aux = torch.zeros(())
+    def forward(self, x):
+        B, T, D = x.shape; z = x.reshape(-1, D)
+        probs = F.softmax(self.router(z).float(), -1)
+        w, idx = probs.topk(self.k, -1); w = w / w.sum(-1, keepdim=True)
+        out = torch.zeros_like(z)
+        for e, ex in enumerate(self.experts):
+            hit = idx == e
+            rows = hit.any(-1).nonzero(as_tuple=True)[0]
+            if rows.numel(): out[rows] += ((w[rows] * hit[rows]).sum(-1, keepdim=True) * ex(z[rows]).float()).type_as(out)
+        # load balancing (Switch Transformer): penalise sending most tokens to a few favourite experts
+        frac = F.one_hot(idx[:, 0], probs.shape[-1]).float().mean(0)
+        self.aux = probs.shape[-1] * (frac * probs.mean(0)).sum()
+        return out.view(B, T, D)
+
 class Block(nn.Module):
     def __init__(self, m, b):
         super().__init__(); self.pre, self.res = m["normPos"] == "pre", m["residual"]
         self.attn = Attention(m, m["window"] if b["attn"] == "window" else 0) if b["attn"] != "none" else None
-        self.mlp = MLP(m) if b["mlp"] else None
+        self.mlp = (MoE(m) if b["mlp"] == "moe" else MLP(m)) if b["mlp"] else None
         self.n1, self.n2 = norm_layer(m), norm_layer(m)
     def forward(self, x, cos, sin):
         for part, nrm in ((self.attn, self.n1), (self.mlp, self.n2)):
@@ -191,8 +212,9 @@ def train(m, seed):
         x, y = batch("train", g)
         with torch.autocast(dev, dtype=amp_dtype, enabled=use_amp):
             loss = F.cross_entropy(model(x).float().view(-1, V), y.view(-1))
+            aux = sum((mod.aux for mod in model.modules() if isinstance(mod, MoE)), torch.zeros((), device=dev))
         if not torch.isfinite(loss): diverged = True; curve.append([step, float("nan")]); break
-        opt.zero_grad(set_to_none=True); scaler.scale(loss).backward(); scaler.unscale_(opt)
+        opt.zero_grad(set_to_none=True); scaler.scale(loss + 0.01 * aux).backward(); scaler.unscale_(opt)
         if step == 0: grads0 = block_grads(model)
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0); scaler.step(opt); scaler.update()
         if dev == "cuda": torch.cuda.synchronize()

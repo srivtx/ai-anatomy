@@ -72,6 +72,8 @@ if (!only || only === "studio") {
   for (const at of ["embed", "pos", "b2", "b2/attn", "b2/attn/h3", "b2/mlp", "b2/ln2", "lnf", "head"]) await visit(`/studio?m=gpt2&at=${at}`, `studio ${at}`, studio);
   await visit("/studio?m=llama8&at=b9/mlp", "studio llama mlp", studio);
   await visit("/studio?m=mistral7", "studio mistral", studio);
+  await visit("/studio?m=mixtral", "studio mixtral", studio);
+  await visit("/studio?m=mixtral&at=b3/mlp", "studio mixtral experts", studio);
   // learn: every level, its buttons, the + / - block tools
   const { LEVELS, CHALLENGES } = await import("../lib/studio/learn.js");
   const learn = async (p) => {
