@@ -211,7 +211,44 @@ export default function (root, { id }) {
     tst.set(0, macs.toLocaleString()); tst.set(1, (reads / macs).toFixed(n > 4 ? 3 : 2), n >= 8 ? "good" : "warn");
     const q = 4096 ** 3 / macs, e = Math.floor(Math.log10(q)); tst.set(2, `${(q / 10 ** e).toFixed(1)} × 10${String(e).split("").map((d) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+d]).join("")}`);
     tst.set(3, `${((reads / macs) / 3 * 100).toFixed(n > 8 ? 1 : 0)}%`, n >= 8 ? "good" : "warn");
+    tcv.paint(() => {
+      tcv.clear(); const c = tcv.colors;
+      tcv.box(10, 8, 500, 264, { fill: c.surface, stroke: c.line, r: 10 });
+      tcv.text(`One instruction: C (${n}×${n}) += A (${n}×${n}) × B (${n}×${n})`, 24, 26, { size: 12 });
+      const sz = Math.min(30, 120 / n), side = sz * n, y0 = 70 + (150 - side) / 2, r = Math.min(n - 1, Math.floor(n / 3)), k = Math.min(n - 1, Math.floor((2 * n) / 3));
+      const grid = (x, label, hl) => {
+        for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+          const on = hl(i, j);
+          tcv.ctx.fillStyle = on ? on : `color-mix(in srgb, ${c.c1} 18%, transparent)`;
+          tcv.ctx.fillRect(x + j * sz + 0.5, y0 + i * sz + 0.5, Math.max(0.6, sz - 1), Math.max(0.6, sz - 1));
+        }
+        tcv.box(x - 1, y0 - 1, side + 2, side + 2, { fill: "transparent", stroke: c.line, lw: 1, r: 2 });
+        tcv.text(label, x + side / 2, y0 + side + 16, { size: 11, align: "center" });
+      };
+      const gx = (i) => 40 + i * 160;
+      grid(gx(0), "A", (i) => (i === r ? c.c3 : null));
+      tcv.text("×", gx(0) + side + (160 - side) / 2, y0 + side / 2, { size: 18, align: "center", color: c["ink-3"] });
+      grid(gx(1), "B", (i, j) => (j === k ? c.c4 : null));
+      tcv.text("→", gx(1) + side + (160 - side) / 2, y0 + side / 2, { size: 18, align: "center", color: c["ink-3"] });
+      grid(gx(2), "C", (i, j) => (i === r && j === k ? c.accent : i === r || j === k ? `color-mix(in srgb, ${c.accent} 30%, transparent)` : null));
+      tcv.text(`one C value = a row of A · a column of B (${n} multiply-adds)`, 24, 238, { size: 10.5, color: c["ink-2"] });
+      tcv.text(`the same row of A is reused for all ${n} values in that row of C`, 24, 256, { size: 10.5, color: c["ink-2"] });
+      // right: reads vs work, log scale
+      tcv.box(522, 8, 268, 264, { fill: c.surface, stroke: c.line, r: 10 });
+      tcv.text("Numbers read vs work done", 536, 26, { size: 12 });
+      const L = (v) => 170 * (Math.log10(Math.max(1, v)) / 5);
+      [["read (A, B, C)", reads, c.c6], ["multiply-adds", macs, c.good]].forEach(([nm, v, col], i) => {
+        const y = 62 + i * 46;
+        tcv.text(nm, 536, y, { size: 10.5, color: c["ink-2"] });
+        tcv.box(536, y + 10, Math.max(4, L(v)), 14, { fill: `color-mix(in srgb, ${col} 70%, transparent)`, stroke: "transparent", r: 3 });
+        tcv.text(v.toLocaleString(), 542 + Math.max(4, L(v)), y + 17, { size: 10.5, mono: true });
+      });
+      tcv.text("bar length on a log scale", 536, 160, { size: 9.5, color: c["ink-3"] });
+      tcv.text("work per number fetched (n / 3)", 536, 196, { size: 11, color: c["ink-2"] });
+      tcv.text(`${(macs / reads).toFixed(macs / reads < 10 ? 1 : 0)} multiply-adds`, 536, 222, { size: 16, color: n >= 8 ? c.good : c.warn });
+    });
   }
+  const tcv = canvas(800, 280, "A tensor core instruction: tiles of A and B multiplied into C, with how many numbers are read against how many multiply-adds are done");
 
   root.append(
     section(null,
@@ -281,7 +318,7 @@ export default function (root, { id }) {
       prose("<p>A tensor core takes a small tile of A and of B and computes their product in one instruction. An n×n tile product does n³ multiply-adds but reads only 3n² numbers (A, B and the accumulator C), so the operand traffic per multiply-add falls as 3/n. Slide the tile size.</p>"),
       h("div.stage",
         h("div.stage-controls", slider({ label: "Tile size n (an n×n×n multiply per instruction)", min: 0, max: 5, value: 4, fmt: (v) => String(2 ** v), onInput: (v) => { tc.n = 2 ** v; drawT(); } })),
-        h("div.stage-body", tst.el)),
+        h("div.stage-body", h("div.wide-canvas", tcv.el), tst.el)),
       callout("note", "The same idea at every scale", "<p>Reuse is the theme of the whole machine: tensor cores reuse operands inside the unit, shared memory reuses tiles inside an SM, L2 reuses data across SMs, and Google's TPU takes it furthest with a <b>systolic array</b>, a 128×128 grid of multiply-add cells where numbers flow from cell to cell and each one is used 128 times without returning to a register file. On an H100 each SM's four tensor cores do about 2,048 bf16 multiply-adds per clock.</p>"),
     ),
     section("Decode an H100",

@@ -98,7 +98,40 @@ export default function (root, { id }) {
   function drawL() {
     const cyc = 1 / lt.ghz, cm = 30 * cyc;
     lst.set(0, `${cm.toFixed(1)} cm (in vacuum)`); lst.set(1, `${(6 / 30 / cyc).toFixed(2)} cycles`, "good"); lst.set(2, `~550–700 cycles ≈ ${Math.round(600 * cyc)} ns`, "bad");
+    ltc.paint(() => {
+      ltc.clear(); const c = ltc.colors, U = 22;          // 22 px per centimetre
+      ltc.box(10, 8, 780, 132, { fill: c.surface, stroke: c.line, r: 10 });
+      ltc.text("Distance, to scale (1 cm = the bar below)", 24, 24, { size: 12 });
+      ltc.line(24, 40, 24 + U, 40, { color: c.ink, lw: 2 }); ltc.text("1 cm", 24 + U + 6, 40, { size: 9.5, color: c["ink-3"], mono: true });
+      // the package: die in the middle, HBM stacks on two sides
+      const px = 30, py = 62, die = 2.85 * U;
+      ltc.box(px, py, die + 2.4 * U, die, { fill: c.sunken, stroke: c.line, r: 4 });
+      ltc.box(px + 1.2 * U, py, die, die, { fill: `color-mix(in srgb, ${c.c1} 40%, transparent)`, stroke: c.c1, lw: 1, r: 3 });
+      ltc.text("GPU", px + 1.2 * U + die / 2, py + die / 2, { size: 10, align: "center" });
+      for (const k of [0, 1, 2]) { ltc.box(px + 2, py + 2 + k * die / 3, 1.1 * U - 4, die / 3 - 4, { fill: `color-mix(in srgb, ${c.c4} 55%, transparent)`, stroke: "transparent", r: 2 }); ltc.box(px + 1.2 * U + die + 2, py + 2 + k * die / 3, 1.1 * U - 4, die / 3 - 4, { fill: `color-mix(in srgb, ${c.c4} 55%, transparent)`, stroke: "transparent", r: 2 }); }
+      ltc.text("HBM", px + 0.55 * U, py + die + 10, { size: 9.5, align: "center", color: c["ink-3"] });
+      // how far light gets in one cycle
+      const ax = px + 1.2 * U + die / 2, reach = cm * U, end = Math.min(776, ax + reach), ay = 52;
+      ltc.line(ax, ay, end, ay, { color: c.good, lw: 2.5 });
+      if (ax + reach <= 776) { ltc.line(end, ay, end - 7, ay - 5, { color: c.good, lw: 2.5 }); ltc.line(end, ay, end - 7, ay + 5, { color: c.good, lw: 2.5 }); }
+      else ltc.text("→ off the edge", 776, ay + 12, { size: 9.5, color: c.good, align: "right" });
+      ltc.text(`light in one clock tick at ${lt.ghz.toFixed(2)} GHz: ${cm.toFixed(1)} cm`, Math.min(end, 776) - 6, ay - 12, { size: 11, color: c.good, align: "right" });
+      ltc.text("The whole package is ~6 cm across: light could cross it several times per tick.", 240, 112, { size: 10.5, color: c["ink-2"] });
+      // where the time really goes, on a log scale
+      ltc.box(10, 150, 780, 162, { fill: c.surface, stroke: c.line, r: 10 });
+      ltc.text("Waiting time in clock ticks (log scale)", 24, 166, { size: 12 });
+      const x0 = 190, x1 = 770, L = (v) => x0 + ((Math.log10(v) + 1) / 4) * (x1 - x0);
+      for (const t of [0.1, 1, 10, 100, 1000]) { ltc.line(L(t), 178, L(t), 300, { color: c.line, lw: 1 }); ltc.text(String(t), L(t), 304, { size: 9, color: c["ink-3"], align: "center", mono: true }); }
+      const rows = [["Light: SM → HBM → SM", 6 / 30 / cyc, c.good], ["One multiply-add", 4, c.c1], ["Shared memory / L1", 30, c.c3], ["L2 cache", 300, c.c6], ["HBM (measured)", 600, c.bad]];
+      rows.forEach(([nm, v, col], i) => {
+        const y = 190 + i * 21;
+        ltc.text(nm, x0 - 10, y + 6, { size: 10.5, align: "right", color: c["ink-2"] });
+        ltc.box(L(0.1), y, Math.max(3, L(v) - L(0.1)), 12, { fill: `color-mix(in srgb, ${col} 70%, transparent)`, stroke: "transparent", r: 3 });
+        ltc.text(v < 1 ? v.toFixed(2) : `~${v}`, L(v) + 6, y + 6, { size: 10, mono: true, color: c.ink });
+      });
+    });
   }
+  const ltc = canvas(800, 320, "How far light travels in one clock tick against the size of a GPU package, and memory waiting times on a log scale");
 
   root.append(
     section(null,
@@ -153,7 +186,7 @@ export default function (root, { id }) {
       }),
       h("div.stage",
         h("div.stage-controls", slider({ label: "Clock speed", min: 1, max: 5, step: 0.05, value: lt.ghz, fmt: (v) => `${v.toFixed(2)} GHz`, onInput: (v) => { lt.ghz = v; drawL(); } })),
-        h("div.stage-body", lst.el)),
+        h("div.stage-body", h("div.wide-canvas", ltc.el), lst.el)),
     ),
     section("The hierarchy: small and close, big and far",
       prose("<p>Since fast memory must be small and close, and big memory must be slow and far, every processor stacks them. Each level is roughly 10× bigger and several times slower than the one above. A good program keeps the numbers it's using right now in the top levels. These are approximate H100 figures from NVIDIA's documentation and independent microbenchmarks; latency depends on clocks and how it's measured.</p>"),
