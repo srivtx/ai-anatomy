@@ -325,6 +325,90 @@ export default function (root, { id }) {
     const [yr, name, idea] = MILESTONES[hstep]; hcv.text(`${yr} · ${name}: ${idea}`, 440, 182, { size: 12, align: "center" });
   });
 
+  // ---------- caches: a tiny fully associative LRU cache over 256 lines of memory ----------
+  const ca = { pat: "seq", lines: 16 };
+  const LINES = 256, PER = 16, HIT = 4, MISS = 250, NACC = 1024;
+  const PATS = [["seq", "Walk in order"], ["stride", "Skip 16 (one per line)"], ["col", "2D array by column"], ["reuse", "Small loop, reused"], ["rand", "Random"]];
+  function accesses(pat) {
+    let x = 12345; const rnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
+    const out = [];
+    for (let k = 0; k < NACC; k++) {
+      if (pat === "seq") out.push(k % (LINES * PER));
+      else if (pat === "stride") out.push((k * PER) % (LINES * PER));
+      else if (pat === "col") { const n = 64, r = k % n, cc = Math.floor(k / n) % n; out.push(r * n + cc); }   // 64 × 64 ints, row-major, walked down columns
+      else if (pat === "reuse") out.push(k % (6 * PER));
+      else out.push(Math.floor(rnd() * LINES * PER));
+    }
+    return out;
+  }
+  const cst2 = stats([{ label: "Hit rate" }, { label: "Average time per access" }, { label: "Slower than all hits by" }]);
+  const ccv = canvas(880, 300, "Memory as 256 cache lines, coloured by hits and misses, and the first accesses as a strip");
+  function drawCache() {
+    const acc = accesses(ca.pat), lru = new Map(), state = new Uint8Array(LINES), seq = [];
+    let hits = 0;
+    for (const a of acc) {
+      const line = Math.floor(a / PER);
+      if (lru.has(line)) { hits++; lru.delete(line); seq.push(1); if (state[line] < 2) state[line] = 2; }
+      else { seq.push(0); state[line] = state[line] === 2 ? 3 : Math.max(state[line], 1); if (lru.size >= ca.lines) lru.delete(lru.keys().next().value); }
+      lru.set(line, true);
+    }
+    const hr = hits / acc.length, amat = HIT + (1 - hr) * MISS;
+    cst2.set(0, `${Math.round(hr * 100)}%`, hr > 0.9 ? "good" : hr > 0.6 ? "warn" : "bad");
+    cst2.set(1, `${amat.toFixed(0)} cycles`, amat < 30 ? "good" : amat < 100 ? "warn" : "bad");
+    cst2.set(2, `${(amat / HIT).toFixed(1)}×`, amat < 30 ? "good" : amat < 100 ? "warn" : "bad");
+    ccv.paint(() => {
+      ccv.clear(); const c = ccv.colors, cs = 13, x0 = 20, y0 = 30;
+      ccv.text("memory: 256 lines of 64 bytes (16 numbers each)", x0, 18, { size: 11, color: c["ink-3"] });
+      for (let l = 0; l < LINES; l++) {
+        const i = l % 16, j = Math.floor(l / 16), st = state[l];
+        const fill = st === 0 ? c.sunken : st === 1 ? `color-mix(in srgb, ${c.bad} 55%, ${c.surface})` : st === 2 ? `color-mix(in srgb, ${c.good} 55%, ${c.surface})` : `color-mix(in srgb, ${c.warn} 60%, ${c.surface})`;
+        ccv.box(x0 + i * cs, y0 + j * cs, cs - 2, cs - 2, { fill, stroke: lru.has(l) ? c.accent : "transparent", lw: 2, r: 3 });
+      }
+      const ky = y0 + 16 * cs + 16;
+      [[c.good, "hit"], [c.bad, "only missed"], [c.warn, "hit, pushed out, missed again"]].forEach(([col, t], k) => { ccv.box(x0 + [0, 44, 134][k], ky - 9, 10, 10, { fill: col, stroke: "transparent", r: 2 }); ccv.text(t, x0 + [0, 44, 134][k] + 14, ky, { size: 10.5, color: c["ink-2"] }); });
+      ccv.box(x0 + 0, ky + 12, 10, 10, { fill: c.surface, stroke: c.accent, lw: 2, r: 2 }); ccv.text(`in the cache at the end (${ca.lines} lines = ${ca.lines * 64 / 1024} KB)`, x0 + 14, ky + 21, { size: 10.5, color: c["ink-2"] });
+      // the strip: first 192 accesses
+      const sx = 300, sw = 560, n = 192, w = sw / n;
+      ccv.text("the first 192 accesses, in order (each tick: a hit or a miss)", sx, 18, { size: 11, color: c["ink-3"] });
+      for (let k = 0; k < n; k++) ccv.box(sx + k * w, 30, Math.max(1, w - 0.6), 34, { fill: seq[k] ? c.good : c.bad, stroke: "transparent", r: 1 });
+      // time bar: hits cost 4 cycles, misses 250
+      const tot = seq.slice(0, n).reduce((t, s) => t + (s ? HIT : MISS), 0), best = n * HIT;
+      ccv.text("time those 192 accesses took", sx, 92, { size: 11, color: c["ink-3"] });
+      ccv.box(sx, 100, sw, 18, { fill: c.sunken, stroke: "transparent", r: 9 });
+      ccv.box(sx, 100, Math.max(10, (sw * tot) / (n * MISS)), 18, { fill: tot / best < 8 ? c.good : tot / best < 25 ? c.warn : c.bad, stroke: "transparent", r: 9 });
+      ccv.text(`${tot.toLocaleString("en-US")} cycles (all hits: ${best}; all misses: ${(n * MISS).toLocaleString("en-US")})`, sx, 136, { size: 11.5 });
+      const why = { seq: "Each miss brings in 64 bytes: the next 15 numbers are free. That's spatial locality.", stride: "One number per line: every access is a new line, so the free neighbours are wasted.", col: "Down a column, each step jumps a whole row (256 bytes): a new line every time, just like the stride.", reuse: "The same 6 lines again and again: once they're in, everything hits. That's temporal locality.", rand: "No pattern to exploit: only the share of memory that fits in the cache hits." }[ca.pat];
+      ccv.text(why, sx, 170, { size: 12.5, color: c.ink });
+      ccv.text(`A hit costs ~${HIT} cycles; a trip to DRAM ~${MISS} (about 60 ns at 4 GHz).`, sx, 196, { size: 11.5, color: c["ink-2"] });
+      ccv.text("Real CPUs add hardware prefetchers that spot simple strides and fetch ahead,", sx, 226, { size: 11, color: c["ink-3"] });
+      ccv.text("so the stride pattern does better on real hardware than here. Random access can't be helped.", sx, 242, { size: 11, color: c["ink-3"] });
+    });
+  }
+
+  // ---------- SIMD: one instruction, many numbers ----------
+  const sm = { bits: 512, dt: 32 };
+  const sst = stats([{ label: "Numbers per instruction (lanes)" }, { label: "Peak per core per clock (2 FMA units)" }, { label: "A GPU warp, for comparison" }]);
+  const scv = canvas(880, 220, "A vector register split into lanes: one instruction adds every lane at once");
+  function drawSimd() {
+    const lanes = sm.bits / sm.dt, peak = 2 * lanes * 2;
+    sst.set(0, String(lanes)); sst.set(1, `${peak} ${sm.dt === 8 ? "int8 ops" : sm.dt === 16 ? "bf16 FLOPs" : "fp32 FLOPs"}`, peak >= 64 ? "good" : "warn"); sst.set(2, "32 lanes per instruction");
+    scv.paint(() => {
+      scv.clear(); const c = scv.colors, x0 = 110, W = 740, lw = W / lanes;
+      const row = (y, name, col, val) => {
+        scv.text(name, x0 - 10, y + 19, { size: 12, align: "right", color: c["ink-2"] });
+        for (let k = 0; k < lanes; k++) {
+          scv.box(x0 + k * lw + 1, y, lw - 2, 28, { fill: `color-mix(in srgb, ${col} ${40 + ((k * 37) % 30)}%, ${c.surface})`, stroke: "transparent", r: Math.min(5, lw / 4) });
+          if (lw > 22) scv.text(String(val(k)), x0 + k * lw + lw / 2, y + 19, { size: lw > 40 ? 12 : 9.5, align: "center", mono: true });
+        }
+      };
+      row(20, "a", c.c1, (k) => k + 1); row(62, "b", c.c4, (k) => 10 * ((k % 3) + 1));
+      scv.text("+", 60, 116, { size: 20, align: "center" });
+      row(110, "a + b", c.accent, (k) => k + 1 + 10 * ((k % 3) + 1));
+      scv.text(`one instruction (e.g. ${sm.bits === 512 ? "AVX-512 VADDPS" : sm.bits === 256 ? "AVX2 VADDPS" : "SSE / NEON add"}) works on all ${lanes} lanes of a ${sm.bits}-bit register at once`, x0, 172, { size: 12.5 });
+      scv.text("it only helps when the same operation applies to many numbers side by side: exactly what a matrix multiply is", x0, 194, { size: 11.5, color: c["ink-2"] });
+    });
+  }
+
   root.append(
     section(null,
       goal("<p>A CPU has one job: run <b>any</b> program, one instruction after another, and finish it as soon as possible. Programs branch, depend on their own earlier results and reach into memory unpredictably, so the CPU spends most of its transistors guessing what comes next. Seeing why it works this way, and where it stops, explains why AI needed a different machine.</p>",
@@ -366,6 +450,26 @@ export default function (root, { id }) {
           toggle({ label: "First load misses the cache", checked: false, onChange: (v) => { oo.miss = v; drawO(); } })),
         h("div.stage-body", ost.el, h("div.wide-canvas", ocv.el))),
       callout("tip", "The wall it hits", "<p>However wide the machine, it can't beat the <b>longest dependency chain</b>: c needs b needs a. Out of order hides small waits by doing other work, but a 200-clock cache miss on the chain still stalls the finish. A real core has about 2–5 independent instructions to find per clock in typical code. That's the ceiling on one thread, and it's why the GPU took a different road: thousands of threads with no dependencies between them.</p>"),
+    ),
+    section("Caches: keep the hot data close",
+      prose("<p>A trip to DRAM takes ~60 ns, about 250 clock ticks, during which a core could have run ~1,000 instructions. So a CPU spends a large share of its area on <b>caches</b>: small, fast SRAM copies of recently used memory. They work because programs are predictable in two ways. <b>Temporal locality</b>: what you used, you'll use again soon. <b>Spatial locality</b>: what's next to it, you'll use soon too, so memory moves in 64-byte <b>lines</b>, not single numbers. Pick an access pattern and a cache size.</p>"),
+      h("div.stage",
+        h("div.stage-controls",
+          segmented({ label: "Access pattern", options: PATS.map(([v, l]) => ({ value: v, label: l })), value: ca.pat, onChange: (v) => { ca.pat = v; drawCache(); } }),
+          slider({ label: "Cache size", min: 2, max: 7, step: 1, value: 4, fmt: (v) => `${2 ** v} lines (${(2 ** v * 64) / 1024} KB)`, onInput: (v) => { ca.lines = 2 ** v; drawCache(); } })),
+        h("div.stage-body", h("div.wide-canvas", ccv.el), cst2.el)),
+      predict({ chapter: id, question: "A 4,000 × 4,000 array of floats is stored row by row (as in C and NumPy). You sum it twice: once row by row, once column by column. Same number of additions. What happens?",
+        options: ["Same speed: same work", "Row by row is several times faster", "Column by column is faster", "Depends only on the clock speed"], answer: 1,
+        explain: "<p>Row by row walks memory in order: each 64-byte line brings 16 floats, and the prefetcher streams the next lines ahead. Column by column jumps 16 KB each step, a new line every time, and the row is long enough that lines are pushed out before they're reused. Typically 3–10× slower for the same arithmetic. GPUs care even more: <a href='/learn?c=gpu-from-scratch'>coalescing</a> is the same idea for 32 threads at once.</p>" }),
+    ),
+    section("SIMD: one instruction, many numbers",
+      prose("<p>Decoding an instruction, tracking it and retiring it costs far more energy than the addition itself. So CPUs added <b>vector</b> (SIMD: single instruction, multiple data) units: one instruction that adds 4, 8 or 16 numbers side by side. This is the CPU's step towards the GPU's idea: pay for control once, do lots of arithmetic. Pick a register width and a number format.</p>"),
+      h("div.stage",
+        h("div.stage-controls",
+          segmented({ label: "Register width", options: [128, 256, 512].map((b) => ({ value: b, label: `${b}-bit` })), value: sm.bits, onChange: (v) => { sm.bits = v; drawSimd(); } }),
+          segmented({ label: "Number format", options: [[32, "fp32"], [16, "bf16"], [8, "int8"]].map(([v, l]) => ({ value: v, label: l })), value: sm.dt, onChange: (v) => { sm.dt = v; drawSimd(); } })),
+        h("div.stage-body", h("div.wide-canvas", scv.el), sst.el)),
+      callout("note", "SIMD on a CPU, SIMT on a GPU", "<p>A GPU warp is the same trick with 32 lanes, but the hardware lets each lane look like its own thread with its own registers (<b>SIMT</b>, single instruction, multiple threads), so you write ordinary scalar code and the GPU groups it. On a CPU you (or the compiler, or NumPy) must arrange data into vectors yourself. That's a big part of <a href='/learn?c=languages'>why NumPy beats a Python loop</a>: its inner loops use these instructions.</p>"),
     ),
     section("Inside a modern core",
       prose("<p>Where the transistors of a 2020s laptop or server core actually go. Pick a part.</p>"),
@@ -439,5 +543,5 @@ import random; print(two_bit([random.random() < .5 for _ in range(10000)]))   # 
       }),
     ),
   );
-  drawC(); drawP(); drawB(); drawO();
+  drawC(); drawP(); drawB(); drawO(); drawCache(); drawSimd();
 }

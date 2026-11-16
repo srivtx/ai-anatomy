@@ -212,7 +212,7 @@ export default function (root, { id }) {
           slider({ label: "Clock", min: 0.5, max: 10, step: 0.1, value: lt.f, fmt: (v) => `${v.toFixed(1)} GHz`, onInput: (v) => { lt.f = v; drawS(); } }),
           segmented({ label: "Signal travels as", options: [{ value: "wire", label: "On-chip wire" }, { value: "glass", label: "Light in glass" }, { value: "vacuum", label: "Light in vacuum" }], value: lt.medium, onChange: (v) => { lt.medium = v; drawS(); } })),
         h("div.stage-body", sst.el, h("div.wide-canvas", scv.el))),
-      predict({ chapter: id, question: "At 5 GHz, how far does light travel in a vacuum during one clock tick?", options: ["6 metres", "6 centimetres", "6 millimetres", "60 micrometres"], answer: 1, explain: "<p>Light covers 30 cm per nanosecond. One tick at 5 GHz is 0.2 ns: 6 cm. A real on-chip wire manages a tenth of that or less, so crossing a large die takes several ticks. Distance is time, and time is energy: that's the physical root of the memory wall in <a href='/learn?c=memory-physics'>chapter 5</a>.</p>" }),
+      predict({ chapter: id, question: "At 5 GHz, how far does light travel in a vacuum during one clock tick?", options: ["6 metres", "6 centimetres", "6 millimetres", "60 micrometres"], answer: 1, explain: "<p>Light covers 30 cm per nanosecond. One tick at 5 GHz is 0.2 ns: 6 cm. A real on-chip wire manages a tenth of that or less, so crossing a large die takes several ticks. Distance is time, and time is energy: that's the physical root of the memory wall in <a href='/learn?c=memory-physics'>why memory is far</a>.</p>" }),
     ),
     section("The candidates",
       prose("<p>What might carry computing past the current walls, what each would fix, and what is still unsolved. Status as of the mid-2020s.</p>"),
