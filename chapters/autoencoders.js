@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
 import { plane } from "../lib/plot.js";
@@ -86,7 +87,9 @@ export default function (root, { id }) {
   init();
 
   root.append(
-    section(null, prose(`<p>An <b>autoencoder</b> is trained to output its own input, through a bottleneck. The <b>encoder</b> squeezes a 64-pixel image into just two numbers (the <b>latent code</b>); the <b>decoder</b> rebuilds the image from those two numbers. To succeed it must discover what actually varies between images: shape, position, thickness. No labels needed.</p>`)),
+    section(null, goal("<p>We have lots of data and no labels. We want to find <b>the few numbers that actually vary</b> between examples, by forcing a network to rebuild each input from a tiny code.</p>", ["an encoder that squeezes", "a bottleneck too small to copy through", "a decoder that rebuilds"]),
+      prose(`<p>An <b>autoencoder</b> is trained to output its own input, through a bottleneck. The <b>encoder</b> squeezes a 64-pixel image into just two numbers (the <b>latent code</b>); the <b>decoder</b> rebuilds the image from those two numbers. To succeed it must discover what actually varies between images: shape, position, thickness. No labels needed.</p>`),
+      h("div.vx-row", sticker("hourglass", { title: "Squeeze, then rebuild", caption: "a wide input (blue), a tiny code (yellow), a wide output (orange)", px: 4 }))),
     section("Train one in your browser",
       prose("<p>600 tiny 8 × 8 glyphs in six families (bars, crosses, boxes, slashes, blobs). The left plot places each glyph at its 2D code; colour shows its family, which the model never sees. Click anywhere in the latent plane to decode that point. The right panel decodes a whole grid of points.</p>"),
       h("div.stage",
@@ -118,6 +121,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("autoencoders"),
+    section("Why copying teaches features",
+      whyChain({
+        claim: "An autoencoder trained only to copy its input learns meaningful features of the data.",
+        steps: [
+          { q: "Why doesn't it just copy?", a: "<p>The bottleneck makes copying impossible: 64 pixels can't pass through 2 numbers unchanged. To rebuild well it has to spend those 2 numbers on whatever explains most of the image.</p>" },
+          { q: "Why would that be the meaningful part?", a: "<p>Real images aren't random. Faces vary along a few directions (pose, light, expression); digits along stroke and slant. The data lies near a low-dimensional surface, and the code learns coordinates on it.</p>" },
+          { q: "And if encoder and decoder are linear?", a: "<p>Then the best possible code is exactly <b>principal component analysis</b>: the top directions of variance. A nonlinear autoencoder generalises PCA to curved surfaces.</p>" },
+        ],
+        axiom: { name: "The manifold hypothesis (an observation, not a law)", html: "<p>Real high-dimensional data, like images or speech, lies close to a much lower-dimensional surface inside its space. It isn't proven in general, but nearly all of machine learning leans on it: if data filled its space evenly, no realistic amount of data would be enough to learn it.</p>" },
+      })),
     section("In code",
       code({
         PyTorch: `import torch, torch.nn as nn, torch.nn.functional as F

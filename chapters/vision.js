@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button, toggle, stepper } from "../lib/widgets.js";
 import { heatmap } from "../lib/plot.js";
@@ -108,7 +109,9 @@ export default function (root, { id }) {
   }
 
   root.append(
-    section(null, prose(`<p>For a decade, vision meant convolutional networks. Then <b>Vision Transformers</b> (Dosovitskiy et al., 2020) showed you can cut an image into square <b>patches</b>, treat each patch as a token, and feed the sequence to the same transformer that reads text. With enough data it matches or beats CNNs, and it means one architecture can see and read. <b>CLIP</b> (Radford et al., 2021) then trained an image encoder and a text encoder together on 400 million image–caption pairs so that matching pairs land close together. That shared space is what lets you search photos with words, guide image generators, and plug vision into language models.</p>`)),
+    section(null, goal("<p>Transformers read sequences of tokens. We want to <b>read an image the same way</b>, so the same architecture, and the same scaling recipe, works for pictures as for text.</p>", ["a way to cut an image into tokens", "a position for each token", "enough data to make up for fewer built-in assumptions"]),
+      prose(`<p>For a decade, vision meant convolutional networks. Then <b>Vision Transformers</b> (Dosovitskiy et al., 2020) showed you can cut an image into square <b>patches</b>, treat each patch as a token, and feed the sequence to the same transformer that reads text. With enough data it matches or beats CNNs, and it means one architecture can see and read. <b>CLIP</b> (Radford et al., 2021) then trained an image encoder and a text encoder together on 400 million image–caption pairs so that matching pairs land close together. That shared space is what lets you search photos with words, guide image generators, and plug vision into language models.</p>`),
+      h("div.vx-row", sticker("patches", { title: "An image as tokens", caption: "cut into patches; each patch becomes one token in a row", px: 4 }))),
     section("An image is a sequence of patches",
       prose("<p>Each patch is flattened into a vector of pixel values and multiplied by a learned matrix to become a token embedding. A learned <b>position embedding</b> is added so the model knows where each patch came from. After that it's an ordinary transformer.</p>"),
       h("div.stage",
@@ -172,6 +175,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("vision"),
+    section("Why ViTs need so much data",
+      whyChain({
+        claim: "Vision transformers lose to CNNs on small datasets but win on huge ones.",
+        steps: [
+          { q: "Why lose on small data?", a: "<p>A CNN has locality and translation built in. A ViT has to learn from examples that neighbouring patches go together and that a cat on the left is a cat on the right. With little data it can't learn that well.</p>" },
+          { q: "Why win on big data?", a: "<p>Built-in assumptions help most when data is scarce and limit you when it's plentiful. With hundreds of millions of images, attention learns long-range relations that a stack of small windows only reaches slowly, and it keeps improving with scale.</p>" },
+          { q: "Why 16 × 16 patches?", a: "<p>Attention cost grows with the square of the token count. A 224 × 224 image as single pixels is 50,176 tokens; as 16 × 16 patches it's 196. Each patch (16 · 16 · 3 = 768 numbers) is flattened and projected into one token.</p>" },
+        ],
+        axiom: { name: "The bias–variance trade-off", html: "<p>A model with strong built-in assumptions needs less data but is wrong wherever the assumptions are; a flexible one can fit anything but needs more data to pin it down. Which wins depends on how much data you have. It's the oldest trade-off in statistics.</p>" },
+      })),
     section("In code",
       code({
         "Patch embedding": `class PatchEmbed(nn.Module):

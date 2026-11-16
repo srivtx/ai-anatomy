@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, bars } from "../lib/widgets.js";
 import { plane, xyChart } from "../lib/plot.js";
@@ -85,7 +86,9 @@ export default function (root, { id }) {
   }
 
   root.append(
-    section(null, prose(`<p>The best model is rarely the one you can afford to serve. <b>Distillation</b> trains a small <i>student</i> to imitate a big <i>teacher</i>. <b>Pruning</b> deletes weights that don't matter. <b>Merging</b> combines separately fine-tuned models by averaging their weights. Together with quantisation (systems level), these are how frontier capability reaches phones and cheap API tiers.</p>`)),
+    section(null, goal("<p>The best model is too big to serve cheaply. We want a <b>small model that behaves like the big one</b>, at a fraction of the cost.</p>", ["the teacher's outputs as training targets", "a student small enough to serve", "a signal richer than right or wrong"]),
+      prose(`<p>The best model is rarely the one you can afford to serve. <b>Distillation</b> trains a small <i>student</i> to imitate a big <i>teacher</i>. <b>Pruning</b> deletes weights that don't matter. <b>Merging</b> combines separately fine-tuned models by averaging their weights. Together with quantisation (systems level), these are how frontier capability reaches phones and cheap API tiers.</p>`),
+      h("div.vx-row", sticker("distill", { title: "Teacher to student", caption: "the big model's full probability lists flow down to the small one", px: 4 }))),
     section("Dark knowledge: the teacher's wrong answers are informative",
       prose("<p>A teacher looking at a cat photo puts most probability on “cat”, but noticeably more on “dog” and “fox” than on “teapot”. Those small numbers say <i>what a cat is like</i>. Hinton, Vinyals and Dean (2015) called this <b>dark knowledge</b>. Raising the softmax temperature T makes it visible, and training the student on these soft targets passes it on.</p>"),
       h("div.stage",
@@ -128,6 +131,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("distillation"),
+    section("Why soft targets teach more",
+      whyChain({
+        claim: "A student learns more from the teacher's probabilities than from the correct answers alone.",
+        steps: [
+          { q: "Why? The answers are the same.", a: "<p>A hard label says only “cat”. The teacher says “cat 0.85, lynx 0.10, dog 0.04, car 0.0001”: cats look like lynxes and nothing like cars. Every example now carries information about how all the classes relate.</p>" },
+          { q: "How much more?", a: "<p>A hard label among 1,000 classes is at most log₂ 1000 ≈ 10 bits. A full distribution has 999 free numbers. The student gets the teacher's learned sense of similarity, not just its verdicts.</p>" },
+          { q: "Why soften with a temperature?", a: "<p>The tiny probabilities (0.0001 vs 0.00001) carry structure but vanish in the loss. Dividing the logits by T > 1 before the softmax lifts them so the student can learn from them; the loss is multiplied by T² to keep gradients the same size.</p>" },
+        ],
+        axiom: { name: "More information per example, less data needed", html: "<p>Learning narrows down which function you have, and each example can narrow it only by the information it carries. Soft targets carry far more than one-hot labels, so the student needs fewer examples to pin down the same behaviour. Hinton, Vinyals and Dean (2015) called it the teacher's “dark knowledge”.</p>" },
+      })),
     section("In code",
       code({
         "Distillation loss": `import torch.nn.functional as F
