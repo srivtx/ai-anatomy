@@ -1963,3 +1963,75 @@ details.as-table > :not(summary) { margin: 0; }
 .st-grid .st-tag { font-size: 8.5px; padding: 3px 4px; }
 .st-pc:not([open]) summary:hover .st-pc-t, .st-rules summary:hover b { color: var(--accent); }
 .st-rules details:not([open]) summary b::after { content: " ›"; color: var(--ink-3); }
+
+/* ---- round 3: flow player, HUD deltas, key help, goal bar, level path ---- */
+.st-crumbs { right: 190px; }
+.st-hint { left: 14px; right: auto; top: 48px; }
+.st-play { position: absolute; top: 12px; right: 52px; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; box-shadow: 0 3px 0 var(--line); }
+.st-play[hidden], .st-keybtn[hidden] { display: none; }
+.st-play-i { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 6px; background: var(--accent); color: var(--accent-ink); font-size: 9px; }
+.st-view.flowing .st-play { border-color: var(--accent); color: var(--accent); }
+.st-view.flowing .st-play-i { animation: stBeat .6s ease-in-out infinite alternate; }
+@keyframes stBeat { to { transform: scale(1.18); } }
+.st-keybtn { position: absolute; top: 12px; right: 12px; width: 32px; height: 30px; padding: 0; font: 700 14px/1 var(--mono); box-shadow: 0 3px 0 var(--line); }
+.st-flowcap { position: absolute; left: 12px; bottom: 12px; right: 180px; padding: 9px 14px 12px; border-radius: 12px;
+  background: var(--surface); border: 2px solid var(--ink); box-shadow: 0 4px 0 var(--ink); font-size: 13.5px; line-height: 1.4; display: flex; gap: 10px; align-items: baseline;
+  animation: stPop .22s ease-out; overflow: hidden; }
+.st-flowcap[hidden] { display: none; }
+.st-flowcap::after { content: ""; position: absolute; left: 0; bottom: 0; height: 4px; width: var(--p, 0%); background: var(--accent); transition: width .25s; }
+.st-flowk { font: 700 11px/1.6 var(--mono); color: var(--accent); white-space: nowrap; }
+@keyframes stPop { from { transform: translateY(8px) scale(.97); opacity: 0; } }
+.st-hud { transition: opacity .2s; }
+.st-view.flowing .st-hud { opacity: 0; }
+.st-keys { position: absolute; top: 50px; right: 12px; width: auto; background: var(--surface); border: 2px solid var(--ink); border-radius: 12px; box-shadow: 0 4px 0 var(--ink); padding: 10px 12px; z-index: 3; }
+.st-keys[hidden] { display: none; }
+.st-keys-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.st-keys-top .btn { width: 26px; height: 24px; padding: 0; }
+.st-keys dl { display: grid; grid-template-columns: max-content auto; justify-content: start; column-gap: 14px; gap: 5px 10px; margin: 0; font-size: 12.5px; align-items: center; }
+.st-keys dd { margin: 0; color: var(--ink-2); }
+.st-keys kbd { font: 600 11px/1 var(--mono); padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line); border-bottom-width: 2px; background: var(--bg); white-space: nowrap; }
+.st-hud span { position: relative; transition: border-color .3s; }
+.st-hud span.chg { border-color: var(--accent); animation: stHud .5s ease-out; }
+@keyframes stHud { 30% { transform: translateY(-3px); } }
+.st-dlt { position: absolute; top: -11px; right: -6px; font: 700 10px/1 var(--mono); font-style: normal; padding: 3px 5px; border-radius: 6px; background: var(--accent); color: var(--accent-ink);
+  animation: stDlt 3.2s ease-out forwards; white-space: nowrap; }
+.st-dlt[data-good="1"] { background: var(--good); color: #fff; }
+.st-dlt[data-good="0"] { background: var(--bad); color: #fff; }
+@keyframes stDlt { 0% { transform: scale(.4); opacity: 0; } 10% { transform: scale(1.12); opacity: 1; } 18% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+.st-gbar { display: flex; gap: 4px; align-items: center; margin: 10px 0 2px; }
+.st-gbar i { flex: 1; height: 8px; border-radius: 4px; background: var(--sunken); border: 1px solid var(--line); transition: background .3s; }
+.st-gbar i[data-ok="1"] { background: var(--good); border-color: var(--good); }
+.st-gbar small { font: 700 11px/1 var(--mono); color: var(--ink-3); margin-left: 4px; }
+.st-goals li.pop { animation: stGoal .5s ease-out; }
+.st-goals li.pop .st-gk { animation: stStamp .5s ease-out; }
+@keyframes stGoal { 0% { transform: scale(.97); } 40% { transform: scale(1.03); } }
+@keyframes stStamp { 0% { transform: scale(2.2) rotate(-20deg); opacity: 0; } 60% { transform: scale(.9); opacity: 1; } }
+.st-lvmap { align-items: center; gap: 6px; }
+.st-lvmap button { position: relative; box-shadow: 0 2px 0 var(--line); transition: transform .12s; }
+.st-lvmap button:hover { transform: translateY(-1px); }
+.st-lvmap button:not(:nth-last-child(2))::after { content: ""; position: absolute; left: calc(100% + 2px); top: 50%; width: 4px; height: 2px; background: var(--line); }
+.st-lvmap button[data-done="1"]::after { background: var(--good); }
+.st-lvmap button[aria-current] { box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 55%, #000); transform: translateY(-1px); }
+.st-lvn { margin-left: auto; font: 700 11px/1 var(--mono); color: var(--ink-3); }
+.st-pane:not([hidden]) { animation: stPane .2s ease-out; }
+@keyframes stPane { from { opacity: 0; transform: translateY(4px); } }
+.st-modes button { transition: transform .12s, box-shadow .12s; }
+.st-modes button:hover { transform: translateY(-2px); }
+@media (prefers-reduced-motion: reduce) { .st-flowcap, .st-hud span.chg, .st-dlt, .st-goals li.pop, .st-goals li.pop .st-gk, .st-pane:not([hidden]), .st-view.flowing .st-play-i { animation: none; } }
+@media (max-width: 900px) {
+  .st-crumbs { right: 150px; }
+  .st-play span:last-child { display: none; }
+  .st-play { padding: 0; width: 34px; height: 30px; justify-content: center; }
+  .st-play-i { background: none; color: var(--accent); font-size: 12px; }
+  .st-crumbs { right: 96px; }
+  .st-hud { bottom: 12px; max-width: calc(100% - 112px); gap: 4px; }
+  .st-hud span { padding: 3px 7px; border-radius: 8px; }
+  .st-hud small { font-size: 8.5px; }
+  .st-hud b { font-size: 13px; }
+  .st-blocks { flex-direction: column; align-items: stretch; }
+  .st-blocks .btn { padding: 4px 8px; font-size: 12px; }
+  .st-tools { top: 46%; }
+  .st-tools .btn { width: 32px; height: 28px; }
+  .st-flowcap { right: 100px; font-size: 12.5px; padding: 8px 10px 11px; }
+  .st-keys { width: calc(100% - 24px); }
+}
