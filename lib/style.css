@@ -1494,3 +1494,9 @@ pre.code.folded { max-height: 372px; overflow-y: hidden; -webkit-mask-image: lin
   .tbl-wrap:has(table.t th:nth-child(3))::after { content: "↔ swipe for more columns"; display: block; position: sticky; left: 0; width: max-content; padding: 6px 12px 8px; font: 600 11px/1.2 var(--mono); color: var(--ink-3); }
 }
 @media (min-width: 760px) { .opts:has(> .opt:nth-child(3)) { grid-template-columns: 1fr 1fr; } .opts .opt { align-items: flex-start; } .opts .opt .opt-k { flex: none; } }
+
+/* plain-word definitions: a dotted underline on the first use of a term, a small card on hover, focus or tap */
+.gterm { text-decoration: underline dotted color-mix(in srgb, var(--accent) 70%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; cursor: help; border-radius: 3px; }
+.gterm:hover, .gterm:focus-visible { background: var(--accent-soft); outline: none; }
+.gl-pop { position: absolute; z-index: 60; padding: 10px 12px; border-radius: 10px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); box-shadow: 0 8px 28px rgba(0,0,0,.16); font-size: 14px; line-height: 1.45; pointer-events: none; }
+.gl-pop b { color: var(--ink); }
