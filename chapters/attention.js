@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { maskLab } from "../lib/labs.js";
 import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, toggle, bars } from "../lib/widgets.js";
@@ -94,6 +95,9 @@ export default function (root, { id }) {
         explain: "<p>If each component has variance 1, a dot product of two d-dimensional vectors has variance d. At d = 128, raw scores of ±20 would push softmax to put ~100% on one key, and its gradient would be almost zero everywhere else. Dividing by √d keeps the scores around unit size. Set the query length to 6 above to see the saturated regime.</p>",
       }),
     ),
+    section("Shape the mask",
+      prose("<p>The attention matrix in 3D. Each tower is how much one token attends to another. Dark tiles are masked: those scores are never computed. Switch patterns and compare how much of the square is left.</p>"),
+      maskLab()),
     section("Heads on a real sentence",
       prose("<p>A transformer layer runs many attention <b>heads</b> in parallel, each with its own query, key and value matrices, so each can specialise. Researchers looking inside trained models find recurring kinds of head (Clark et al. 2019; Olsson et al. 2022). The patterns below are hand-set to show those kinds. Click any row to inspect that token.</p>"),
       h("div.stage",

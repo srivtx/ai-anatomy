@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { moeLab } from "../lib/labs.js";
 import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, bars } from "../lib/widgets.js";
@@ -138,6 +139,9 @@ export default function (root, { id }) {
         explain: "<p>Routing collapse is self-reinforcing, so every practical MoE adds a balancing mechanism: auxiliary losses, bias adjustment, noisy routing, or expert-choice routing (each expert picks its top tokens instead, which balances by construction).</p>",
       }),
     ),
+    section("Route a token, in 3D",
+      prose("<p>One MoE layer. Pick a token and watch the router light up its top-k experts; tower height is the gate weight. Then change the number of experts and k, and watch total and used parameters come apart.</p>"),
+      moeLab()),
     section("Total vs active parameters",
       prose("<p>MoEs are described by two numbers. <b>Total</b> parameters must all sit in GPU memory. <b>Active</b> parameters are what each token actually uses, and they set the compute per token. Fine-grained designs (DeepSeekMoE) use many small experts plus a few <b>shared</b> experts every token visits.</p>"),
       h("div.stage",

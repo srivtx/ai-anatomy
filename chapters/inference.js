@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { fitLab } from "../lib/labs.js";
 import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
@@ -117,6 +118,9 @@ export default function (root, { id }) {
         explain: "<p>KV memory is proportional to the number of KV heads. GQA keeps all query heads but shares K and V across groups, which barely hurts quality. Multi-head latent attention (DeepSeek) compresses further. Set the heads to 32 above and compare.</p>",
       }),
     ),
+    section("Will it fit? Plan a deployment",
+      prose("<p>Put it together. Pick a model, a precision, how long each conversation is and how many people use it at once. Each block is 2 GB of GPU memory: purple is weights, orange is KV cache, red is what doesn't fit.</p>"),
+      fitLab()),
     section("The inference toolbox",
       table(["Technique", "Attacks", "Typical gain"], [
         ["Continuous batching + paged KV cache", "Idle slots, fragmented memory", "Several × throughput"],
