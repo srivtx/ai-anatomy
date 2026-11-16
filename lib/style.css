@@ -1930,8 +1930,10 @@ details.as-table > :not(summary) { margin: 0; }
   .st-app { height: auto; grid-template-columns: minmax(0, 1fr); }
   .st-view { height: 62vh; min-height: 360px; }
   .st-side { overflow: visible; padding: 0; }
-  .st-modes { width: 100%; }
-  .st-modes button { flex: 1 1 0; padding: 6px 8px; }
+  .st-modes { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .st-modes button { padding: 6px; gap: 6px; flex-direction: column; text-align: center; }
+  .st-mart { width: 32px; height: 24px; }
+  .st-mart svg { width: 32px; }
   .st-modes small { display: none; }
   .st-hud { max-width: calc(100% - 24px); bottom: 54px; }
   .st-hud span:nth-child(n+4) { display: none; }
