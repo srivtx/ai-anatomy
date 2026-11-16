@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { rfLab } from "../lib/labs.js";
 import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button, toggle } from "../lib/widgets.js";
@@ -150,6 +151,9 @@ export default function (root, { id }) {
         ["ViT", "2020", "No convolutions: patches + attention (see the vision chapter)"],
       ]),
     ),
+    section("The receptive field as a pyramid",
+      prose("<p>The same calculation, stacked. The bottom is the image, each slab is the patch one unit depends on after that layer, and the green block on top is the unit. Switch on stride 2 and watch the base explode.</p>"),
+      rfLab()),
     walk("cnn"),
     section("Why so few weights",
       whyChain({

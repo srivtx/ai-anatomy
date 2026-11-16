@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { sizeLab } from "../lib/labs.js";
 import { slider, stats, predict, code, callout, section, prose, table, dilemma } from "../lib/widgets.js";
 import { xyChart, fmtSI } from "../lib/plot.js";
 
@@ -58,6 +59,9 @@ export default function (root, { id }) {
         explain: "<p>Compute-optimal N and D both grow roughly as √C, so 4× compute means about 2× parameters and 2× tokens. Kaplan's earlier analysis had suggested putting most of it into model size; Chinchilla's more careful learning-rate schedules showed data matters as much.</p>",
       }),
     ),
+    section("See a model's shape",
+      prose("<p>A model's shape decides its size. Depth stacks more blocks; width makes every block bigger, and counts squared. Try the presets (drawn to the same scale), then read off what a compute-optimal training run, about 20 tokens per parameter, would cost.</p>"),
+      sizeLab()),
     section("But inference costs money too",
       prose("<p>Chinchilla minimises <i>training</i> compute. A model served to millions of people spends far more compute on inference over its lifetime, and inference cost scales with N. So labs now deliberately <b>overtrain</b> smaller models: Llama 3 8B saw 15 trillion tokens, about 1,900 tokens per parameter, almost 100× the Chinchilla ratio.</p>"),
       h("div.stage",

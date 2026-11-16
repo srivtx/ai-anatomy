@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { adderLab } from "../lib/labs.js";
 import { slider, stats, predict, code, callout, section, prose, table, segmented, stepper } from "../lib/widgets.js";
 import { flowCanvas } from "../lib/flow.js";
 import { goal, whyChain, stackMap, sticker } from "../lib/why.js";
@@ -274,6 +275,9 @@ export default function (root, { id }) {
       callout("note", "Carries are the slow part", "<p>Try 255 + 1: the carry ripples through all eight adders before the top bit is right. Real adders use <b>carry-lookahead</b> trees that compute all carries in about log₂(n) steps instead of n, spending more gates to save time. That trade (more transistors for less waiting) is the oldest move in chip design.</p>"),
     ),
     walk("logic"),
+    section("Watch a carry ripple",
+      prose("<p>An adder in 3D, adding the worst case. Drag time forward and watch each bit turn green as the carry reaches it. Then switch to carry lookahead and try 64 bits.</p>"),
+      adderLab()),
     section("Multipliers grow with the square of the bits",
       prose("<p>The walkthrough above multiplied two 4-bit numbers with 16 AND gates and a block of adders. An n-bit multiplier needs n² AND gates and about n² full adders. A floating-point number multiplies its fractions (24 bits in fp32, 8 in bf16, 4 in fp8 E4M3, counting the hidden leading 1) and just adds its exponents, which is cheap.</p>"),
       h("div.stage",

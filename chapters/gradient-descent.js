@@ -1,4 +1,5 @@
 import { h, loop, rng } from "../lib/core.js";
+import { gdLab } from "../lib/labs.js";
 import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, dilemma, callout, section, prose, button, table } from "../lib/widgets.js";
@@ -129,6 +130,9 @@ export default function (root, { id }) {
         explain: "<p>Stability is set by the <b>steepest</b> direction (step must be below about 2 / curvature), and speed by the <b>shallowest</b>. Their ratio, the condition number, is how slow plain GD is. Momentum and Adam attack that ratio in different ways: momentum accumulates speed along the floor, Adam rescales each coordinate.</p>",
       }),
     ),
+    section("Roll the ball yourself",
+      prose("<p>The loss as terrain (blue is low). Set the learning rate and watch the path. In the narrow valley, find the largest rate that still works, then switch on momentum and compare.</p>"),
+      gdLab()),
     section("Schedules: warm up, then cool down",
       prose("<p>Large models use a learning rate that changes over training. <b>Warmup</b> starts tiny because Adam's statistics are garbage in the first steps and early updates are huge. Then it <b>decays</b>, because near the end you want to settle into the valley floor, not bounce across it. Cosine decay was the default for years; <b>warmup-stable-decay</b> (WSD) holds the rate flat and decays only at the end, so you can branch off checkpoints from the flat part.</p>"),
       h("div.stage",
