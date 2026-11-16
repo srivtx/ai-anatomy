@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { bellmanLab } from "../lib/labs.js";
 import { goal, whyChain, sticker } from "../lib/why.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, toggle, bars } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
@@ -84,6 +85,9 @@ export default function (root, { id }) {
         ["Exploration", "Trying things that might be better", "Sampling temperature; diverse rollouts"],
       ]),
     ),
+    section("Watch value flow back",
+      prose("<p>Here is that backward flow, made visible. Each square's tower is its value V: how much reward the agent expects from there. Step the sweeps forward and watch value seep back from the goal through the corridors. Lower \u03b3 and the far end goes flat.</p>"),
+      bellmanLab()),
     section("Why delayed rewards still teach",
       whyChain({
         claim: "An agent can learn from a reward that arrives 100 moves after the move that earned it.",
