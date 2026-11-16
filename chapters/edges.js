@@ -139,6 +139,37 @@ export default function (root, { id }) {
     });
   }
 
+  // the candidates as a map: how close each is to products, coloured by the wall it attacks
+  const candCv = canvas(800, 252, "The candidate technologies placed by how close they are to products, coloured by which physical wall each attacks");
+  candCv.paint(() => {
+    candCv.clear(); const c = candCv.colors;
+    const wallCol = { size: c.c1, swing: c.c4, energy: c.good, wire: c.c6, other: c["ink-3"] };
+    const cols = ["Research", "Prototypes and start-ups", "First products", "Heading for production"];
+    const items = [
+      ["2D-material channels", "size", 0], ["Steep-slope switches", "swing", 0], ["Reversible logic", "energy", 0],
+      ["Photonic matrix multiply", "energy", 1], ["Analog in-memory compute", "wire", 1], ["Superconducting logic", "energy", 1],
+      ["Co-packaged optics", "wire", 2], ["Quantum computers", "other", 2],
+      ["Stacked transistors (CFET)", "size", 3],
+    ];
+    const cw = 190, gap = 4;
+    cols.forEach((nm, k) => {
+      const x = 10 + k * (cw + gap);
+      candCv.box(x, 8, cw, 186, { fill: c.surface, stroke: c.line, r: 10 });
+      candCv.text(nm, x + cw / 2, 26, { size: 11.5, align: "center" });
+      items.filter((it) => it[2] === k).forEach(([t, w], j) => {
+        const y = 44 + j * 50, col = wallCol[w];
+        candCv.box(x + 10, y, cw - 20, 40, { fill: `color-mix(in srgb, ${col} 22%, ${c.surface})`, stroke: col, lw: 1.2, r: 6 });
+        candCv.text(t, x + cw / 2, y + 20, { size: 10.5, align: "center" });
+      });
+    });
+    candCv.line(20, 204, 780, 204, { color: c["ink-3"], lw: 1.5 });
+    candCv.line(780, 204, 772, 199, { color: c["ink-3"], lw: 1.5 }); candCv.line(780, 204, 772, 209, { color: c["ink-3"], lw: 1.5 });
+    candCv.text("closer to a chip you can buy →", 776, 216, { size: 9.5, color: c["ink-3"], align: "right" });
+    [["size", "size"], ["swing", "switch steepness"], ["energy", "energy per operation"], ["wire", "moving data"], ["other", "a different kind of problem"]].forEach(([w, nm], i) => {
+      const x = 20 + i * 150; candCv.box(x, 230, 12, 12, { fill: `color-mix(in srgb, ${wallCol[w]} 22%, ${c.surface})`, stroke: wallCol[w], lw: 1.2, r: 3 }); candCv.text(nm, x + 18, 236, { size: 10.5, color: c["ink-2"] });
+    });
+  });
+
   root.append(
     section(null,
       goal("<p>Every chapter so far ended at a law of physics. This one asks the question the whole industry is asking: <b>how much room is left before each law becomes a wall</b>, which walls are physics and which are only engineering, and what nobody yet knows how to do. Some limits are close (the steepness of a switch), some are far (energy per operation), and some (wires, heat) are now the real bottleneck.</p>",
@@ -185,6 +216,7 @@ export default function (root, { id }) {
     ),
     section("The candidates",
       prose("<p>What might carry computing past the current walls, what each would fix, and what is still unsolved. Status as of the mid-2020s.</p>"),
+      h("div.stage", h("div.stage-body", h("div.wide-canvas", candCv.el))),
       table(["Idea", "Would fix", "Unsolved", "Status"], CAND),
     ),
     section("What nobody knows yet",
