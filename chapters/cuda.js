@@ -171,7 +171,50 @@ export default function (root, { id }) {
     wst.set(0, fmtT(cpu)); wst.set(1, fmtT(gpu)); wst.set(2, fmtT(copy), copy > kern * 3 ? "bad" : "");
     wst.set(3, fmtT(launch), launch > kern ? "warn" : "");
     wst.set(4, gpu < cpu ? `GPU, ${(cpu / gpu).toFixed(1)}× faster` : `CPU, ${(gpu / cpu).toFixed(1)}× faster`, gpu < cpu ? "good" : "bad");
+    const times = (n) => {
+      const c1 = Math.max((n * F) / 1e12, (n * B) / 100e9), cp = wt.resident ? 0 : (n * 12) / 25e9;
+      return [c1, launch + cp + Math.max((n * F) / 50e12, (n * B) / 3e12)];
+    };
+    wc.paint(() => {
+      wc.clear(); const c = wc.colors;
+      // left: one run, drawn to scale
+      wc.box(10, 8, 420, 264, { fill: c.surface, stroke: c.line, r: 10 });
+      wc.text("One run, to scale", 24, 26, { size: 12 });
+      const T = Math.max(cpu, gpu) * 1.02, x0 = 70, x1 = 412, X = (t) => x0 + (t / T) * (x1 - x0);
+      wc.text("CPU", 24, 76, { size: 11 }); wc.box(x0, 66, Math.max(2, X(cpu) - x0), 20, { fill: `color-mix(in srgb, ${c.c1} 70%, transparent)`, stroke: "transparent", r: 3 });
+      wc.text(fmtT(cpu), Math.min(X(cpu) + 6, 412), 98, { size: 10, mono: true, align: X(cpu) > 340 ? "right" : "left" });
+      wc.text("GPU", 24, 140, { size: 11 });
+      const cin = wt.resident ? 0 : (N * 8) / 25e9, cout = wt.resident ? 0 : (N * 4) / 25e9;
+      const segs = [["copy in", cin, c.c6], ["launch", launch, c.warn], ["kernel", kern, c.good], ["copy out", cout, c.c6]];
+      let t = 0;
+      for (const [, d, col] of segs) { if (d > 0) wc.box(X(t), 130, Math.max(1.5, X(t + d) - X(t) - 1), 20, { fill: `color-mix(in srgb, ${col} 70%, transparent)`, stroke: "transparent", r: 3 }); t += d; }
+      wc.text(fmtT(gpu), Math.min(X(gpu) + 6, 412), 162, { size: 10, mono: true, align: X(gpu) > 340 ? "right" : "left" });
+      let kx = 24;
+      for (const [nm, d, col] of segs.slice(0, 3)) { wc.box(kx, 196, 10, 10, { fill: `color-mix(in srgb, ${col} 70%, transparent)`, stroke: "transparent", r: 2 }); wc.text(nm === "copy in" ? "PCIe copies" : nm, kx + 15, 201, { size: 10, color: c["ink-2"] }); kx += nm === "copy in" ? 100 : 80; }
+      const share = (cin + cout) / gpu;
+      wc.text(wt.resident ? "data already on the GPU: no copies" : `copies are ${(share * 100).toFixed(0)}% of the GPU's time`, 24, 236, { size: 11, color: share > 0.5 ? c.bad : c["ink-2"] });
+      wc.text(gpu < cpu ? `GPU wins by ${(cpu / gpu).toFixed(1)}×` : `CPU wins by ${(gpu / cpu).toFixed(1)}×`, 24, 256, { size: 12, color: gpu < cpu ? c.good : c.bad });
+      // right: time against problem size, log-log, so the crossover shows
+      wc.box(442, 8, 348, 264, { fill: c.surface, stroke: c.line, r: 10 });
+      wc.text("Time against problem size", 456, 26, { size: 12 });
+      const lx0 = 490, lx1 = 776, ly0 = 236, ly1 = 44, ns = [];
+      for (let e = 2; e <= 9; e += 0.1) ns.push(10 ** e);
+      const all = ns.flatMap(times), lo = Math.log10(Math.min(...all)), hi = Math.log10(Math.max(...all));
+      const LX = (n) => lx0 + ((Math.log10(n) - 2) / 7) * (lx1 - lx0), LY = (v) => ly0 - ((Math.log10(v) - lo) / (hi - lo)) * (ly0 - ly1);
+      for (const e of [2, 4, 6, 8]) { wc.line(LX(10 ** e), ly1, LX(10 ** e), ly0, { color: c.line, lw: 1 }); wc.text(`10${"⁰¹²³⁴⁵⁶⁷⁸⁹"[e]}`, LX(10 ** e), ly0 + 12, { size: 9.5, color: c["ink-3"], align: "center", mono: true }); }
+      wc.text("elements →", lx1, ly0 + 26, { size: 9.5, color: c["ink-3"], align: "right" });
+      wc.text("time ↑ (log)", lx0 - 4, ly1 - 8, { size: 9.5, color: c["ink-3"] });
+      [[0, c.c1, "CPU"], [1, c.good, "GPU"]].forEach(([k, col, nm]) => {
+        const ctx = wc.ctx; ctx.beginPath(); ns.forEach((n, i) => { const y = LY(times(n)[k]); i ? ctx.lineTo(LX(n), y) : ctx.moveTo(LX(n), y); });
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+        const yl = LY(times(100)[k]); const below = yl > LY(times(100)[1 - k]), yt = below && yl + 12 > ly0 - 10 ? yl - 12 : yl + (below ? 12 : -12); wc.text(nm, lx0 + (below && yt < yl ? 40 : 4), yt, { size: 10.5, color: col });
+      });
+      wc.line(LX(N), ly1, LX(N), ly0, { color: c.accent, lw: 1.2, dash: [3, 3] });
+      wc.dot(LX(N), LY(cpu), 4.5, c.c1); wc.dot(LX(N), LY(gpu), 4.5, c.good);
+      wc.text("you", LX(N) + 5, ly1 + 6, { size: 10, color: c.accent });
+    });
   }
+  const wc = canvas(800, 280, "CPU against GPU time for one run, split into copies, launch and kernel, and both times against problem size");
 
   root.append(
     section(null,
@@ -242,7 +285,7 @@ export default function (root, { id }) {
           slider({ label: "Elements", min: 2, max: 9, step: 0.5, value: wt.n, fmt: sciS, onInput: (v) => { wt.n = v; drawW(); } }),
           slider({ label: "Operations per element", min: 1, max: 2000, value: wt.flops, onInput: (v) => { wt.flops = v; drawW(); } }),
           toggle({ label: "Data already on the GPU", checked: wt.resident, onChange: (v) => { wt.resident = v; drawW(); } })),
-        h("div.stage-body", wst.el)),
+        h("div.stage-body", h("div.wide-canvas", wc.el), wst.el)),
       callout("note", "Three lessons in one widget", "<p><b>Small problems stay on the CPU</b>: below about 10⁴ elements, the 5 µs launch alone loses. <b>Copying kills cheap work</b>: with the data on the CPU, an elementwise add is limited by PCIe, and the CPU wins. <b>Keep data resident</b>: tick the box and the GPU wins by 30× even for simple operations, because HBM is 30× faster than CPU memory. This is why models are loaded onto the GPU once and stay there, and why AI frameworks fuse many small operations into one kernel.</p>"),
     ),
     section("Ways to program it",
