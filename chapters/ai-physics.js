@@ -82,7 +82,54 @@ export default function (root, { id }) {
     cst.set(0, `${sci(F)} FLOPs`);
     cst.set(1, dur(F / 2), "bad"); cst.set(2, dur(F / 1e11), "bad"); cst.set(3, dur(F / 1.58e12), "warn");
     cst.set(4, dur(F / 989e12), "warn"); cst.set(5, dur(F / (1e4 * 989e12 * 0.4)), "good");
+    ccv.paint(() => {
+      ccv.clear(); const c = ccv.colors;
+      ccv.box(10, 8, 780, 254, { fill: c.surface, stroke: c.line, r: 10 });
+      ccv.text(`Time to train: ${sci(F)} FLOPs (log scale, each gridline is 1,000×)`, 24, 26, { size: 12 });
+      const x0 = 200, x1 = 770, lo = -4, hi = 26, X = (sec) => x0 + ((Math.log10(Math.max(sec, 1e-4)) - lo) / (hi - lo)) * (x1 - x0);
+      const marks = [[1, "1 s"], [3600, "1 hour"], [86400 * 30, "1 month"], [3.15e7 * 80, "a lifetime"], [4.35e17, "age of the universe"]];
+      marks.forEach(([t, nm], i) => { ccv.line(X(t), 44, X(t), 222, { color: c["ink-3"], lw: 1, dash: [3, 4] }); ccv.text(nm, X(t), 236 + (i % 2) * 14, { size: 9.5, color: c["ink-3"], align: "center" }); });
+      const rows = [["By hand, 1 per second", F / 2, c.bad], ["One CPU core", F / 1e11, c.bad], ["GTX 580 (2012)", F / 1.58e12, c.warn], ["One H100", F / 989e12, c.warn], ["10,000 H100s", F / (1e4 * 989e12 * 0.4), c.good]];
+      rows.forEach(([nm, t, col], i) => {
+        const y = 52 + i * 34;
+        ccv.text(nm, x0 - 10, y + 9, { size: 11, align: "right", color: c["ink-2"] });
+        const w = Math.max(3, Math.min(x1, X(t)) - x0);
+        ccv.box(x0, y, w, 18, { fill: `color-mix(in srgb, ${col} 65%, transparent)`, stroke: "transparent", r: 4 });
+        const lab = dur(t), inside = w > 140;
+        ccv.text(lab, inside ? x0 + w - 8 : x0 + w + 8, y + 9, { size: 10.5, align: inside ? "right" : "left", color: c.ink });
+      });
+    });
   }
+  // CPU and GPU dies, schematic: where each spends its transistors
+  const dieCv = canvas(800, 250, "Schematic of a CPU die and a GPU die: the CPU spends its area on a few big cores with large control logic and caches, the GPU on thousands of small arithmetic units");
+  dieCv.paint(() => {
+    dieCv.clear(); const c = dieCv.colors;
+    const alu = `color-mix(in srgb, ${c.good} 60%, transparent)`, ctl = `color-mix(in srgb, ${c.c4} 65%, transparent)`, cache = `color-mix(in srgb, ${c.c1} 40%, transparent)`;
+    const panel = (x, title, sub) => { dieCv.box(x, 8, 380, 210, { fill: c.surface, stroke: c.line, r: 10 }); dieCv.text(title, x + 14, 26, { size: 12 }); dieCv.text(sub, x + 14, 42, { size: 10, color: c["ink-3"] }); };
+    panel(10, "CPU: a few big cores", "make one stream of instructions finish fast");
+    for (let k = 0; k < 4; k++) {                          // four cores, each mostly control and cache
+      const x = 24 + (k % 2) * 176, y = 54 + Math.floor(k / 2) * 64;
+      dieCv.box(x, y, 168, 58, { fill: c.sunken, stroke: c.line, lw: 1, r: 4 });
+      dieCv.box(x + 4, y + 4, 92, 50, { fill: ctl, stroke: "transparent", r: 3 });
+      dieCv.text("control, prediction,", x + 50, y + 22, { size: 9, align: "center", color: c.ink });
+      dieCv.text("out-of-order", x + 50, y + 35, { size: 9, align: "center", color: c.ink });
+      for (let a = 0; a < 4; a++) dieCv.box(x + 100 + (a % 2) * 33, y + 4 + Math.floor(a / 2) * 26, 30, 22, { fill: alu, stroke: "transparent", r: 3 });
+    }
+    dieCv.box(24, 184, 344, 26, { fill: cache, stroke: "transparent", r: 4 }); dieCv.text("big shared cache", 196, 197, { size: 10, align: "center" });
+    panel(410, "GPU: thousands of small units", "make millions of independent steps finish in bulk");
+    for (let r = 0; r < 8; r++) {
+      const y = 54 + r * 16;
+      dieCv.box(424, y, 10, 13, { fill: ctl, stroke: "transparent", r: 2 });
+      for (let k = 0; k < 28; k++) dieCv.box(438 + k * 12, y, 10, 13, { fill: alu, stroke: "transparent", r: 2 });
+    }
+    dieCv.box(424, 184, 352, 26, { fill: cache, stroke: "transparent", r: 4 }); dieCv.text("smaller cache per unit of math", 600, 197, { size: 10, align: "center" });
+    // key
+    [[alu, "arithmetic (multiply-add units)"], [ctl, "control: deciding what to run"], [cache, "cache memory"]].forEach(([col, nm], i) => {
+      const x = 24 + i * 230; dieCv.box(x, 230, 12, 12, { fill: col, stroke: "transparent", r: 2 }); dieCv.text(nm, x + 18, 236, { size: 10.5, color: c["ink-2"] });
+    });
+    dieCv.text("schematic, not to scale", 776, 236, { size: 9.5, color: c["ink-3"], align: "right" });
+  });
+  const ccv = canvas(800, 270, "How long training takes by hand, on one CPU core, on a 2012 GPU, on one H100 and on ten thousand, on a log time scale with a second, an hour, a month, a lifetime and the age of the universe marked");
   const setModel = (N, D) => { cm.N = N; cm.D = D; nSl.value = Math.log10(N); dSl.value = Math.log10(D); drawCount(); };
 
   root.append(
@@ -125,7 +172,7 @@ export default function (root, { id }) {
       prose("<p>A layer that turns 4,096 numbers into 4,096 numbers does 4,096 × 4,096 ≈ 16.8 million multiply-adds per token. A model with N weights does about 2N floating-point operations (FLOPs: one multiply plus one add per weight) per token going forward, and training costs about three times that once the backward pass is included: <b>6 × N × tokens</b>. Pick a model and see how long that takes at different speeds.</p>"),
       h("div.stage",
         h("div.stage-controls", nSl, dSl, h("div.btn-row", button("GPT-2 (1.5B, ~10B tokens, est.)", () => setModel(1.5e9, 1e10)), button("GPT-3 (175B, 300B tokens)", () => setModel(175e9, 300e9)), button("Llama 3 70B (15T tokens)", () => setModel(70e9, 15e12)), button("Llama 3.1 405B (15.6T)", () => setModel(405e9, 15.6e12)))),
-        h("div.stage-body", cst.el)),
+        h("div.stage-body", h("div.wide-canvas", ccv.el), cst.el)),
       callout("note", "What the numbers say", "<p>GPT-3's 3 × 10²³ FLOPs would take a person far longer than the age of the universe, one CPU core about a hundred thousand years, and one H100 about ten years. It only becomes weeks when you run <b>thousands of chips, each doing a million billion operations a second</b>. That is the whole hardware problem, and it's why the rest of this level exists. (The FLOP counts are the standard 6ND estimate; real runs also lose time to communication and restarts.)</p>"),
       predict({
         chapter: id,
@@ -136,6 +183,7 @@ export default function (root, { id }) {
       }),
     ),
     section("Why it's a GPU and not a faster CPU",
+      h("div.stage", h("div.stage-body", h("div.wide-canvas", dieCv.el))),
       prose("<p>A CPU spends most of its transistors making <b>one</b> stream of instructions finish quickly: big caches, branch predictors, out-of-order logic. A GPU spends them on <b>thousands of arithmetic units</b> that each do the same simple step on different numbers. The work above is millions of independent multiply-adds, the GPU's shape exactly. Graphics happened to need the same shape first (every pixel of a frame is computed by the same small program), which is why gaming cards were ready when AI needed them. Dig into why, all the way down:</p>"),
       whyChain({
         claim: "AI runs on GPUs.",
