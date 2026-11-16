@@ -2091,4 +2091,5 @@ details.as-table > :not(summary) { margin: 0; }
 .st-myth[open] summary span:last-child::after { content: ""; }
 .st-myth p { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
 @media (max-width: 900px) { .st-flowp { display: none; } .st-flowf span:nth-child(n+3) { display: none; } }
-.st-flowcap.top { bottom: auto; top: 50px; }
+.st-flowcap { max-width: 520px; }
+.st-flowt { font-size: 13px; }
