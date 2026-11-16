@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, stepper } from "../lib/widgets.js";
 import { xyChart, plane, fmtBytes } from "../lib/plot.js";
@@ -126,7 +127,9 @@ export default function (root, { id }) {
   const scanTable = (lv) => table(["t", ...as.map((_, i) => String(i + 1))], [["(A, B)", ...levels[lv].map(fmt)], ["h_t = B (h₀ = 0)", ...levels[lv].map((p, i) => (lv === 3 || i < 2 ** lv ? p[1].toFixed(3) : "…"))]], { boldFirst: true });
 
   root.append(
-    section(null, prose(`<p>Attention compares every token with every other: cost grows with the square of the length, and the KV cache grows with every token generated. <b>State space models</b> go back to the idea of an RNN, a fixed-size state updated once per token, but with a structure that trains in parallel like a transformer. <b>Mamba</b> (Gu and Dao, 2023) added the missing ingredient, <b>selectivity</b>, and made SSMs competitive with transformers on language at small and medium scale. Today they're mostly used in <b>hybrids</b> that keep a few attention layers.</p>`)),
+    section(null, goal("<p>Attention's cost grows with the square of the length, and its memory with every token. We want a model whose <b>memory stays one fixed size</b> however long the input, and that still <b>trains in parallel</b>.</p>", ["a fixed-size state updated once per token", "an update that runs as a parallel scan", "a way to choose what to keep and what to forget"]),
+      prose(`<p>Attention compares every token with every other: cost grows with the square of the length, and the KV cache grows with every token generated. <b>State space models</b> go back to the idea of an RNN, a fixed-size state updated once per token, but with a structure that trains in parallel like a transformer. <b>Mamba</b> (Gu and Dao, 2023) added the missing ingredient, <b>selectivity</b>, and made SSMs competitive with transformers on language at small and medium scale. Today they're mostly used in <b>hybrids</b> that keep a few attention layers.</p>`),
+      h("div.vx-row", sticker("ssm", { title: "A fixed-size state", caption: "it rides along the sequence; grey tokens are folded in, not stored", px: 4 }), sticker("kvcache", { title: "versus a KV cache", caption: "which keeps every past token, in every layer", px: 3 }))),
     section("A linear recurrence is a convolution",
       prose("<p>The simplest SSM: h<sub>t</sub> = a·h<sub>t−1</sub> + (1 − a)·x<sub>t</sub>. Because it's linear, you can unroll it: the output is the input convolved with a kernel that decays as a<sup>k</sup>. That's the trick behind S4 (Gu et al., 2021): run it as a <b>convolution</b> during training (parallel over the whole sequence) and as a <b>recurrence</b> during generation (constant work per token). Real SSMs use thousands of such channels, each with its own decay, in vector-and-matrix form.</p>"),
       h("div.stage",
@@ -176,6 +179,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("ssm-mamba"),
+    section("Why the state never grows",
+      whyChain({
+        claim: "An SSM makes each new token with the same memory and compute, whether the text is a thousand tokens long or a million.",
+        steps: [
+          { q: "Why constant?", a: "<p>Its whole memory is one state of fixed size (say 16 numbers per channel). Each token updates it, h_t = A·h_{t−1} + B·x_t, and is then thrown away. A transformer keeps every past key and value instead.</p>" },
+          { q: "Then why did RNNs train slowly but SSMs don't?", a: "<p>When the update is linear in h (no tanh inside the loop), steps can be combined in any grouping: two steps compose into one step of the same form. A <b>parallel scan</b> uses that to do n steps in about log₂ n rounds on a GPU.</p>" },
+          { q: "What's the catch?", a: "<p>A fixed state is a compressed summary, so exact recall of something from long ago (a phone number on page 3) is hard. Mamba makes A and B depend on the input (it's <i>selective</i>) to decide what to keep, and many recent models mix a few attention layers back in.</p>" },
+        ],
+        axiom: { name: "Associativity", html: "<p>(a ∘ b) ∘ c = a ∘ (b ∘ c). If combining steps is associative, you can combine them in any grouping: as a tree instead of a chain, and so in parallel. That's why sums, products and linear updates parallelise, and a general nonlinear recurrence doesn't.</p>" },
+      })),
     section("In code",
       code({
         "Selective scan (reference)": `def selective_scan(x, delta, A, B, C):

@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, stepper, bars } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
@@ -74,7 +75,9 @@ export default function (root, { id }) {
   }
 
   root.append(
-    section(null, prose(`<p>SFT teaches a model to imitate good answers. But it's often easier for people to <b>judge</b> answers than to write perfect ones. <b>RLHF</b> (reinforcement learning from human feedback) turns judgements into a training signal. It's the recipe that turned GPT-3 into InstructGPT and ChatGPT (Ouyang et al., 2022), building on Christiano et al. (2017).</p>`)),
+    section(null, goal("<p>We want a model that gives the answers people actually prefer. Writing perfect answers is hard; <b>judging which of two answers is better</b> is easy. So turn judgements into a training signal.</p>", ["pairs of answers ranked by people", "a reward model that predicts those rankings", "an update that raises reward without wrecking the model"]),
+      prose(`<p>SFT teaches a model to imitate good answers. But it's often easier for people to <b>judge</b> answers than to write perfect ones. <b>RLHF</b> (reinforcement learning from human feedback) turns judgements into a training signal. It's the recipe that turned GPT-3 into InstructGPT and ChatGPT (Ouyang et al., 2022), building on Christiano et al. (2017).</p>`),
+      h("div.vx-row", sticker("judge", { title: "Which is better?", caption: "people compare two answers; a reward model (purple) learns to predict the winner", px: 4 }))),
     section("The three steps",
       stepper([
         { title: "1. Supervised fine-tuning", html: "<p>Start from a base model and fine-tune on demonstrations (previous chapter). This is the starting policy, and also the frozen <b>reference</b> model used later.</p>" },
@@ -113,6 +116,16 @@ export default function (root, { id }) {
       }),
     ),
     walk("rlhf-ppo"),
+    section("Why RLHF holds the model back",
+      whyChain({
+        claim: "RLHF keeps the model close to where it started, on purpose, with a KL penalty.",
+        steps: [
+          { q: "Why not just maximise the reward?", a: "<p>The reward model is a learned guess at human taste, trained on limited data. Push hard enough and the policy finds answers it scores highly but people don't like: overlong, flattering, oddly formatted. That's <b>reward hacking</b>.</p>" },
+          { q: "Why does staying close help?", a: "<p>The reward model is only accurate near the kind of answers it was trained on, which came from the starting model. A penalty on the KL divergence from that model keeps the policy where the reward can be trusted.</p>" },
+          { q: "Why does PPO clip its updates too?", a: "<p>A batch of samples is only a fair estimate for the policy that produced it. Clipping the probability ratio to about [0.8, 1.2] stops one update from moving so far that the estimate no longer applies.</p>" },
+        ],
+        axiom: { name: "Goodhart's law", html: "<p>“When a measure becomes a target, it ceases to be a good measure.” A proxy tracks what you want only over the range where it was checked; optimise it hard and you leave that range. It holds for reward models, benchmarks and company targets alike.</p>" },
+      })),
     section("In code",
       code({
         "Reward model loss": `def reward_loss(rm, chosen_ids, rejected_ids):

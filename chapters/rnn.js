@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, bars } from "../lib/widgets.js";
 import { xyChart, heatmap } from "../lib/plot.js";
@@ -69,7 +70,9 @@ export default function (root, { id }) {
   const GS = (label, key, min, max, hint) => slider({ label, min, max, step: 0.05, value: g[key], fmt: (v) => v.toFixed(2), hint, onInput: (v) => { g[key] = v; drawLSTM(); } });
 
   root.append(
-    section(null, prose(`<p>Text, audio and time series arrive in order, and their length varies. A <b>recurrent neural network</b> reads one element at a time and carries a <b>hidden state</b>: a vector summarising everything it has seen so far. At each step, <code>h_t = tanh(W_h · h_{t−1} + W_x · x_t)</code>. The same weights are reused at every step, so it works for any length.</p>`)),
+    section(null, goal("<p>Text, speech and sensor data arrive <b>in order</b>, at any length. We want a network that reads one item at a time and <b>remembers</b> what it has seen, with the same number of weights however long the input is.</p>", ["a memory carried from step to step", "the same weights reused at every step", "gradients that survive the trip back through time"]),
+      prose(`<p>Text, audio and time series arrive in order, and their length varies. A <b>recurrent neural network</b> reads one element at a time and carries a <b>hidden state</b>: a vector summarising everything it has seen so far. At each step, <code>h_t = tanh(W_h · h_{t−1} + W_x · x_t)</code>. The same weights are reused at every step, so it works for any length.</p>`),
+      h("div.vx-row", sticker("recur", { title: "A recurrent net, unrolled", caption: "the same cell at every step; the yellow state is handed along", px: 4 }))),
     section("Watch the state evolve",
       prose("<p>Type below. Each column is the 8-number hidden state after reading that character (darker = higher). The bars underneath show how much the state <i>would</i> change if only the <b>first</b> character were different: that's how much the network still remembers it.</p>"),
       h("div.stage",
@@ -107,6 +110,16 @@ export default function (root, { id }) {
       prose("<p>Why attention won: an RNN must squeeze the whole past into one fixed-size vector and can only be trained one step after another. Attention lets every position look directly at every other (path length 1) and trains in parallel on GPUs. The price is cost that grows with the square of the length, which is why recurrent ideas keep returning.</p>"),
     ),
     walk("rnn"),
+    section("Why plain RNNs forget",
+      whyChain({
+        claim: "A plain RNN forgets what it saw more than a few dozen steps ago.",
+        steps: [
+          { q: "Why does it forget?", a: "<p>To learn from step 1 when the error shows up at step 50, the gradient has to travel back through 49 copies of the cell. Each copy multiplies it by the same recurrent matrix, and by tanh′, which is at most 1.</p>" },
+          { q: "Why does repeated multiplying kill it?", a: "<p>If the matrix stretches by less than 1, the gradient shrinks geometrically: 0.9⁴⁹ ≈ 0.006. More than 1, and it explodes. Only exactly 1 keeps it, and training can't hold it there.</p>" },
+          { q: "How did LSTMs fix it?", a: "<p>They add a separate cell state updated by <b>addition</b>: c_t = f·c_{t−1} + i·g, with a learned forget gate f. When f ≈ 1 the gradient along c passes through almost unchanged. It's an additive highway, the same trick residual connections later used for depth.</p>" },
+        ],
+        axiom: { name: "Long products drift to 0 or infinity", html: "<p>Multiply n numbers each a little off 1 and the result shrinks or grows exponentially: (1 ± ε)ⁿ ≈ e^(±εn). An RNN run over time is a very deep network with shared weights, so it meets the same problem as depth, and the same cure works: make the main path a sum, not a product.</p>" },
+      })),
     section("In code",
       code({
         PyTorch: `import torch, torch.nn as nn

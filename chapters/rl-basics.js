@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, toggle, bars } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
 import { gauss, softmax } from "../lib/nn.js";
@@ -47,8 +48,10 @@ export default function (root, { id }) {
   const lp = loop(() => { for (let k = 0; k < 6; k++) step(); draw(); if (t >= 2000) lp.stop(); }, chart.el);
 
   root.append(
-    section(null, prose(`<p>Supervised learning is told the right answer. Reinforcement learning is only told how <b>good</b> its answer was, often much later. An <b>agent</b> takes <b>actions</b> in an <b>environment</b>, receives <b>rewards</b>, and must learn a <b>policy</b> (what to do in each situation) that maximises total reward. Two problems appear immediately: <b>exploration</b> (you can't know an action is good without trying it) and <b>credit assignment</b> (which of your many actions earned that reward?).</p>
-<p>The smallest RL problem has no states at all: a row of slot machines (“arms”) with unknown payouts. It's called the <b>multi-armed bandit</b>, and it already contains the exploration dilemma.</p>`)),
+    section(null, goal("<p>We want an agent that learns to act when nobody tells it the right move, only a <b>score, often much later</b>. It has to work out which of its earlier moves earned the reward.</p>", ["a way to try new things (explore)", "an estimate of how good each situation is", "credit passed back to earlier moves"]),
+      prose(`<p>Supervised learning is told the right answer. Reinforcement learning is only told how <b>good</b> its answer was, often much later. An <b>agent</b> takes <b>actions</b> in an <b>environment</b>, receives <b>rewards</b>, and must learn a <b>policy</b> (what to do in each situation) that maximises total reward. Two problems appear immediately: <b>exploration</b> (you can't know an action is good without trying it) and <b>credit assignment</b> (which of your many actions earned that reward?).</p>
+<p>The smallest RL problem has no states at all: a row of slot machines (“arms”) with unknown payouts. It's called the <b>multi-armed bandit</b>, and it already contains the exploration dilemma.</p>`),
+      h("div.vx-row", sticker("maze", { title: "Find the flag", caption: "the agent (purple) only learns it did well when it reaches the goal", px: 4 }))),
     section("Three ways to play a bandit",
       prose("<p>Three agents play the same five arms side by side. <b>ε-greedy</b> usually picks the arm with the best average so far, but explores at random with probability ε. <b>UCB</b> adds an optimism bonus to arms it has tried rarely. <b>Policy gradient</b> keeps a probability for every arm and nudges up the probability of actions that did better than average. That last one is the seed of everything from PPO to GRPO.</p>"),
       h("div.stage",
@@ -81,6 +84,16 @@ export default function (root, { id }) {
         ["Exploration", "Trying things that might be better", "Sampling temperature; diverse rollouts"],
       ]),
     ),
+    section("Why delayed rewards still teach",
+      whyChain({
+        claim: "An agent can learn from a reward that arrives 100 moves after the move that earned it.",
+        steps: [
+          { q: "How can it know which move mattered?", a: "<p>It learns a <b>value</b>: how much future reward to expect from each state. Then each move can be judged at once: did it land in a state worth more or less than expected? That surprise, r + γV(s′) − V(s), is the learning signal.</p>" },
+          { q: "Why does that pass credit backwards?", a: "<p>Each update pulls V(s) toward the reward plus the value of the next state. The value at the goal spreads to the step before it, then the step before that, one update at a time, like water filling back along a path.</p>" },
+          { q: "Why the discount γ?", a: "<p>It makes near rewards count more and keeps an endless sum finite. With γ = 0.99, a reward 100 steps away is worth 0.99¹⁰⁰ ≈ 0.37 of the same reward now.</p>" },
+        ],
+        axiom: { name: "Bellman's principle of optimality", html: "<p>Whatever the first step of an optimal plan, the rest of the plan must be optimal from where that step lands (Bellman, 1957). So the value of a state is the best immediate reward plus the discounted value of where you end up: V(s) = max over actions of [r + γ·V(s′)]. Every RL method estimates this equation one way or another.</p>" },
+      })),
     section("In code",
       code({
         PyTorch: `import torch
