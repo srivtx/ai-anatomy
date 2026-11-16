@@ -110,6 +110,22 @@ if (!only || only === "studio") {
     await p.click(".st-play"); await p.waitForTimeout(1200); await p.click(".st-fb.x");
     if (!(await p.$eval(".st-flowcap", (el) => el.hidden))) throw new Error("close did not close");
   });
+  // time machine, change log, pin and compare, the sticker book, a saved picture, number keys
+  await visit("/studio?m=gpt2", "studio time machine and stickers", async (p) => {
+    await p.click(".st-tl li >> nth=1 >> button"); await p.waitForTimeout(500);
+    if (!(await p.$(".st-jump .st-chg li"))) throw new Error("timeline jump shows no changes");
+    await p.click(".st-pinbtn"); await p.click(".st-blocks button >> nth=0"); await p.waitForTimeout(200);
+    if (!(await p.$(".st-cmpt tbody tr"))) throw new Error("no compare table");
+    if (!(await p.$(".st-log .st-chg li"))) throw new Error("no change log");
+    await p.click(".st-cmp button >> nth=0"); await p.waitForTimeout(200);
+    await p.click(".st-tlh .btn"); await p.waitForTimeout(1500); await p.click(".st-tlh .btn");
+    const [dl] = await Promise.all([p.waitForEvent("download"), p.click('.st-tools .btn[title^="Save"]')]);
+    if (!(await dl.suggestedFilename()).endsWith(".png")) throw new Error("picture is not a png");
+    await p.click(".st-bookbtn"); if (!(await p.$(".stk-grid li[data-got='1']"))) throw new Error("no sticker earned");
+    await p.keyboard.press("Escape"); await p.keyboard.press("2");
+    if ((await p.$eval(".st-tabs [aria-selected='true']", (e) => e.textContent)).indexOf("Predict") < 0) throw new Error("key 2 did not open Predict");
+  });
+  for (const m of ["gpt3", "llama2"]) await visit(`/studio?m=${m}`, `studio ${m}`);
   await visit("/studio?mode=learn&lv=mlp", "studio guess and mix-up", async (p) => {
     await p.click(".st-guess-o button >> nth=1"); if (!(await p.$(".st-guess-why"))) throw new Error("guess did not reveal");
     await p.click(".st-myth summary");
