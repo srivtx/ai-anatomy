@@ -2035,3 +2035,12 @@ details.as-table > :not(summary) { margin: 0; }
   .st-flowcap { right: 100px; font-size: 12.5px; padding: 8px 10px 11px; }
   .st-keys { width: calc(100% - 24px); }
 }
+
+.st-stamp { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) rotate(-4deg); z-index: 4; pointer-events: none; display: grid; justify-items: center; gap: 2px;
+  padding: 14px 26px 12px; border-radius: 16px; background: var(--surface); border: 3px solid var(--ink); box-shadow: 0 6px 0 var(--ink); animation: stStampIn .45s cubic-bezier(.2, 1.6, .4, 1); }
+.st-stamp b { font: 700 26px/1.1 var(--display); color: var(--accent); }
+.st-stamp small { font: 600 12.5px/1.3 var(--body); color: var(--ink-2); }
+.st-stamp-m svg { width: 64px; height: auto; }
+.st-stamp.out { transition: opacity .45s, transform .45s; opacity: 0; transform: translate(-50%, -60%) rotate(-4deg) scale(.9); }
+@keyframes stStampIn { from { transform: translate(-50%, -50%) rotate(-14deg) scale(2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .st-stamp { animation: none; } }
