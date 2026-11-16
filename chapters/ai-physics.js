@@ -169,7 +169,7 @@ export default function (root, { id }) {
       ]),
     ),
     section("Count the multiply-adds",
-      prose("<p>A layer that turns 4,096 numbers into 4,096 numbers does 4,096 × 4,096 ≈ 16.8 million multiply-adds per token. A model with N weights does about 2N floating-point operations (FLOPs: one multiply plus one add per weight) per token going forward, and training costs about three times that once the backward pass is included: <b>6 × N × tokens</b>. Pick a model and see how long that takes at different speeds.</p>"),
+      prose("<p>A layer that turns 4,096 numbers into 4,096 numbers does 4,096 × 4,096 ≈ 16.8 million multiply-adds per token. A model with N weights does about 2N floating-point operations per token going forward. (A FLOP is one multiply or one add, and each weight needs one of each.) Training also runs the backward pass, which costs about twice as much again, so the total is about three times that: <b>6 × N × tokens</b>. Pick a model and see how long that takes at different speeds.</p>"),
       h("div.stage",
         h("div.stage-controls", nSl, dSl, h("div.btn-row", button("GPT-2 (1.5B, ~10B tokens, est.)", () => setModel(1.5e9, 1e10)), button("GPT-3 (175B, 300B tokens)", () => setModel(175e9, 300e9)), button("Llama 3 70B (15T tokens)", () => setModel(70e9, 15e12)), button("Llama 3.1 405B (15.6T)", () => setModel(405e9, 15.6e12)))),
         h("div.stage-body", h("div.wide-canvas", ccv.el), cst.el)),

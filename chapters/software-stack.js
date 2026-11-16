@@ -236,7 +236,7 @@ export default function (root, { id }) {
       h("div.stage",
         h("div.stage-controls", lsl, h("div.btn-row", lup, ldown)),
         h("div.stage-body", lst.el, h("div.wide-canvas", lc.el), ltext)),
-      callout("tip", "The pattern", "<p>Every layer turns something convenient into something more specific: a line of Python into an operator, an operator into a chosen kernel, a kernel into launch bytes, bytes into thread blocks, blocks into warp instructions. The upper layers run on the CPU <b>while the GPU is still busy with earlier work</b>: launches are asynchronous, so the CPU races ahead and queues work up. That works until the work per launch gets too small.</p>"),
+      callout("tip", "The pattern", "<p>Every layer turns something convenient into something more specific. A line of Python becomes an operator, and the operator becomes a chosen kernel. The kernel becomes launch bytes, the bytes become thread blocks, and the blocks become warp instructions. The upper layers run on the CPU <b>while the GPU is still busy with earlier work</b>: launches are asynchronous, so the CPU races ahead and queues work up. That works until the work per launch gets too small.</p>"),
     ),
     section("When the layers cost more than the work",
       prose("<p>Each trip down the layers costs the CPU a few microseconds. If a kernel runs for longer than that, the CPU stays ahead and the GPU never waits. If kernels are tiny (small-batch inference is hundreds of small kernels per token) the GPU finishes each one and sits idle until the next arrives. A <b>CUDA Graph</b> records the whole sequence once and replays it with one launch.</p>"),
@@ -246,7 +246,7 @@ export default function (root, { id }) {
           slider({ label: "Kernels per step", min: 10, max: 1000, step: 10, value: lo.n, onInput: (v) => { lo.n = v; drawO(); } }),
           toggle({ label: "Capture as a CUDA Graph", checked: false, onChange: (v) => { lo.graph = v; drawO(); } })),
         h("div.stage-body", ost.el, h("div.wide-canvas", oc.el))),
-      callout("note", "The numbers here", "<p>~8 µs per eager PyTorch op (Python, dispatcher and launch) and ~1 µs between kernels in a replayed graph are typical orders of magnitude, not measurements of your machine; they vary with CPU speed and the op. Notebook 60 measures launch overhead on a real GPU.</p>"),
+      callout("note", "The numbers here", "<p>The timings are typical orders of magnitude, not measurements of your machine: ~8 µs per eager PyTorch op (Python, dispatcher and launch) and ~1 µs between kernels in a replayed graph. They vary with CPU speed and the op. Notebook 60 measures launch overhead on a real GPU.</p>"),
       predict({
         chapter: id,
         question: "A decode step runs 600 kernels of 3 µs GPU time each, launched from eager PyTorch at ~8 µs per launch. Roughly how busy is the GPU?",

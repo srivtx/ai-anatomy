@@ -172,7 +172,7 @@ export default function (root, { id }) {
 
   root.append(
     section(null,
-      goal("<p>Every chapter so far ended at a law of physics. This one asks the question the whole industry is asking: <b>how much room is left before each law becomes a wall</b>, which walls are physics and which are only engineering, and what nobody yet knows how to do. Some limits are close (the steepness of a switch), some are far (energy per operation), and some (wires, heat) are now the real bottleneck.</p>",
+      goal("<p>Every chapter so far ended at a law of physics. This one asks the question the whole industry is asking: <b>how much room is left before each law becomes a wall?</b> It also sorts the walls that are physics from those that are only engineering, and lists what nobody yet knows how to do. Some limits are close (the steepness of a switch), some are far (energy per operation), and some (wires, heat) are now the real bottleneck.</p>",
         ["Know which limits are physics", "Know how far away each one is", "Know what is still unsolved"]),
       h("div.vx-row", sticker("lattice", { arg: "pure", title: "Atoms are discrete", caption: "a 5 nm channel is only about ten silicon cells thick", px: 4 }), sticker("tunnel", { title: "Electrons are waves", caption: "a thin enough wall lets some of them through", px: 4 }), sticker("heatsink", { title: "Heat has one way out", caption: "and the path can only conduct so much", px: 4 })),
     ),

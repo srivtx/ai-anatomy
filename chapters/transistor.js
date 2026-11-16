@@ -196,7 +196,7 @@ export default function (root, { id }) {
       }),
     ),
     section("Smaller, and a new shape",
-      prose("<p>Shrinking a transistor makes it faster and cheaper, but a short channel lets the <b>drain</b> reach under the gate and pull the hill down too. The gate loses control, the subthreshold slope gets worse than 60 mV, and leakage explodes. The fix was to give the gate more of the channel to hold: first by standing the channel up as a <b>fin</b> with the gate on three sides (Intel, 22 nm, 2011), then by slicing it into stacked <b>nanosheets</b> with the gate all around (Samsung 3 nm, 2022; TSMC N2, 2025).</p>"),
+      prose("<p>Shrinking a transistor makes it faster and cheaper, but a short channel lets the <b>drain</b> reach under the gate and pull the hill down too. The gate loses control, the subthreshold slope gets worse than 60 mV, and leakage explodes. The fix was to give the gate more of the channel to hold. First the channel was stood up as a <b>fin</b>, with the gate on three sides (Intel, 22 nm, 2011). Then it was sliced into stacked <b>nanosheets</b>, with the gate all the way around (Samsung 3 nm, 2022; TSMC N2, 2025).</p>"),
       h("div.vx-row", sticker("planar", { arg: true, title: "Planar (to ~2011)", caption: "gate on top only", px: 3 }), sticker("finfet", { title: "FinFET (2011–)", caption: "channel is a fin; gate wraps three sides", px: 3 }), sticker("gaa", { title: "Gate-all-around (2022–)", caption: "stacked sheets; gate on all four sides", px: 3 })),
       h("div.stage",
         h("div.stage-controls",

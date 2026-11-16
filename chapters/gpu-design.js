@@ -252,7 +252,7 @@ export default function (root, { id }) {
 
   root.append(
     section(null,
-      goal("<p>Now design the machine. The job (chapter 1): trillions of <b>independent multiply-adds</b>. The constraints we derived: <b>heat</b> caps the clock, so go wide (chapter 6); <b>memory is far</b>, ~600 cycles and ~170× the energy of the math (chapter 5); and multipliers grow with the <b>square of their bits</b> (chapter 4). Each feature of a GPU is the cheapest answer to one of these. Build it one decision at a time.</p>",
+      goal("<p>Now design the machine. The job (chapter 1): trillions of <b>independent multiply-adds</b>. We derived three constraints. <b>Heat</b> caps the clock, so go wide (chapter 6). <b>Memory is far</b>: ~600 cycles and ~170× the energy of the math (chapter 5). And multipliers grow with the <b>square of their bits</b> (chapter 4). Each feature of a GPU is the cheapest answer to one of these. Build it one decision at a time.</p>",
         ["Thousands of MACs per clock within ~700 W", "Never let them wait on memory", "Spend as little energy as possible on anything that isn't arithmetic"]),
       stackMap(id),
       h("div.vx-row", sticker("package", { title: "What we're designing", caption: "a die of many identical SMs, with HBM stacks millimetres away", px: 3 }), sticker("sm", { title: "One SM", caption: "four tensor cores (purple) beside their register files, over shared memory (blue)", px: 3 }), sticker("tensor", { title: "A tensor core's job", caption: "a small matrix product is a cube of multiply-adds: A on one side, B on the other", px: 4 })),
@@ -319,7 +319,7 @@ export default function (root, { id }) {
       h("div.stage",
         h("div.stage-controls", slider({ label: "Tile size n (an n×n×n multiply per instruction)", min: 0, max: 5, value: 4, fmt: (v) => String(2 ** v), onInput: (v) => { tc.n = 2 ** v; drawT(); } })),
         h("div.stage-body", h("div.wide-canvas", tcv.el), tst.el)),
-      callout("note", "The same idea at every scale", "<p>Reuse is the theme of the whole machine: tensor cores reuse operands inside the unit, shared memory reuses tiles inside an SM, L2 reuses data across SMs, and Google's TPU takes it furthest with a <b>systolic array</b>, a 128×128 grid of multiply-add cells where numbers flow from cell to cell and each one is used 128 times without returning to a register file. On an H100 each SM's four tensor cores do about 2,048 bf16 multiply-adds per clock.</p>"),
+      callout("note", "The same idea at every scale", "<p>Reuse is the theme of the whole machine. Tensor cores reuse operands inside the unit, shared memory reuses tiles inside an SM, and L2 reuses data across SMs. Google's TPU takes it furthest with a <b>systolic array</b>: a 128×128 grid of multiply-add cells. Numbers flow from cell to cell, and each one is used 128 times without going back to a register file. On an H100 each SM's four tensor cores do about 2,048 bf16 multiply-adds per clock.</p>"),
     ),
     section("Decode an H100",
       prose("<p>The whole chip at once. Pick a part to see where it sits on the die and inside one SM, and how many there are.</p>"),

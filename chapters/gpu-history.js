@@ -173,7 +173,7 @@ export default function (root, { id }) {
         h("div.stage-body", rst.el, h("div.wide-canvas", rcv.el))),
     ),
     section("The graphics pipeline",
-      prose("<p>Every frame flows through the same five stages, in hardware. Two of them are the reason GPUs later suited AI: the transform is a <b>matrix multiply</b> per vertex, and shading is a <b>small program per pixel</b>, run millions of times with no dependencies between runs.</p>"),
+      prose("<p>Every frame flows through the same five stages, in hardware. Two of them are the reason GPUs later suited AI. The transform is a <b>matrix multiply</b> per vertex. Shading is a <b>small program per pixel</b>, run millions of times, and no run depends on another.</p>"),
       h("div.wide-canvas", gcv.el),
       stepper(STAGES.map(([n, s], k) => ({ title: `${k + 1}. ${n}`, html: [
         "<p>A model is a mesh of triangles defined by its corner points (vertices): position, colour, texture coordinates, surface direction. A modern game frame has millions of them.</p>",
@@ -184,7 +184,7 @@ export default function (root, { id }) {
       ][k] })), { onStep: (k) => { gs = k; gcv.redraw?.(); } }),
     ),
     section("Math disguised as pixels",
-      prose("<p>Around 2001–2006, before CUDA, researchers noticed that a pixel shader is a tiny parallel computer with fast memory. To multiply matrices they stored A and B as <b>textures</b> (images of numbers), drew a rectangle the size of the answer, and wrote a shader that computed one output element per pixel: a dot product of a row and a column. Step through it.</p>"),
+      prose("<p>Around 2001–2006, before CUDA, researchers noticed that a pixel shader is a tiny parallel computer with fast memory. To multiply matrices, they stored A and B as <b>textures</b> (images of numbers) and drew a rectangle the size of the answer. A shader then computed one output element per pixel: a dot product of a row and a column. Step through it.</p>"),
       walk("gpu-history"),
       callout("note", "Awkward, and it worked", "<p>Everything had to be phrased as drawing: loops became rendering passes, outputs had to be images, and reading results back was slow. It was still several times faster than CPUs for the right problems, enough to convince NVIDIA to build CUDA: the same hardware, without pretending to draw.</p>"),
     ),

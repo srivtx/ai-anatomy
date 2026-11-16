@@ -223,7 +223,7 @@ export default function (root, { id }) {
 
   root.append(
     section(null,
-      goal("<p>We have a voltage-controlled switch. We need <b>arithmetic</b>: circuits that add and multiply numbers, reliably, a billion times a second, and that keep millions of results in step. This chapter climbs from two transistors to a multiplier, and shows why the size of a multiplier grows with the square of its bits, which is the root of every low-precision trick in AI.</p>",
+      goal("<p>We have a voltage-controlled switch. We need <b>arithmetic</b>: circuits that add and multiply numbers, reliably, a billion times a second, and that keep millions of results in step. This chapter climbs from two transistors to a multiplier. It also shows why a multiplier's size grows with the square of its bits, which is the root of every low-precision trick in AI.</p>",
         ["A signal that survives noise", "One building block that makes every function", "A beat that keeps results in step"]),
       stackMap(id),
       h("div.vx-row",
