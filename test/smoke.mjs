@@ -52,6 +52,21 @@ async function pokeAll(page) {
   await page.waitForTimeout(1200);
 }
 
+if (!only || only === "studio") {
+  // the 3D studio: every level of every model, plus clicking, double-clicking, keys and the toolbar
+  const studio = async (p) => {
+    if (!(await p.$(".st-canvas"))) throw new Error("no studio canvas");
+    const box = await (await p.$(".st-canvas")).boundingBox(), cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+    await p.mouse.move(cx, cy); await p.mouse.click(cx, cy); await p.mouse.dblclick(cx, cy); await p.waitForTimeout(900);
+    await p.focus(".st-canvas"); for (const k of ["ArrowLeft", "ArrowUp", "+", "-", "f", "Escape"]) await p.keyboard.press(k);
+    for (const b of await p.$$(".st-tools .btn")) await b.click();
+    await p.waitForTimeout(700);
+  };
+  for (const m of ["tiny", "gpt2", "llama8"]) await visit(`/studio?m=${m}`, `studio ${m}`, studio);
+  for (const at of ["embed", "pos", "b2", "b2/attn", "b2/attn/h3", "b2/mlp", "b2/ln2", "lnf", "head"]) await visit(`/studio?m=gpt2&at=${at}`, `studio ${at}`, studio);
+  await visit("/studio?m=llama8&at=b9/mlp", "studio llama mlp", studio);
+}
+
 if (!only || only === "quiz") {
   if (!only) { await visit("/", "home"); await visit("/roadmap", "roadmap"); }
   const playOne = async (p) => { const o = await p.$(".qz-opt, .qp-chip, .qp-bit, .qp-cell, .qp-kc, .qp-gate button"); if (o) await o.click(); else await p.$eval(".qp-range", (el) => { el.value = el.max; el.dispatchEvent(new Event("input", { bubbles: true })); }).catch(() => {}); await p.waitForTimeout(200); };
