@@ -60,6 +60,12 @@ if (!only || only === "studio") {
     await p.mouse.move(cx, cy); await p.mouse.click(cx, cy); await p.mouse.dblclick(cx, cy); await p.waitForTimeout(900);
     await p.focus(".st-canvas"); for (const k of ["ArrowLeft", "ArrowUp", "+", "-", "f", "Escape"]) await p.keyboard.press(k);
     for (const b of await p.$$(".st-tools .btn")) await b.click();
+    // edit whatever is selected, then every tab and every design slider
+    for (const b of await p.$$(".st-edit .seg button")) await b.click().catch(() => {});
+    for (const t of await p.$$(".st-tabs button")) {
+      await t.click(); await p.waitForTimeout(150);
+      for (const r of await p.$$('.st-pane:not([hidden]) input[type="range"]')) await r.evaluate((el) => { el.value = el.max; el.dispatchEvent(new Event("input", { bubbles: true })); });
+    }
     await p.waitForTimeout(700);
   };
   for (const m of ["tiny", "gpt2", "llama8"]) await visit(`/studio?m=${m}`, `studio ${m}`, studio);
