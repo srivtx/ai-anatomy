@@ -96,12 +96,23 @@ if (!only || only === "studio") {
   await visit("/studio?m=gpt2", "studio token flow", async (p) => {
     await p.click(".st-play"); await p.waitForTimeout(900);
     if (await p.$eval(".st-flowcap", (el) => el.hidden)) throw new Error("flow caption missing");
+    await p.click(".st-fb.main"); const k0 = await p.textContent(".st-flowk");   // pause, then step on and back
+    await p.click(".st-fb >> nth=2"); await p.waitForTimeout(100);
+    if ((await p.textContent(".st-flowk")) === k0) throw new Error("step forward did nothing");
+    await p.click(".st-fb >> nth=0"); await p.waitForTimeout(100);
+    if ((await p.textContent(".st-flowk")) !== k0) throw new Error("step back did nothing");
+    await p.click(".st-flowsp .st-fb"); await p.click(".st-fb.main"); await p.waitForTimeout(400);
     await p.click(".st-blocks button >> nth=0"); await p.waitForTimeout(200);
     if (!(await p.$eval(".st-flowcap", (el) => el.hidden))) throw new Error("flow did not stop on edit");
     if (!(await p.$(".st-dlt"))) throw new Error("no HUD delta after an edit");
     await p.click(".st-keybtn"); if (await p.$eval(".st-keys", (el) => el.hidden)) throw new Error("key help did not open");
     await p.goto(p.url().replace(/\?.*/, "?m=gpt2&at=b2")); await p.waitForTimeout(500);
-    await p.click(".st-play"); await p.waitForTimeout(1200);
+    await p.click(".st-play"); await p.waitForTimeout(1200); await p.click(".st-fb.x");
+    if (!(await p.$eval(".st-flowcap", (el) => el.hidden))) throw new Error("close did not close");
+  });
+  await visit("/studio?mode=learn&lv=mlp", "studio guess and mix-up", async (p) => {
+    await p.click(".st-guess-o button >> nth=1"); if (!(await p.$(".st-guess-why"))) throw new Error("guess did not reveal");
+    await p.click(".st-myth summary");
   });
   const run = (f) => ({ label: f, finals: [f === "a" ? 1.62 : 2.1, f === "a" ? 1.64 : 2.2], curve: [[0, 4.2], [500, 2.4], [1500, f === "a" ? 1.63 : 2.15]], diverged: false, tps: 1000, params: 1e6, grads0: [0.3, 0.1, 0.02, 0.004, 1e-3, 2e-4], acts: [1, 2, 4, 8, 16, 32], sample: "To be, or not" });
   const line = "STUDIO_RESULT:" + Buffer.from(JSON.stringify({ v: 1, id: "x", size: "S", steps: 1500, seeds: 2, device: "test", quick: true, runs: { baseline: run("a"), design: run("b") } })).toString("base64url");

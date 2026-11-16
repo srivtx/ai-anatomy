@@ -2044,3 +2044,51 @@ details.as-table > :not(summary) { margin: 0; }
 .st-stamp.out { transition: opacity .45s, transform .45s; opacity: 0; transform: translate(-50%, -60%) rotate(-4deg) scale(.9); }
 @keyframes stStampIn { from { transform: translate(-50%, -50%) rotate(-14deg) scale(2); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .st-stamp { animation: none; } }
+
+/* ---- the token player ---- */
+.st-flowcap { display: block; padding: 8px 12px 12px; }
+.st-flowbar { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.st-fb { border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 7px; min-width: 28px; height: 26px; padding: 0 6px; font: 700 12px/1 var(--mono); cursor: pointer; display: inline-grid; place-items: center; }
+.st-fb:hover { border-color: var(--ink-3); }
+.st-fb.main { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); min-width: 34px; }
+.st-fb.x { margin-left: 4px; }
+.st-flowk { margin-left: 6px; }
+.st-flowsp { margin-left: auto; }
+.st-flowt { margin: 0; font-size: 13.5px; line-height: 1.45; }
+.st-flowf { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.st-flowf span { font-size: 11.5px; padding: 2px 7px; border-radius: 6px; background: var(--sunken); color: var(--ink-2); }
+.st-flowf small { font: 600 9.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
+.st-flowp { display: block; margin-top: 6px; color: var(--accent); font-size: 12px; }
+.st-view.paused .st-play-i { animation: none; }
+/* the side panel scrolls without a visible scrollbar */
+.st-side { scrollbar-width: none; -ms-overflow-style: none; }
+.st-side::-webkit-scrollbar { display: none; width: 0; height: 0; }
+@media (min-width: 901px) { .st-side { padding-right: 0; mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); padding-bottom: 26px; } }
+
+/* ---- learning: guess first, common mix-ups ---- */
+.st-guess { margin: 10px 0; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--ink); background: var(--surface); box-shadow: 0 3px 0 var(--ink); }
+.st-guess[data-state="right"] { border-color: var(--good); box-shadow: 0 3px 0 var(--good); }
+.st-guess[data-state="wrong"] { border-color: #e08a1e; box-shadow: 0 3px 0 #e08a1e; }
+.st-guess-top { display: flex; justify-content: space-between; align-items: center; }
+.st-guess-k { font: 700 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.st-guess-r { font: 700 12px/1 var(--mono); }
+.st-guess[data-state="right"] .st-guess-r { color: var(--good); }
+.st-guess[data-state="wrong"] .st-guess-r { color: #c06a00; }
+.st-guess-q { margin: 6px 0 8px; font-weight: 600; font-size: 14px; line-height: 1.4; }
+.st-guess-o { display: grid; gap: 5px; }
+.st-guess-o button { text-align: left; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 9px; padding: 7px 10px; font: 500 13px/1.35 var(--body); cursor: pointer; transition: border-color .12s, transform .12s; }
+.st-guess-o button:not(:disabled):hover { border-color: var(--accent); transform: translateX(2px); }
+.st-guess-o button:disabled { cursor: default; opacity: .65; }
+.st-guess-o button[data-pick="1"] { opacity: 1; border-color: #e08a1e; background: color-mix(in srgb, #e08a1e 10%, var(--bg)); }
+.st-guess-o button[data-ans="1"] { opacity: 1; border-color: var(--good); background: var(--good-bg); font-weight: 600; }
+.st-guess-why { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); animation: stPane .25s ease-out; }
+.st-myth { margin: 10px 0 4px; border: 1.5px dashed var(--line); border-radius: 10px; padding: 8px 10px; background: var(--bg); }
+.st-myth summary { cursor: pointer; display: grid; gap: 2px; font-size: 13px; list-style: none; }
+.st-myth summary::-webkit-details-marker { display: none; }
+.st-myth-k { font: 700 10px/1.2 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #c06a00; }
+.st-myth summary span:last-child { font-weight: 600; text-decoration: line-through; text-decoration-color: color-mix(in srgb, #c06a00 60%, transparent); }
+.st-myth summary span:last-child::after { content: "  why not? ›"; text-decoration: none; display: inline-block; margin-left: 6px; color: var(--accent); font-weight: 600; }
+.st-myth[open] summary span:last-child::after { content: ""; }
+.st-myth p { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+@media (max-width: 900px) { .st-flowp { display: none; } .st-flowf span:nth-child(n+3) { display: none; } }
+.st-flowcap.top { bottom: auto; top: 50px; }
