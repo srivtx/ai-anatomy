@@ -1,7 +1,7 @@
 import { h } from "../lib/core.js";
 import { slider, stats, predict, code, callout, section, prose, table, segmented } from "../lib/widgets.js";
 import { flowCanvas } from "../lib/flow.js";
-import { goal, whyChain, sticker } from "../lib/why.js";
+import { goal, whyChain, sticker, lawCards } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 
 function canvas(width, height, label) {
@@ -43,6 +43,16 @@ const OPEN = [
   ["How close to Landauer can practical computers get?", "Reversible logic avoids the bound in principle; error correction, speed and wiring may make it irrelevant in practice. Unknown."],
   ["How low can precision go?", "Training has moved from 32 to 16 to 8 bits; 4-bit and ternary models exist. Where accuracy breaks, and why, is not understood."],
   ["How does the brain do so much with ~20 W?", "Its energy per synaptic event (~1–10 fJ, rough) isn't far below a chip's per operation; its architecture (memory and compute in the same place, sparse events) is the difference. How to copy that usefully is open."],
+];
+
+const OPEN_SHORT = [
+  ["Beat 60 mV a decade", "boltz", ["transistor", "the switch"]],
+  ["After copper", "wire", ["circuits", "circuits"]],
+  ["The memory wall", "node", ["memory-physics", "memory"]],
+  ["Cool 2 kW chips", "heat", ["power-wall", "power wall"]],
+  ["Near Landauer?", "clock", ["all-the-way-down", "capstone"]],
+  ["How few bits?", "charge", ["logic", "arithmetic"]],
+  ["The 20 W brain", "rc", ["ai-physics", "the job"]],
 ];
 
 export default function (root, { id }) {
@@ -220,7 +230,9 @@ export default function (root, { id }) {
       table(["Idea", "Would fix", "Unsolved", "Status"], CAND),
     ),
     section("What nobody knows yet",
-      table(["Open question", "Why it matters, and why it's hard"], OPEN),
+      prose("<p>Seven open problems, each with the layer of the stack where it lives. Nobody knows the answers yet; they are where the next decade of hardware will be decided.</p>"),
+      lawCards(OPEN.map(([q, why], k) => ({ name: `open problem ${k + 1}`, formula: OPEN_SHORT[k][0], glyph: OPEN_SHORT[k][1], html: `<p><b>${q}</b> ${why}</p>`, where: [OPEN_SHORT[k][2]] })), { whereLabel: "lives in" }),
+      h("details.as-table", h("summary", "The same seven, as a table"), table(["Open question", "Why it matters, and why it's hard"], OPEN)),
       callout("tip", "Where to watch", "<p>Most gains in AI compute over the next decade are expected from architecture and arithmetic (lower precision, sparsity, less data movement, 3D stacking), not from faster transistors. If one of these open questions breaks, especially a steeper switch or cheap optics, the whole stack in this level shifts.</p>"),
     ),
     section("Dig down: why can't transistors shrink forever?",

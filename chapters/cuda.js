@@ -216,6 +216,37 @@ export default function (root, { id }) {
   }
   const wc = canvas(800, 280, "CPU against GPU time for one run, split into copies, launch and kernel, and both times against problem size");
 
+  // ---------- ways to program it: pick a goal, see which layer fits ----------
+  const WAYS = [
+    ["PyTorch / JAX", 1, 2, "a line of Python"],
+    ["torch.compile", 1.2, 3, "one decorator"],
+    ["Triton", 4, 6, "a block-level kernel in Python"],
+    ["CUDA C++", 7, 8.5, "one thread's code, shared memory, sync"],
+    ["CUTLASS / CuTe", 9, 10, "tile templates for tensor cores"],
+  ];
+  const GOALS = [["model", "Train a standard model", 0], ["fuse", "Speed up a chain of small ops", 1], ["custom", "A new fused op (e.g. attention)", 2], ["learn", "Learn how the GPU works", 3], ["peak", "The fastest matmul possible", 4]];
+  const wy = { goal: "custom" };
+  const ycv = canvas(880, 280, "Five ways to program a GPU, by how much code you write and how much of the hardware you control");
+  function drawWays() {
+    const pick = GOALS.find((g) => g[0] === wy.goal)[2];
+    ycv.paint(() => {
+      ycv.clear(); const c = ycv.colors, x0 = 170, bw = 300, row = 42;
+      ycv.text("code you write", x0, 18, { size: 11, color: c["ink-3"] });
+      ycv.text("control over the hardware", x0 + bw + 40, 18, { size: 11, color: c["ink-3"] });
+      WAYS.forEach(([name, effort, ctrl, what], k) => {
+        const y = 30 + k * row, on = k === pick;
+        if (on) ycv.box(8, y - 4, 864, row - 4, { fill: `color-mix(in srgb, ${c.accent} 12%, ${c.surface})`, stroke: c.accent, lw: 1.5, r: 10 });
+        ycv.text(name, x0 - 14, y + 20, { size: 13, align: "right", color: on ? c.ink : c["ink-2"] });
+        ycv.box(x0, y + 8, bw, 14, { fill: c.sunken, stroke: "transparent", r: 7 });
+        ycv.box(x0, y + 8, (bw * effort) / 10, 14, { fill: on ? c.c2 : `color-mix(in srgb, ${c.c2} 45%, ${c.surface})`, stroke: "transparent", r: 7 });
+        ycv.box(x0 + bw + 40, y + 8, bw, 14, { fill: c.sunken, stroke: "transparent", r: 7 });
+        ycv.box(x0 + bw + 40, y + 8, (bw * ctrl) / 10, 14, { fill: on ? c.accent : `color-mix(in srgb, ${c.accent} 40%, ${c.surface})`, stroke: "transparent", r: 7 });
+      });
+      ycv.text(`${WAYS[pick][0]}: you write ${WAYS[pick][3]}`, 440, 252, { size: 13, align: "center" });
+      ycv.text("Start at the top and move down only when profiling says the layer above is the bottleneck.", 440, 272, { size: 11.5, align: "center", color: c["ink-3"] });
+    });
+  }
+
   root.append(
     section(null,
       goal("<p>We have a machine with 132 SMs, each wanting 64 warps of 32 threads in flight. We need a way to <b>describe a million small, independent pieces of work</b> so the hardware can spread them over whatever SMs it has, without the programmer managing any of it. CUDA's answer: write the code for <b>one thread</b>, and launch it as a grid.</p>",
@@ -289,6 +320,10 @@ export default function (root, { id }) {
       callout("note", "Three lessons in one widget", "<p><b>Small problems stay on the CPU</b>: below about 10⁴ elements, the 5 µs launch alone loses. <b>Copying kills cheap work</b>: with the data on the CPU, an elementwise add is limited by PCIe, and the CPU wins. <b>Keep data resident</b>: tick the box and the GPU wins by 30× even for simple operations, because HBM is 30× faster than CPU memory. This is why models are loaded onto the GPU once and stay there, and why AI frameworks fuse many small operations into one kernel.</p>"),
     ),
     section("Ways to program it",
+      prose("<p>You rarely write raw CUDA. Each layer trades code you have to write for control over the machine. Pick what you're trying to do.</p>"),
+      h("div.stage",
+        h("div.stage-controls", segmented({ label: "Your goal", options: GOALS.map(([v, l]) => ({ value: v, label: l })), value: wy.goal, onChange: (v) => { wy.goal = v; drawWays(); } })),
+        h("div.stage-body", h("div.wide-canvas", ycv.el))),
       table(["Layer", "You write", "Good for"], [
         ["PyTorch / JAX", "<code>y = x @ W</code>", "almost everything: calls NVIDIA's tuned libraries (cuBLAS, cuDNN) and generated kernels"],
         ["torch.compile", "the same Python, plus one decorator", "fusing chains of small operations into fewer kernels automatically"],
@@ -360,5 +395,5 @@ add_kernel[grid](a, b, c, n, BLOCK=1024)`,
       }, "Project 60 compiles and times this kernel on a free Colab T4, measures PCIe against on-GPU bandwidth, and checks Little's law."),
     ),
   );
-  drawG(); drawW();
+  drawG(); drawW(); drawWays();
 }

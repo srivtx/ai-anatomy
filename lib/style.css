@@ -1642,3 +1642,7 @@ pre.code.folded { max-height: 372px; overflow-y: hidden; -webkit-mask-image: lin
 .qz-pic { width: 64px; height: 48px; border-radius: 12px; background: var(--accent-soft); display: grid; place-items: center; }
 .qz-pic svg { width: 52px; height: 34px; }
 .pi-on { fill: var(--accent); } .pi-off { fill: color-mix(in srgb, var(--accent) 25%, var(--surface)); } .pi-ln { stroke: var(--ink-2); stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+details.as-table { margin: 10px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+details.as-table > summary { cursor: pointer; padding: 10px 14px; font: 500 13px var(--mono); color: var(--ink-2); }
+details.as-table[open] > summary { border-bottom: 1px solid var(--line); }
+details.as-table > :not(summary) { margin: 0; }
