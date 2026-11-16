@@ -26,9 +26,11 @@ Every chapter runs a live simulation in plain JavaScript (no build step, no serv
 
 [\`/studio\`](studio.html) is a real transformer in 3D, drawn at its true proportions, that you open level by level (model › block › attention › one head) and change part by part. It has three modes:
 
-- **Learn**: nine levels that build a transformer one part at a time, from a bare lookup table to the modern Llama recipe, with Neuro explaining why each part exists and checks that tick as you go.
+- **Learn**: nine levels that build a transformer one part at a time, from a bare lookup table to the modern Llama recipe, with Neuro explaining why each part exists and checks that tick as you go. Each level asks you to guess first (answered with numbers from our own lab runs) and clears up a common mix-up.
 - **Challenges**: real design problems (shrink the KV cache 4×, fit 100 users on one GPU, read 128k tokens cheaply, the best model for $500) checked live against the predictor.
-- **Build**: start from Tiny GPT, GPT-2, Llama 3 8B or Mistral 7B (exact parameter counts), apply recipes, and edit anything.
+- **Build**: start from Tiny GPT, GPT-2, GPT-3, Llama 2, Llama 3 8B, Mistral 7B or Mixtral 8×7B (exact parameter counts), ride the time machine from 2019 to 2024 and see what changed at each step, apply recipes, edit anything, pin a design to compare against, and save a picture of it.
+
+Press ▶ **Watch a token** (or Space) to follow one token through the model stop by stop, with pause, step and speed controls. Earn stickers as you go.
 
 Five panels: **Inspect** (what a part is and why it's there), **Predict** (what will happen before training, each line tagged exact / physics / law / rule of thumb / test it), **Speed** (what makes it faster on an H100 and what doesn't), **Test** (one click to a Colab run of your design against its baseline, then paste the result back to see if the prediction held, and colour the 3D blocks by the measured gradients) and **Design**.
 
