@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, bars } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
@@ -88,7 +89,9 @@ export default function (root, { id }) {
   const rebuild = () => { model = build(order); stats_(); evalCurve(); drawDist(); };
 
   root.append(
-    section(null, prose(`<p>Every GPT is trained on one task: given the text so far, output a probability for every possible next token. Generation is just that, in a loop: pick a token from the distribution, append it, repeat. The simplest model that does this is the <b>n-gram</b>: look up the last n − 1 characters in a big table of counts. It was the state of the art in speech recognition and machine translation for decades.</p>`)),
+    section(null, goal("<p>We want a machine that can write. Writing is hard to define, but one task contains all of it: <b>given the text so far, say how likely each next token is</b>. Do that well and you can generate by picking one token at a time.</p>", ["a way to turn text into numbers (tokens)", "a score for every possible next token", "a rule to turn scores into probabilities and pick one"]),
+      prose(`<p>Every GPT is trained on one task: given the text so far, output a probability for every possible next token. Generation is just that, in a loop: pick a token from the distribution, append it, repeat. The simplest model that does this is the <b>n-gram</b>: look up the last n − 1 characters in a big table of counts. It was the state of the art in speech recognition and machine translation for decades.</p>`),
+      h("div.vx-row", sticker("tokens", { title: "Text as tokens", caption: "the model reads numbered pieces, not letters", px: 4 }), sticker("nexttok", { title: "One guess per step", caption: "a probability for every candidate; the likeliest is lit", px: 4 }))),
     section("A language model you can read",
       prose("<p>This model counted every character context in the lighthouse story (85% of it; the last 15% is held out). Choose n, then generate. Above the output you see the model's distribution for the next character, after temperature, top-k and top-p have reshaped it.</p>"),
       h("div.stage",
@@ -121,6 +124,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("next-token"),
+    section("Why one small task teaches so much",
+      whyChain({
+        claim: "Predicting the next token is enough to learn grammar, facts and some reasoning.",
+        steps: [
+          { q: "Why would guessing one token teach anything big?", a: "<p>To lower its loss on <i>The capital of France is</i>, the model has to store that it's Paris. Every pattern in text that helps the guess (grammar, facts, arithmetic, who said what) is something the loss pays it to learn.</p>" },
+          { q: "Why does the loss reward patterns, not memorising?", a: "<p>The loss that matters is on text the model hasn't seen. Memorising the training set doesn't help there; only patterns that carry over do. And a model with far fewer bits of storage than its training text can't memorise it anyway, so it's pushed to compress.</p>" },
+          { q: "Why is compressing like understanding?", a: "<p>A model that gives the real next token probability p can encode it in −log₂ p bits (arithmetic coding does exactly this). So lower loss means a shorter compressed file. The best compressor of text is one that captures whatever produced the text: syntax, facts, the writer's goals.</p>" },
+        ],
+        axiom: { name: "Shannon: information is surprise", html: "<p>An event of probability p carries −log₂ p bits. Averaged over real text, that's the cross-entropy: the fewest bits per token any code built from your model can reach. No model can beat the true entropy of the source. Training a language model is pushing this number down.</p>" },
+      })),
     section("In code",
       code({
         PyTorch: `import torch

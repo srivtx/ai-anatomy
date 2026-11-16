@@ -1,4 +1,5 @@
 import { h, s } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, stepper, table } from "../lib/widgets.js";
 
@@ -64,8 +65,10 @@ export default function (root, { id }) {
   ];
 
   root.append(
-    section(null, prose(`<p>Training needs the gradient of the loss with respect to every parameter. A GPT has billions. Nudging each one separately to see what happens (the <b>nudge test</b>) would take billions of forward passes per step.</p>
-<p><b>Backpropagation</b> gets all of them in one backward sweep, using nothing but the chain rule: if L depends on a, and a depends on z, then dL/dz = dL/da · da/dz. Each operation only needs to know its own <b>local derivative</b>. Multiply local derivatives along the path and you have the global one.</p>`)),
+    section(null, goal("<p>Gradient descent needs the slope of the loss for <b>every</b> parameter, billions of them, on every step. We want all of them for about the price of a couple of extra forward passes.</p>", ["each operation's local slope", "a way to combine slopes along a path", "shared work done once, not once per parameter"]),
+      prose(`<p>Training needs the gradient of the loss with respect to every parameter. A GPT has billions. Nudging each one separately to see what happens (the <b>nudge test</b>) would take billions of forward passes per step.</p>
+<p><b>Backpropagation</b> gets all of them in one backward sweep, using nothing but the chain rule: if L depends on a, and a depends on z, then dL/dz = dL/da · da/dz. Each operation only needs to know its own <b>local derivative</b>. Multiply local derivatives along the path and you have the global one.</p>`),
+      h("div.vx-row", sticker("neuron", { title: "A neuron, run backwards", caption: "the gradient flows from the output back along each wire to its weight", px: 4 }))),
     section("Step through one neuron",
       h("div.stage",
         h("div.stage-controls", sliders),
@@ -92,6 +95,17 @@ export default function (root, { id }) {
       prose("<p>When a value feeds into several places, its gradients from each <b>add up</b>. Those two facts, the chain rule and gradient accumulation, are all of autograd. PyTorch, JAX and TensorFlow build this graph as your code runs and walk it backwards when you call <code>.backward()</code>.</p>"),
     ),
     walk("backprop"),
+    section("Why one backward pass is enough",
+      whyChain({
+        claim: "The backward pass costs about twice the forward pass, however many parameters there are.",
+        steps: [
+          { q: "Why not nudge each parameter and measure?", a: "<p>That's one forward pass per parameter. For 7 billion parameters, 7 billion forward passes per training step. Training would never finish.</p>" },
+          { q: "How does one sweep reach them all?", a: "<p>Each operation knows its own local derivative. Start from dL/dL = 1 at the output and walk backwards. At each node, multiply the incoming gradient by the local derivative and pass it on. Every parameter is reached once.</p>" },
+          { q: "Why can you just multiply local slopes?", a: "<p>Small changes compose. If a moves da/dz per unit of z, and L moves dL/da per unit of a, then a unit of z moves L by their product. Where paths split and rejoin, their contributions add.</p>" },
+          { q: "Why about twice?", a: "<p>For each matrix multiply in the forward pass, the backward pass does two of the same size: one for the gradient of the input, one for the gradient of the weights. Forward plus backward is about 3× forward: that's where the <b>6 × parameters × tokens</b> rule for training compute comes from.</p>" },
+        ],
+        axiom: { name: "The chain rule", html: "<p>If L depends on a and a depends on z, then dL/dz = dL/da · da/dz; if z reaches L by several paths, sum over them. It follows from what a derivative is, the best linear approximation: chaining linear approximations gives the linear approximation of the chain.</p>" },
+      })),
     section("Build it: micrograd in 40 lines",
       code({
         Python: `import math

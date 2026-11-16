@@ -1,4 +1,5 @@
 import { h, loop, rng } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, dilemma, callout, section, prose, button, table } from "../lib/widgets.js";
 import { plane, xyChart } from "../lib/plot.js";
@@ -106,8 +107,10 @@ export default function (root, { id }) {
   }
 
   root.append(
-    section(null, prose(`<p>Gradient descent has one idea: the gradient points uphill, so step the other way. For a straight-line fit the loss is a perfect bowl and that's all you need. Real networks have millions of dimensions and surfaces full of narrow valleys, ridges and plateaus. How you step matters as much as which way.</p>
-<p>Three optimizers race below from the same starting point. <b>Gradient descent</b> takes <code>lr × gradient</code>. <b>Momentum</b> keeps a running velocity, so it speeds up along consistent directions and cancels zig-zags. <b>Adam</b> also divides each coordinate's step by its recent gradient size, so steep and shallow directions move at similar speeds.</p>`)),
+    section(null, goal("<p>We have a model with millions of knobs and one number, the loss, that says how wrong it is. We want to <b>turn every knob the right way at once</b>, without trying them one by one.</p>", ["the direction each knob should move", "a step that's neither too big nor too small", "something that copes with long, narrow valleys"]),
+      prose(`<p>Gradient descent has one idea: the gradient points uphill, so step the other way. For a straight-line fit the loss is a perfect bowl and that's all you need. Real networks have millions of dimensions and surfaces full of narrow valleys, ridges and plateaus. How you step matters as much as which way.</p>
+<p>Three optimizers race below from the same starting point. <b>Gradient descent</b> takes <code>lr × gradient</code>. <b>Momentum</b> keeps a running velocity, so it speeds up along consistent directions and cancels zig-zags. <b>Adam</b> also divides each coordinate's step by its recent gradient size, so steep and shallow directions move at similar speeds.</p>`),
+      h("div.vx-row", sticker("bowl", { title: "A loss surface", caption: "cut open: the ball rolls down the slope to the lowest point", px: 4 }))),
     section("Race them",
       h("div.stage",
         h("div.stage-controls",
@@ -146,6 +149,16 @@ export default function (root, { id }) {
       ], "For language models, AdamW (or a newer optimizer like Muon) and a warmup + decay schedule. Optimizer state is often bigger than the model weights in memory, which is why ZeRO and 8-bit optimizers exist."),
     ),
     walk("gradient-descent"),
+    section("Why downhill works, and when it doesn't",
+      whyChain({
+        claim: "Stepping against the gradient is the fastest way down, for a small enough step.",
+        steps: [
+          { q: "Why the gradient?", a: "<p>Close to any point, a smooth loss looks like a tilted plane: L(θ + δ) ≈ L(θ) + ∇L · δ. For a step of fixed length, the dot product ∇L · δ is most negative when δ points straight against ∇L.</p>" },
+          { q: "Why only for a small step?", a: "<p>The plane is only an approximation. The real surface curves, and a big step overshoots. In a valley with curvature λ, any learning rate above 2/λ makes the error grow every step instead of shrink.</p>" },
+          { q: "Why does Adam help in narrow valleys?", a: "<p>In a narrow valley the steep direction has huge curvature and the floor direction tiny curvature. One learning rate can't suit both. Adam divides each coordinate's step by the size of its recent gradients, so steep and flat directions take similar-sized steps.</p>" },
+        ],
+        axiom: { name: "Taylor's theorem: smooth functions are locally flat", html: "<p>If a function has a derivative, then close to any point it equals its tangent plane plus an error that shrinks like the square of the step. Every gradient method rests on this: we only know the slope where we stand, and trust it for a short distance.</p>" },
+      })),
     section("In code",
       code({
         "PyTorch": `model = MyModel()

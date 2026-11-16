@@ -1,4 +1,5 @@
 import { h, loop } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { segmented, slider, stats, predict, code, callout, section, prose, button, table } from "../lib/widgets.js";
 import { plane, xyChart } from "../lib/plot.js";
@@ -70,9 +71,11 @@ export default function (root, { id }) {
   ]);
 
   root.append(
-    section(null, prose(`<p>In 1958 Frank Rosenblatt built the <b>Mark I Perceptron</b>, a room-sized machine that learned to tell shapes apart. Its unit of computation was a cartoon of a neuron: multiply each input by a weight, add them up, and fire if the sum crosses a threshold.</p>
+    section(null, goal("<p>We want a machine that <b>learns a decision from examples</b> instead of being told the rule. The smallest version: a few numbers in, yes or no out, and a rule for fixing itself when it's wrong.</p>", ["a weight for each input", "a threshold to say yes or no", "an update that moves it toward the right answer"]),
+      prose(`<p>In 1958 Frank Rosenblatt built the <b>Mark I Perceptron</b>, a room-sized machine that learned to tell shapes apart. Its unit of computation was a cartoon of a neuron: multiply each input by a weight, add them up, and fire if the sum crosses a threshold.</p>
 <p><code>output = 1 if w₁x₁ + w₂x₂ + b > 0 else 0</code></p>
-<p>Geometrically that's a <b>line</b> (a plane, in more dimensions). The weight vector <b>w</b> points at the side that fires. Learning means moving the line until the classes fall on the right sides.</p>`)),
+<p>Geometrically that's a <b>line</b> (a plane, in more dimensions). The weight vector <b>w</b> points at the side that fires. Learning means moving the line until the classes fall on the right sides.</p>`),
+      h("div.vx-row", sticker("neuron", { title: "A neuron", caption: "inputs on wires of different strength (weights) into one sum, then one output", px: 4 }))),
     section("Train a perceptron",
       prose("<p>The <b>perceptron rule</b> is almost too simple: look at one point; if it's on the wrong side, nudge w towards it (or away, for the other class). Click the plane to add your own points.</p>"),
       h("div.stage",
@@ -108,6 +111,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("perceptron"),
+    section("Why one perceptron isn't enough",
+      whyChain({
+        claim: "One perceptron can't learn XOR, however long it trains.",
+        steps: [
+          { q: "Why not?", a: "<p>A perceptron says yes on one side of a straight line and no on the other. XOR wants yes at (0,1) and (1,0) and no at (0,0) and (1,1): the yes points sit on opposite corners. No single line puts both yes corners on one side and both no corners on the other.</p>" },
+          { q: "Why is the boundary always a straight line?", a: "<p>The output flips where w₁x₁ + w₂x₂ + b = 0. That's a linear equation in x₁ and x₂, and a linear equation in two variables draws a line. Whatever weights training finds, the boundary stays a line.</p>" },
+          { q: "So how do networks get past it?", a: "<p>Stack units with a nonlinearity in between. The first layer draws two lines (say OR and NAND); the second ANDs them. That's XOR. Without the nonlinearity, two linear layers multiply out to one linear layer: back to a single line.</p>" },
+        ],
+        axiom: { name: "Linear maps composed stay linear", html: "<p>If f(x) = Ax + b and g(y) = Cy + d, then g(f(x)) = CAx + (Cb + d): still a matrix times x plus a constant. Any number of linear layers collapses into one, with a single flat boundary. Only a nonlinear step (a threshold, ReLU, a sigmoid) breaks this.</p>" },
+      })),
     section("In code",
       code({
         "Perceptron": `import numpy as np
