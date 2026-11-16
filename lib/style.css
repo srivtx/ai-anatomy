@@ -1923,7 +1923,7 @@ details.as-table > :not(summary) { margin: 0; }
 .lab-log li { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: 13px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
 .lab-ls { font-size: 11.5px; color: var(--ink-3); }
 @media (max-width: 900px) {
-  .st-app { height: auto; }
+  .st-app { height: auto; grid-template-columns: minmax(0, 1fr); }
   .st-view { height: 62vh; min-height: 360px; }
   .st-side { overflow: visible; padding: 0; }
   .st-modes { width: 100%; }

@@ -71,6 +71,34 @@ if (!only || only === "studio") {
   for (const m of ["tiny", "gpt2", "llama8"]) await visit(`/studio?m=${m}`, `studio ${m}`, studio);
   for (const at of ["embed", "pos", "b2", "b2/attn", "b2/attn/h3", "b2/mlp", "b2/ln2", "lnf", "head"]) await visit(`/studio?m=gpt2&at=${at}`, `studio ${at}`, studio);
   await visit("/studio?m=llama8&at=b9/mlp", "studio llama mlp", studio);
+  await visit("/studio?m=mistral7", "studio mistral", studio);
+  // learn: every level, its buttons, the + / - block tools
+  const { LEVELS, CHALLENGES } = await import("../lib/studio/learn.js");
+  const learn = async (p) => {
+    await studio(p);
+    for (const b of await p.$$(".st-blocks .btn")) await b.click();
+    for (const b of await p.$$(".st-lvnav .btn")) { await b.click().catch(() => {}); await p.waitForTimeout(150); }
+  };
+  for (const l of LEVELS) await visit(`/studio?mode=learn&lv=${l.id}`, `studio level ${l.id}`, learn);
+  // challenges: the list, then each one with its hint open
+  await visit("/studio?mode=ch", "studio challenges", async (p) => { await p.click(".st-ch"); await p.waitForTimeout(300); });
+  for (const c of CHALLENGES) await visit(`/studio?mode=ch&c=${c.id}`, `studio challenge ${c.id}`, async (p) => { await p.click(".st-hint2 summary"); await studio(p); });
+  // speed levers, recipes, and the whole Colab loop with a pasted result
+  await visit("/studio?m=gpt2", "studio levers and recipes", async (p) => {
+    await p.click('.st-tabs button:has-text("Speed")');
+    for (let i = 0; i < 4; i++) { const b = (await p.$$(".sp-lever .btn"))[i]; if (b) { await b.click(); await p.waitForTimeout(150); } }
+    await p.click('.st-tabs button:has-text("Design")');
+    for (let i = 0; i < 8; i++) { const b = (await p.$$(".st-recipes .btn"))[i]; if (b) { await b.click(); await p.waitForTimeout(120); } }
+  });
+  const run = (f) => ({ label: f, finals: [f === "a" ? 1.62 : 2.1, f === "a" ? 1.64 : 2.2], curve: [[0, 4.2], [500, 2.4], [1500, f === "a" ? 1.63 : 2.15]], diverged: false, tps: 1000, params: 1e6, grads0: [0.3, 0.1, 0.02, 0.004, 1e-3, 2e-4], acts: [1, 2, 4, 8, 16, 32], sample: "To be, or not" });
+  const line = "STUDIO_RESULT:" + Buffer.from(JSON.stringify({ v: 1, id: "x", size: "S", steps: 1500, seeds: 2, device: "test", quick: true, runs: { baseline: run("a"), design: run("b") } })).toString("base64url");
+  await visit("/studio?m=gpt2&x=eyJyZXNpZHVhbCI6ZmFsc2V9", "studio test tab", async (p) => {
+    await p.click('.st-tabs button:has-text("Test")');
+    for (let i = 2; i >= 0; i--) { const b = (await p.$$(".st-pane:not([hidden]) .seg button"))[i]; if (b) { await b.click(); await p.waitForTimeout(100); } }
+    await p.fill(".lab-ta", line); await p.waitForTimeout(300);
+    if (!(await p.$(".lab-res"))) throw new Error("result card missing");
+    for (let i = 0; i < 3; i++) { const b = (await p.$$(".lab-res .row .btn"))[i]; if (b) { await b.click(); await p.waitForTimeout(250); } }
+  });
 }
 
 if (!only || only === "quiz") {
