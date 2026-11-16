@@ -1952,3 +1952,4 @@ details.as-table > :not(summary) { margin: 0; }
 .lab-t { table-layout: fixed; }
 .lab-t th:first-child { width: 34%; }
 .lab-tr th:first-child { width: 52%; }
+.st-edited .row { gap: 6px; flex-wrap: nowrap; }
