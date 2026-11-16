@@ -22,6 +22,16 @@ Every chapter runs a live simulation in plain JavaScript (no build step, no serv
 | ![pass@k before and after RL](docs/img/rl-narrows.png) | ![Thirty generations of models trained on models](docs/img/self-consumption.png) |
 | **What RL really does to a model.** pass@1 rises while pass@k falls: RL sharpens more than it teaches. | **Models eating their own outputs.** Each generation forgets more of the tail of the distribution. |
 
+## The Architecture Studio
+
+[\`/studio\`](studio.html) is a real transformer in 3D, drawn at its true proportions, that you open level by level (model › block › attention › one head) and change part by part. It has three modes:
+
+- **Learn**: nine levels that build a transformer one part at a time, from a bare lookup table to the modern Llama recipe, with Neuro explaining why each part exists and checks that tick as you go.
+- **Challenges**: real design problems (shrink the KV cache 4×, fit 100 users on one GPU, read 128k tokens cheaply, the best model for $500) checked live against the predictor.
+- **Build**: start from Tiny GPT, GPT-2, Llama 3 8B or Mistral 7B (exact parameter counts), apply recipes, and edit anything.
+
+Five panels: **Inspect** (what a part is and why it's there), **Predict** (what will happen before training, each line tagged exact / physics / law / rule of thumb / test it), **Speed** (what makes it faster on an H100 and what doesn't), **Test** (one click to a Colab run of your design against its baseline, then paste the result back to see if the prediction held, and colour the 3D blocks by the measured gradients) and **Design**.
+
 ## The curriculum
 
 ${lv}

@@ -1,6 +1,6 @@
 # AI Anatomy
 
-How machines learn, from one neuron to the frontier. 104 interactive chapters that train real models in your browser, and 59 Colab projects where you build each idea yourself.
+How machines learn, from one neuron to the frontier. 104 interactive chapters that train real models in your browser, and 60 Colab projects where you build each idea yourself.
 
 ![The home page](docs/img/home.png)
 
@@ -14,6 +14,16 @@ Every chapter runs a live simulation in plain JavaScript (no build step, no serv
 | **Different networks, same mind.** Two seeds look unrelated until their neurons are re-ordered. | **How machines see (and don't).** Puzzles a child solves that vision-language models still miss. |
 | ![pass@k before and after RL](docs/img/rl-narrows.png) | ![Thirty generations of models trained on models](docs/img/self-consumption.png) |
 | **What RL really does to a model.** pass@1 rises while pass@k falls: RL sharpens more than it teaches. | **Models eating their own outputs.** Each generation forgets more of the tail of the distribution. |
+
+## The Architecture Studio
+
+[`/studio`](studio.html) is a real transformer in 3D, drawn at its true proportions, that you open level by level (model › block › attention › one head) and change part by part. It has three modes:
+
+- **Learn**: nine levels that build a transformer one part at a time, from a bare lookup table to the modern Llama recipe, with Neuro explaining why each part exists and checks that tick as you go.
+- **Challenges**: real design problems (shrink the KV cache 4×, fit 100 users on one GPU, read 128k tokens cheaply, the best model for $500) checked live against the predictor.
+- **Build**: start from Tiny GPT, GPT-2, Llama 3 8B or Mistral 7B (exact parameter counts), apply recipes, and edit anything.
+
+Five panels: **Inspect** (what a part is and why it's there), **Predict** (what will happen before training, each line tagged exact / physics / law / rule of thumb / test it), **Speed** (what makes it faster on an H100 and what doesn't), **Test** (one click to a Colab run of your design against its baseline, then paste the result back to see if the prediction held, and colour the 3D blocks by the measured gradients) and **Design**.
 
 ## The curriculum
 
@@ -64,7 +74,7 @@ Every chapter runs a live simulation in plain JavaScript (no build step, no serv
 | Agents, interpretability and research | 6 | Agent loop and Ralph loop with Claude, Superposition and sparse autoencoders, Grokking modular addition, Ablation lab: what matters in a small GPT, Data vs model size, Catastrophic forgetting |
 | Lab notebook | 5 | GPU kernels step by step, Hyperparameters that transfer: μP, A scaling ladder, A sleeper-agent model organism, Reward hacking and the monitor |
 | Capstones | 3 | Train a reasoning model with GRPO, GPT-2 speedrun: Muon vs AdamW, Find the features inside GPT-2 |
-| Hidden curriculum | 11 | Does RL teach, or only sharpen?, Model collapse with a real language model, Error bars on evals, with real models, How long should a model think?, Test what a model says about itself, Can a model teach itself?, The cooldown, measured, Emergence or mirage?, Testing my conjectures, One-way facts and confident guesses, From electrons to CUDA, measured |
+| Hidden curriculum | 12 | Does RL teach, or only sharpen?, Model collapse with a real language model, Error bars on evals, with real models, How long should a model think?, Test what a model says about itself, Can a model teach itself?, The cooldown, measured, Emergence or mirage?, Testing my conjectures, One-way facts and confident guesses, From electrons to CUDA, measured, Studio lab: test your design |
 
 Every notebook runs end to end on a CPU in a quick mode (`QUICK=1`), with offline fallbacks when Hugging Face or an API key isn't available. The expected results quoted on the site were measured from these notebooks; where a run needs a GPU we didn't have, the result is labelled as a prediction.
 
