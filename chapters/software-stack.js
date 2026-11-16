@@ -46,6 +46,16 @@ const LAYERS = [
 ];
 const WHERE = { user: ["CPU, user space", "c1"], kernel: ["CPU, OS kernel", "c5"], gpu: ["GPU", "c3"] };
 
+const SIDE = [
+        ["Python + PyTorch", "<code>y = x @ W</code>", "devices, dtypes, gradients, memory", "<code>torch.compile</code>, custom ops"],
+        ["Compiler (Inductor, XLA)", "nothing: it's automatic", "fusion, scheduling, kernel code", "<code>max-autotune</code>, graph-break fixes"],
+        ["Kernel language (Triton)", "block-level kernels in Python", "threads, shared memory layout, PTX", "CUDA C++ for full control"],
+        ["Libraries (cuBLAS, cuDNN, CUTLASS)", "a function call", "hundreds of tuned kernels per GPU", "CUTLASS / CuTe templates"],
+        ["CUDA C++", "threads, blocks, shared memory", "SASS, register allocation, scheduling", "inline PTX"],
+        ["PTX", "virtual assembly", "the real instruction set of each GPU", "nothing public below this"],
+        ["Driver + hardware", "nothing", "command queues, page tables, block scheduling", "Nsight tools to observe it"],
+      ];
+
 export default function (root, { id }) {
   // ---------- 1. one call, down the layers ----------
   const ly = { i: 0 };
@@ -222,6 +232,43 @@ export default function (root, { id }) {
     }
   });
 
+  // ---------- the layers as a tower: pick where you write, see what's hidden below ----------
+  const tw = { at: 0 };
+  const twc = canvas(800, 300, "The software layers as a tower: the layer you write at, the layers above it you skip, and the layers below that it hides from you");
+  const plain = (x) => x.replace(/<[^>]+>/g, "");
+  function drawTw() {
+    twc.paint(() => {
+      twc.clear(); const c = twc.colors, n = SIDE.length, bh = 34, gap = 5, x = 20, w = 350, y0 = 22;
+      SIDE.forEach(([nm], i) => {
+        const y = y0 + i * (bh + gap), state = i < tw.at ? "above" : i === tw.at ? "you" : "below";
+        const fill = state === "you" ? c.accent : state === "below" ? `color-mix(in srgb, ${c.c1} 22%, ${c.surface})` : c.sunken;
+        twc.box(x, y, w, bh, { fill, stroke: state === "you" ? c.accent : c.line, lw: 1, r: 6 });
+        twc.text(plain(nm), x + 12, y + bh / 2, { size: 11.5, color: state === "you" ? c["accent-ink"] : state === "above" ? c["ink-3"] : c.ink });
+        twc.text(state === "you" ? "you write here" : state === "below" ? "handled for you" : "above you", x + w - 10, y + bh / 2, { size: 9.5, align: "right", color: state === "you" ? c["accent-ink"] : c["ink-3"] });
+      });
+      // bracket over the hidden layers
+      if (tw.at < n - 1) {
+        const ya = y0 + (tw.at + 1) * (bh + gap), yb = y0 + n * (bh + gap) - gap;
+        twc.line(x + w + 10, ya, x + w + 10, yb, { color: c.c1, lw: 2 });
+        twc.text(`${n - 1 - tw.at} hidden`, x + w + 18, (ya + yb) / 2, { size: 10.5, color: c.c1 });
+      }
+      // the chosen layer, in words
+      const [nm, write, hides, hatch] = SIDE[tw.at].map(plain);
+      twc.box(490, 22, 290, 266, { fill: c.surface, stroke: c.line, r: 10 });
+      twc.text(nm, 506, 44, { size: 13 });
+      const wrap = (str, x0, y, maxW, col) => {          // simple word wrap on canvas
+        twc.ctx.font = "500 11.5px Inter, system-ui, sans-serif"; let line = "", yy = y;
+        for (const word of str.split(" ")) { const t = line ? line + " " + word : word; if (twc.ctx.measureText(t).width > maxW && line) { twc.text(line, x0, yy, { size: 11.5, weight: 500, color: col }); line = word; yy += 17; } else line = t; }
+        if (line) twc.text(line, x0, yy, { size: 11.5, weight: 500, color: col }); return yy;
+      };
+      let yy = 74;
+      for (const [lab, val, col] of [["You'd write", write, c.accent], ["It hides from you", hides, c.c1], ["When you need more speed", hatch, c.good]]) {
+        twc.text(lab.toUpperCase(), 506, yy, { size: 9.5, color: col, mono: true }); yy = wrap(val, 506, yy + 18, 260, c.ink) + 30;
+      }
+    });
+  }
+  drawTw();
+
   root.append(
     section(null,
       goal("<p>You type <code>y = x @ W</code>. The GPU can only run its own machine code, started by writing bytes into a queue and ringing a doorbell. Between the two sit about nine layers of software, written by different people at different times. The goal is to see <b>why each layer exists</b>: each one lets somebody change one thing (the model, the library, the GPU) without rewriting everything else, and each one costs something.</p>",
@@ -345,15 +392,10 @@ nvcc add.cu -o add \\
       }),
     ),
     section("Every layer, side by side",
-      table(["Layer", "You'd write", "It hides from you", "Escape hatch when you need speed"], [
-        ["Python + PyTorch", "<code>y = x @ W</code>", "devices, dtypes, gradients, memory", "<code>torch.compile</code>, custom ops"],
-        ["Compiler (Inductor, XLA)", "nothing: it's automatic", "fusion, scheduling, kernel code", "<code>max-autotune</code>, graph-break fixes"],
-        ["Kernel language (Triton)", "block-level kernels in Python", "threads, shared memory layout, PTX", "CUDA C++ for full control"],
-        ["Libraries (cuBLAS, cuDNN, CUTLASS)", "a function call", "hundreds of tuned kernels per GPU", "CUTLASS / CuTe templates"],
-        ["CUDA C++", "threads, blocks, shared memory", "SASS, register allocation, scheduling", "inline PTX"],
-        ["PTX", "virtual assembly", "the real instruction set of each GPU", "nothing public below this"],
-        ["Driver + hardware", "nothing", "command queues, page tables, block scheduling", "Nsight tools to observe it"],
-      ], { boldFirst: true }),
+      h("div.stage",
+        h("div.stage-controls", segmented({ label: "You write at", options: SIDE.map((r, i) => ({ value: String(i), label: r[0].split(" (")[0].replace(" + PyTorch", "") })), value: String(tw.at), onChange: (v) => { tw.at = +v; drawTw(); } })),
+        h("div.stage-body", h("div.wide-canvas", twc.el))),
+      table(["Layer", "You'd write", "It hides from you", "Escape hatch when you need speed"], SIDE.map((r) => r.map((x) => (x.includes("<code>") ? h("span", { html: x }) : x))), { boldFirst: true }),
       callout("note", "What “abstraction” costs and buys", "<p>Each layer lets one group change without breaking the others: model authors don't track GPU generations, library authors don't track your model, and NVIDIA can change SASS every generation because nobody writes it. The price is overhead and lost information at each boundary. Speed work is mostly finding which boundary is costing you, then reaching one layer down.</p>"),
     ),
     section("In code",
