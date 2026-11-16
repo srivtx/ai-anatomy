@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { tileLab } from "../lib/labs.js";
 import { slider, stats, predict, code, callout, section, prose, table, stepper, segmented, toggle } from "../lib/widgets.js";
 import { flowCanvas } from "../lib/flow.js";
 import { xyChart } from "../lib/plot.js";
@@ -156,6 +157,9 @@ export default function (root, { id }) {
         h("div.stage-body", tst.el, h("div.wide-canvas", tc.el), tchart.el)),
       callout("note", "Why real kernels are more complicated", "<p>Shared-memory tiling alone reaches the H100's compute roof only around T ≈ 600, far too big for one block. Real kernels stack several levels of reuse: block tiles in shared memory (e.g. 128×256), warp tiles, per-thread register tiles (each thread computes an 8×8 or larger piece of C), and on Hopper, TMA for asynchronous bulk copies and warp-group MMA instructions, with loads for the next tile overlapped with math on the current one (software pipelining). Simon Boehm's well-known walkthrough on an RTX A6000 (fp32, no tensor cores) went from ~0.3 TFLOPS (naive) to ~2 (coalesced) to ~3 (shared-memory tiles) to ~16 (2D register tiling) to ~22 (warp tiling), against ~23 for cuBLAS.</p>"),
     ),
+    section("Tiling, in 3D",
+      prose("<p>A matrix multiply is a cube: one multiply-add for every (row, column, k). Colour it by which block owns each output tile and drag k forward to watch the partial sums build up. The numbers are for a real 4096 \u00d7 4096 \u00d7 4096 multiply in bf16 on an H100.</p>"),
+      tileLab()),
     section("Bank conflicts in shared memory",
       prose("<p>Shared memory is split into 32 <b>banks</b>, each 4 bytes wide; word <i>w</i> lives in bank <i>w</i> mod 32. A warp's access is full speed if every thread hits a different bank (or the same word). If several threads hit different words in the same bank, the accesses are serialised.</p>"),
       h("div.stage",

@@ -1,4 +1,5 @@
 import { h, loop, reducedMotion } from "../lib/core.js";
+import { launchLab } from "../lib/labs.js";
 import { slider, stats, predict, code, callout, section, prose, table, segmented, stepper, toggle, button } from "../lib/widgets.js";
 import { flowCanvas } from "../lib/flow.js";
 import { goal, whyChain, stackMap, sticker } from "../lib/why.js";
@@ -273,6 +274,9 @@ export default function (root, { id }) {
       }),
     ),
     walk("cuda"),
+    section("Launch a grid, and watch it land",
+      prose("<p>Pick how many elements and how many threads per block. The launch becomes blocks; the GPU hands blocks to SMs until each is full, then runs the rest in later waves. This toy GPU has 4 SMs with H100 limits each; hover any cube to see whose threads it holds.</p>"),
+      launchLab()),
     section("Why blocks can't wait for each other",
       prose("<p>A GPU with 4 SMs, each with room for 2 blocks, runs a grid of blocks. Pick a rule and press Run. In the middle option every block, after its work, waits for all the others: a grid-wide barrier that plain CUDA doesn't allow.</p>"),
       h("div.stage",
