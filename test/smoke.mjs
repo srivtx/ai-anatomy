@@ -54,7 +54,9 @@ async function pokeAll(page) {
 
 if (!only || only === "quiz") {
   if (!only) { await visit("/", "home"); await visit("/roadmap", "roadmap"); }
-  await visit("/quiz", "quiz", async (p) => { await p.click(".qz-word"); await p.click(".qz-go"); await p.click(".qz-opt"); await p.waitForTimeout(200); });
+  const playOne = async (p) => { const o = await p.$(".qz-opt, .qp-chip, .qp-bit, .qp-cell, .qp-kc, .qp-gate button"); if (o) await o.click(); else await p.$eval(".qp-range", (el) => { el.value = el.max; el.dispatchEvent(new Event("input", { bubbles: true })); }).catch(() => {}); await p.waitForTimeout(200); };
+  await visit("/quiz", "quiz", async (p) => { await p.click(".qz-word"); await p.click(".qz-go"); await playOne(p); });
+  for (const k of ["estimate", "order", "build"]) await visit(`/quiz?kind=${k}`, `quiz ${k}`, async (p) => { await p.click(".qz-go"); for (let i = 0; i < 4; i++) { await playOne(p); const b = await p.$(".qz-nav .primary:not([disabled])"); if (!b) break; await b.click(); } });
   await visit("/settings", "settings", async (p) => { for (const b of await p.$$(".set-seg button")) await b.click().catch(() => {}); });
 }
 for (const c of ALL.filter((c) => c.live && (!only || c.id === only))) await visit(`/learn?c=${c.id}`, c.id, pokeAll);

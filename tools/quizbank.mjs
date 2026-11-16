@@ -8,7 +8,7 @@ import { ALL } from "../lib/catalog.js";
 const live = new Map(ALL.filter((c) => c.live).map((c) => [c.id, c]));
 const questions = [];
 const hash = (s) => { let x = 2166136261; for (const ch of s) x = Math.imul(x ^ ch.charCodeAt(0), 16777619); return (x >>> 0).toString(36); };
-const add = (q) => { q.id = hash(q.kind + q.ch + q.q + q.options.join("|")); if (!questions.some((o) => o.id === q.id)) questions.push(q); };
+const add = (q) => { q.id = hash(q.kind + q.ch + q.q + (q.options ? q.options.join("|") : JSON.stringify(q))); if (!questions.some((o) => o.id === q.id)) questions.push(q); };
 
 // 1. predict({...}) blocks, cut out of the chapter source and evaluated on their own
 function objectAt(src, start) {
@@ -65,6 +65,10 @@ if (extra[1].status === "fulfilled") {
     (p.traps || []).forEach((t) => add({ kind: "field", ch, q: `From the field: good practice, or a trap? “${t}”`, options: ["Good practice: it usually works", "A trap that bites people"], answer: 1, explain: `<p>A trap, from the field notes of ${live.get(ch).title}.</p>` }));
   }
 }
+
+// 4. interactive questions: guess a number, put steps in order, build something
+const { QUIZPLUS } = await import("../lib/quizplus.js");
+for (const q of QUIZPLUS) if (live.has(q.ch)) add({ ...q });
 
 const kinds = {}; for (const q of questions) kinds[q.kind] = (kinds[q.kind] || 0) + 1;
 writeFileSync(new URL("../lib/quizbank.js", import.meta.url),
