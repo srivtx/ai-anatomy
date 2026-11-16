@@ -2,6 +2,7 @@ import { h } from "../lib/core.js";
 import { slider, stats, toggle, predict, stepper, code, callout, section, prose, table } from "../lib/widgets.js";
 import { flowCanvas } from "../lib/flow.js";
 import { goal, whyChain, stackMap, sticker, lawCards } from "../lib/why.js";
+import { walk } from "../lib/walks.js";
 
 function canvas(width, height, label) {
   const fc = flowCanvas({ width, height, label });
@@ -303,6 +304,8 @@ export default function (root, { id }) {
         { title: "The input rises: empty the wire", html: "<p>Now the n-type turns on and the stored charge drains to ground. The ½·C·V² that was stored is turned into heat in the n-type. The supply gives nothing this time.</p>" },
         { title: "The bill: C·V² per cycle", html: "<p>One full 0 → 1 → 0 costs <b>C·V²</b>, all of it heat. Multiply by how often each wire flips (α) and the clock (f), and sum over billions of wires: <b>P = α·C·V²·f</b>. With 0.2 fF and 0.75 V that's ~0.11 fJ per flip; an H100 doing ~10¹⁸ flips a second would burn ~100 W on that alone.</p>" },
       ], { onStep: (k) => { iv = k; icv.redraw?.(); } }),
+      prose("<p>Step through the numbers, one time constant at a time:</p>"),
+      walk("circuits"),
     ),
     section("Why long wires are slow",
       prose("<p>A long wire is a resistor <i>and</i> a capacitor, spread along its length. Double the length and you double both R and C, so the RC delay grows with <b>length squared</b>. The fix is to cut the wire into short pieces with an amplifier (a <b>repeater</b>) between each, which makes delay grow only linearly. Drag the length and switch repeaters on.</p>"),

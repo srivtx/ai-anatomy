@@ -2,6 +2,7 @@ import { h } from "../lib/core.js";
 import { slider, segmented, stats, predict, stepper, code, callout, section, prose, table } from "../lib/widgets.js";
 import { flowCanvas } from "../lib/flow.js";
 import { goal, whyChain, stackMap, sticker, lawCards } from "../lib/why.js";
+import { walk } from "../lib/walks.js";
 
 function canvas(width, height, label) {
   const fc = flowCanvas({ width, height, label });
@@ -243,6 +244,8 @@ export default function (root, { id }) {
           slider({ label: "Killer defects per cm²", min: 0.02, max: 0.6, step: 0.01, value: yd.D, fmt: (v) => v.toFixed(2), onInput: (v) => { yd.D = +v.toFixed(2); drawY(); } }),
           segmented({ label: "Split into", options: [1, 2, 4, 8].map((n) => ({ value: n, label: n === 1 ? "one die" : `${n} chiplets` })), value: 1, onChange: (n) => { yd.n = n; drawY(); } })),
         h("div.stage-body", h("div.wide-canvas", ycv.el), yst.el)),
+      prose("<p>Step through the arithmetic for five die sizes:</p>"),
+      walk("fab"),
       callout("note", "What the numbers mean", `<p>The wafer price (~$${WAFER_COST.toLocaleString("en-US")}, roughly what's been reported for a leading-edge 5 nm-class wafer) is an assumption, and packaging, testing and the chiplets' extra connections cost money that isn't counted here. The model also ignores that defects cluster, which helps big dies a little. But the shape is right, and it's why AMD's server CPUs are made of 8–12 small chiplets, and why NVIDIA's B200 is two reticle-sized dies joined together.</p>`),
       predict({
         chapter: id,
