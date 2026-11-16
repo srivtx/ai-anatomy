@@ -146,6 +146,63 @@ export default function (root, { id }) {
     const [yr, n, idea] = MS[hs]; tcv.text(`${yr} · ${n}: ${idea}`, 440, 140, { size: 12, align: "center" });
   });
 
+  // ---------- graphics and AI: the same shape of work ----------
+  const fit = { k: "matrix" };
+  const fcv = canvas(800, 270, "One graphics job and the matching deep-learning job, drawn side by side");
+  function drawFit() {
+    fcv.paint(() => {
+      fcv.clear(); const c = fcv.colors, k = fit.k;
+      const A = c.c1, B = c.c4, M = c.accent;
+      const panel = (x, title) => { fcv.box(x, 8, 360, 254, { fill: c.surface, stroke: c.line, r: 10 }); fcv.text(title, x + 14, 26, { size: 12 }); };
+      panel(10, "Graphics needed…"); panel(430, "…and deep learning needs");
+      fcv.text("=", 400, 135, { size: 26, align: "center", color: c["ink-3"] });
+      const sides = [[10, "vertices", "4×4 transform", "pixel", "texture", "colour channel"], [430, "inputs", "weight matrix W", "neuron", "weights", "bf16 / fp8 number"]];
+      sides.forEach(([x, item, mat, cell, data, num], si) => {
+        const col = si ? B : A;
+        if (k === "matrix") {
+          for (let i = 0; i < 7; i++) { fcv.box(x + 24, 52 + i * 26, 46, 18, { fill: `color-mix(in srgb, ${col} 45%, transparent)`, stroke: "transparent", r: 4 }); fcv.line(x + 72, 61 + i * 26, x + 138, 140, { color: c.line, lw: 1 }); }
+          fcv.box(x + 140, 100, 80, 80, { fill: `color-mix(in srgb, ${M} 22%, ${c.surface})`, stroke: M, lw: 1.5, r: 6 });
+          for (let r = 0; r < 4; r++) for (let q = 0; q < 4; q++) fcv.dot(x + 155 + q * 17, 115 + r * 17, 3, M);
+          fcv.text(mat, x + 180, 194, { size: 10.5, align: "center", color: M });
+          for (let i = 0; i < 7; i++) { fcv.line(x + 222, 140, x + 288, 61 + i * 26, { color: c.line, lw: 1 }); fcv.box(x + 290, 52 + i * 26, 46, 18, { fill: `color-mix(in srgb, ${col} 75%, transparent)`, stroke: "transparent", r: 4 }); }
+          fcv.text(`millions of ${item}, one matrix`, x + 180, 242, { size: 11, align: "center", color: c["ink-2"] });
+        } else if (k === "indep") {
+          for (let r = 0; r < 7; r++) for (let q = 0; q < 12; q++) {
+            const v = si ? (Math.sin(r * 1.7 + q * 0.9) + 1) / 2 : (Math.sin(r * 0.6) * Math.cos(q * 0.45) + 1) / 2;
+            fcv.box(x + 30 + q * 25, 46 + r * 25, 21, 21, { fill: `color-mix(in srgb, ${col} ${Math.round(25 + v * 60)}%, transparent)`, stroke: "transparent", r: si ? 10 : 3 });
+          }
+          fcv.text(`each ${cell} needs only its own inputs: no ${cell} waits for another`, x + 180, 242, { size: 10.5, align: "center", color: c["ink-2"] });
+        } else if (k === "stream") {
+          fcv.box(x + 24, 60, 90, 130, { fill: `color-mix(in srgb, ${col} 25%, ${c.surface})`, stroke: col, lw: 1, r: 6 });
+          fcv.text(si ? "HBM" : "video memory", x + 69, 125, { size: 10.5, align: "center" });
+          fcv.box(x + 246, 60, 90, 130, { fill: c.sunken, stroke: c.line, lw: 1, r: 6 });
+          for (let r = 0; r < 6; r++) for (let q = 0; q < 4; q++) fcv.box(x + 254 + q * 20, 68 + r * 20, 15, 15, { fill: `color-mix(in srgb, ${c.good} 60%, transparent)`, stroke: "transparent", r: 2 });
+          for (let i = 0; i < 9; i++) fcv.line(x + 116, 72 + i * 13, x + 244, 72 + i * 13, { color: `color-mix(in srgb, ${col} 70%, transparent)`, lw: 3 });
+          fcv.text(`all the ${data}, every ${si ? "step" : "frame"}`, x + 180, 214, { size: 11, align: "center", color: c["ink-2"] });
+          fcv.text(si ? "H100: 3.35 TB/s" : "GTX 580: 192 GB/s", x + 180, 236, { size: 10.5, align: "center", color: c["ink-3"], mono: true });
+        } else {
+          if (!si) {                                   // 8 bits per colour channel: 256 shades are plenty for an eye
+            for (let i = 0; i < 256; i++) fcv.box(x + 24 + i * (312 / 256), 80, 312 / 256 + 0.6, 60, { fill: `rgb(${i},${Math.round(i * 0.62)},${255 - Math.round(i * 0.75)})`, stroke: "transparent", lw: 0, r: 0 });
+            fcv.text("8 bits per channel = 256 shades", x + 180, 162, { size: 11, align: "center", color: c["ink-2"] });
+            fcv.text("the eye can't see finer steps", x + 180, 182, { size: 10.5, align: "center", color: c["ink-3"] });
+          } else {                                     // how many values each format can hold between 1 and 2
+            [["fp32", 23], ["bf16", 7], ["fp8 E4M3", 3], ["fp4 E2M1", 1]].forEach(([nm, b], i) => {
+              const y = 60 + i * 34, n = 2 ** b;
+              fcv.text(nm, x + 70, y + 8, { size: 10.5, align: "right", color: c["ink-2"] });
+              fcv.line(x + 80, y + 8, x + 330, y + 8, { color: c.line, lw: 1 });
+              const shown = Math.min(n, 128);
+              for (let j = 0; j <= shown; j++) fcv.line(x + 80 + (j / shown) * 250, y + 2, x + 80 + (j / shown) * 250, y + 14, { color: `color-mix(in srgb, ${col} 80%, transparent)`, lw: n > 128 ? 0.6 : 1.4 });
+              fcv.text(n > 128 ? `${n.toLocaleString()} steps` : `${n} steps`, x + 330, y - 6, { size: 9.5, align: "right", color: c["ink-3"], mono: true });
+            });
+            fcv.text("values between 1 and 2 in each format", x + 180, 212, { size: 10.5, align: "center", color: c["ink-2"] });
+          }
+          fcv.text(si ? "networks train in 16 bits, run in 8 or 4" : "colours never needed 32-bit floats", x + 180, 236, { size: 11, align: "center", color: c["ink-2"] });
+        }
+      });
+    });
+  }
+  drawFit();
+
   root.append(
     section(null,
       goal("<p>The GPU wasn't invented for AI. It was invented to draw a 3D world <b>fast enough to play a game</b>: every pixel on the screen, recomputed 60 times a second. That job turned out to be millions of small, identical, independent calculations, mostly multiply-adds on matrices. Thirty years later, neural networks needed exactly the same thing.</p>",
@@ -195,6 +252,9 @@ export default function (root, { id }) {
       stepper(MS.map(([yr, n, idea, txt]) => ({ title: `${yr}: ${n}`, html: `<p><b>${idea[0].toUpperCase() + idea.slice(1)}.</b> ${txt}</p>` })), { onStep: (k) => { hs = k; tcv.redraw?.(); } }),
     ),
     section("Why graphics hardware fit AI",
+      h("div.stage",
+        h("div.stage-controls", segmented({ label: "Match", options: [{ value: "matrix", label: "One matrix, many items" }, { value: "indep", label: "Independent work" }, { value: "stream", label: "Streaming memory" }, { value: "prec", label: "Low precision" }], value: fit.k, onChange: (v) => { fit.k = v; drawFit(); } })),
+        h("div.stage-body", h("div.wide-canvas", fcv.el))),
       table(["Graphics needed", "Deep learning needs", "So the GPU already had"], [
         ["the same matrix applied to millions of vertices", "the same weights applied to millions of inputs", "fast multiply-add on small matrices"],
         ["every pixel computed independently", "every neuron and every example computed independently", "thousands of threads and no dependencies to wait for"],
