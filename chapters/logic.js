@@ -148,7 +148,42 @@ export default function (root, { id }) {
     kst.set(1, `${f.toFixed(2)} GHz`, f > 3 ? "good" : f > 1.5 ? "warn" : "bad");
     kst.set(2, `${f.toFixed(2)} billion`);
     kst.set(3, `${(path * ck.stages).toFixed(0)} ps (${ck.stages} stage${ck.stages > 1 ? "s" : ""})`);
+    kc.paint(() => {
+      kc.clear(); const c = kc.colors, P1 = ck.depth * ck.delay + flop, T = 4 * P1;
+      const x0 = 150, x1 = 784, X = (t) => x0 + (t / T) * (x1 - x0);
+      kc.box(10, 8, 780, 264, { fill: c.surface, stroke: c.line, r: 10 });
+      const lane = (y, label, sub) => { kc.text(label, 22, y, { size: 11.5 }); if (sub) kc.text(sub, 22, y + 14, { size: 9.5, color: c["ink-3"] }); };
+      const clock = (y, P, col) => {            // a square wave: high for the first half of each period
+        const ctx = kc.ctx; ctx.beginPath(); ctx.moveTo(X(0), y + 10);
+        for (let t = 0; t < T; t += P) { ctx.lineTo(X(t), y - 10); ctx.lineTo(X(Math.min(T, t + P / 2)), y - 10); ctx.lineTo(X(Math.min(T, t + P / 2)), y + 10); ctx.lineTo(X(Math.min(T, t + P)), y + 10); }
+        ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.stroke();
+      };
+      const work = (y, P, logic) => {           // inside every period: logic settling, then the register capturing
+        for (let t = 0; t + 0.5 < T; t += P) {
+          const w = Math.min(P, T - t), lx = X(t) + 0.5, lw = Math.max(0.5, X(t + Math.min(logic, w)) - X(t) - 1);
+          kc.box(lx, y - 7, lw, 14, { fill: `color-mix(in srgb, ${c.c1} 55%, transparent)`, stroke: "transparent", r: 3 });
+          if (w > logic) kc.box(X(t + logic), y - 7, Math.max(0.5, X(t + w) - X(t + logic) - 1), 14, { fill: `color-mix(in srgb, ${c.c4} 70%, transparent)`, stroke: "transparent", r: 3 });
+        }
+      };
+      const outs = (y, P, st, col) => { let k = 0; for (let t = st * P; t <= T + 0.01; t += P) { kc.dot(X(t), y, 4, col); k++; } return k; };
+      // with the chosen pipeline
+      lane(40, `${ck.stages} stage${ck.stages > 1 ? "s" : ""}: clock`, `period ${path.toFixed(0)} ps`); clock(40, path, c.accent);
+      lane(76, "each tick", "logic, then register"); work(76, path, path - flop);
+      lane(108, "results out"); const n1 = outs(108, path, ck.stages, c.good);
+      kc.text(`${n1} result${n1 === 1 ? "" : "s"}`, x1, 124, { size: 10.5, color: c.good, align: "right" });
+      // without a pipeline, for comparison
+      kc.line(22, 142, x1, 142, { color: c.line, lw: 1, dash: [3, 4] });
+      lane(170, "no pipeline: clock", `period ${P1.toFixed(0)} ps`); clock(170, P1, c["ink-3"]);
+      lane(206, "each tick"); work(206, P1, P1 - flop);
+      lane(238, "results out"); const n0 = outs(238, P1, 1, c["ink-3"]);
+      kc.text(`${n0} result${n0 === 1 ? "" : "s"}`, x1, 254, { size: 10.5, color: c["ink-3"], align: "right" });
+      kc.text(`time → (${T.toFixed(0)} ps shown)`, x1, 20, { size: 9.5, color: c["ink-3"], align: "right", mono: true });
+      // key
+      kc.box(x0, 15, 12, 10, { fill: `color-mix(in srgb, ${c.c1} 55%, transparent)`, stroke: "transparent", r: 2 }); kc.text("gates settling", x0 + 17, 20, { size: 10, color: c["ink-2"] });
+      kc.box(x0 + 108, 15, 12, 10, { fill: `color-mix(in srgb, ${c.c4} 70%, transparent)`, stroke: "transparent", r: 2 }); kc.text("register (25 ps)", x0 + 125, 20, { size: 10, color: c["ink-2"] });
+    });
   }
+  const kc = canvas(800, 280, "Timing diagram: the clock, the logic settling inside each tick, and when results come out, with and without pipelining");
 
   // ---------- 4. multiplier size ----------
   const mu = { bits: 24 };
@@ -157,7 +192,34 @@ export default function (root, { id }) {
     const n = mu.bits, rel = (n * n) / (24 * 24);
     mst.set(0, String(n * n)); mst.set(1, String(n * (n - 1)));
     mst.set(2, rel >= 1 ? `${rel.toFixed(1)}× bigger` : `${(1 / rel).toFixed(1)}× smaller`, rel < 0.2 ? "good" : rel <= 1 ? "warn" : "bad");
+    mc.paint(() => {
+      mc.clear(); const c = mc.colors;
+      // left: the partial products, each row shifted one place, like long multiplication on paper
+      mc.box(10, 8, 440, 284, { fill: c.surface, stroke: c.line, r: 10 });
+      mc.text(`${n} × ${n} = ${n * n} partial products`, 24, 26, { size: 12 });
+      mc.text("one dot = one AND gate; adders sum each column", 24, 44, { size: 10, color: c["ink-3"] });
+      const s2 = Math.min(12, 400 / (2 * n - 1), 220 / n), right = 24 + (2 * n - 1) * s2 + (400 - (2 * n - 1) * s2) / 2, top = 60 + (226 - n * s2) / 2;
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) mc.dot(right - (i + j) * s2 - s2 / 2, top + i * s2 + s2 / 2, Math.max(0.8, s2 * 0.36), `color-mix(in srgb, ${i % 2 ? c.c1 : c.c3} 85%, transparent)`);
+      // right: area of each format's multiplier, drawn to scale (side ∝ bits)
+      mc.box(462, 8, 328, 284, { fill: c.surface, stroke: c.line, r: 10 });
+      mc.text("Multiplier area, to scale", 476, 26, { size: 12 });
+      mc.text("area grows with bits², so side grows with bits", 476, 44, { size: 10, color: c["ink-3"] });
+      const F = [["fp64", 53], ["fp32", 24], ["bf16", 8], ["fp8", 4], ["fp4", 2]];
+      if (!F.some(([, b]) => b === n)) F.push([`yours`, n, true]);
+      F.sort((p, q) => q[1] - p[1]);
+      const room = 304 - 10 * (F.length - 1), k = Math.min(2.6, room / F.reduce((t, [, b]) => t + Math.max(b * 2.6, 18) / 2.6, 0)), base = 250;
+      let x = 478;
+      for (const [nm, b, mine] of F) {
+        const sd = b * k, on = b === n, cx = x + Math.max(sd, 14) / 2;
+        if (mine) { mc.ctx.setLineDash([4, 3]); mc.box(x, base - sd, sd, sd, { fill: "transparent", stroke: c.accent, lw: 1.5, r: Math.min(4, sd / 4) }); mc.ctx.setLineDash([]); }
+        else mc.box(x, base - sd, sd, sd, { fill: on ? c.accent : `color-mix(in srgb, ${c.c1} 30%, transparent)`, stroke: on ? c.accent : c.line, lw: 1, r: Math.min(4, sd / 4) });
+        mc.text(nm, cx, base + 14, { size: 10.5, align: "center", color: on ? c.accent : c.ink });
+        mc.text(`${b}b`, cx, base + 28, { size: 9.5, align: "center", color: on ? c.accent : c["ink-3"], mono: true });
+        x += Math.max(sd, 18) + 10;
+      }
+    });
   }
+  const mc = canvas(800, 300, "Partial products of an n-bit multiplier, and multiplier area for each number format drawn to scale");
 
   root.append(
     section(null,
@@ -216,7 +278,7 @@ export default function (root, { id }) {
       prose("<p>The walkthrough above multiplied two 4-bit numbers with 16 AND gates and a block of adders. An n-bit multiplier needs n² AND gates and about n² full adders. A floating-point number multiplies its fractions (24 bits in fp32, 8 in bf16, 4 in fp8 E4M3, counting the hidden leading 1) and just adds its exponents, which is cheap.</p>"),
       h("div.stage",
         h("div.stage-controls", slider({ label: "Bits in the fraction being multiplied", min: 2, max: 53, value: mu.bits, onInput: (v) => { mu.bits = v; drawMu(); } })),
-        h("div.stage-body", mst.el)),
+        h("div.stage-body", h("div.wide-canvas", mc.el), mst.el)),
       table(["Format", "Fraction bits multiplied", "Multiplier size vs fp32", "Where it's used"], [
         ["fp64", "53", "≈ 4.9× bigger", "science; barely used in AI"],
         ["fp32", "24", "1×", "master weights, accumulators"],
@@ -240,7 +302,7 @@ export default function (root, { id }) {
           slider({ label: "Gates on the slowest path", min: 4, max: 80, value: ck.depth, onInput: (v) => { ck.depth = v; drawK(); } }),
           slider({ label: "Delay per gate", min: 4, max: 40, value: ck.delay, fmt: (v) => `${v} ps`, onInput: (v) => { ck.delay = v; drawK(); } }),
           slider({ label: "Pipeline stages", min: 1, max: 8, value: ck.stages, onInput: (v) => { ck.stages = v; drawK(); } })),
-        h("div.stage-body", kst.el)),
+        h("div.stage-body", h("div.wide-canvas", kc.el), kst.el)),
       callout("note", "Why clocks stopped at ~4–5 GHz", "<p>Deeper pipelines and faster gates pushed clocks from 1 MHz to 3.8 GHz between 1975 and 2004. Then they stopped. Gates kept getting faster; the problem was <b>heat</b>, because every clock tick charges and drains millions of capacitors. That's <a href='/learn?c=power-wall'>the power wall</a>, and it's why the answer became more units side by side instead of a faster clock.</p>"),
     ),
     section("In code",
