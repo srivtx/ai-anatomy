@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { stats, predict, code, callout, section, prose, table, button, segmented, slider } from "../lib/widgets.js";
 import { plane } from "../lib/plot.js";
@@ -106,8 +107,10 @@ export default function (root, { id }) {
   init();
 
   root.append(
-    section(null, prose(`<p>Networks eat numbers, so words (or products, users, songs) need to become vectors. The naive way is <b>one-hot</b>: a 50,000-long vector with a single 1. Every word is equally far from every other; “cat” is as different from “dog” as from “banana”.</p>
-<p>An <b>embedding</b> is a short dense vector, learned so that things used in similar ways end up close together. The idea behind it is the <b>distributional hypothesis</b>: “you shall know a word by the company it keeps” (J. R. Firth, 1957). Word2vec (Mikolov et al., 2013) turned it into a training objective: predict which words appear near each other.</p>`)),
+    section(null, goal("<p>Words are symbols with no built-in meaning. We want each word as a <b>short list of numbers</b> where similar words land close together, so whatever the model learns about one word carries over to its neighbours.</p>", ["one learned vector per word", "closeness that means similar use", "few enough numbers to be cheap"]),
+      prose(`<p>Networks eat numbers, so words (or products, users, songs) need to become vectors. The naive way is <b>one-hot</b>: a 50,000-long vector with a single 1. Every word is equally far from every other; “cat” is as different from “dog” as from “banana”.</p>
+<p>An <b>embedding</b> is a short dense vector, learned so that things used in similar ways end up close together. The idea behind it is the <b>distributional hypothesis</b>: “you shall know a word by the company it keeps” (J. R. Firth, 1957). Word2vec (Mikolov et al., 2013) turned it into a training objective: predict which words appear near each other.</p>`),
+      h("div.vx-row", sticker("embed", { title: "Words as points", caption: "three clusters: words used alike end up close together", px: 4 }))),
     section("Train word2vec in the page",
       prose("<p>The model below starts with random 12-dimensional vectors for 20 words and trains on a generated corpus of 1,400 little sentences (“the queen lives in the castle”, “the dog chases the cat”). Nobody tells it which words are animals or royals. Watch the groups form; the plot is a PCA projection of the 12 dimensions down to 2.</p>"),
       h("div.stage",
@@ -138,6 +141,16 @@ export default function (root, { id }) {
       prose("<p><b>Contrastive learning</b> generalises word2vec's trick: pull matching pairs together, push everything else apart. With a batch of N pairs, you score all N × N combinations and train each row to pick its true partner (the InfoNCE loss). It's how sentence-embedding models and CLIP are trained, and it needs no labels beyond “these two belong together”.</p>"),
     ),
     walk("embeddings"),
+    section("Why king − man + woman ≈ queen",
+      whyChain({
+        claim: "In word2vec, king − man + woman lands near queen.",
+        steps: [
+          { q: "Why would subtracting vectors mean anything?", a: "<p>Training pulls a word's vector toward the words around it. <i>king</i> and <i>queen</i> share most of their contexts (crown, reign, throne) and differ in the same way <i>man</i> and <i>woman</i> differ (he/she, his/her).</p>" },
+          { q: "Why does a shared difference become a direction?", a: "<p>If gender shifts the contexts the same way for many pairs, the cheapest way to fit them all is one consistent offset. Then king − man ≈ queen − woman, which rearranges to the famous sum.</p>" },
+          { q: "Why are similar words close at all?", a: "<p>The loss is lowest when a word's vector has a high dot product with its real neighbours and a low one with random words. Two words with the same neighbours feel the same pulls, so they settle in the same place.</p>" },
+        ],
+        axiom: { name: "The distributional hypothesis (an observation, not a law)", html: "<p>“You shall know a word by the company it keeps” (Firth, 1957). It isn't a theorem; it's a fact about language that keeps holding up. Meaning shows in usage, and usage can be counted. Every embedding, from word2vec to an LLM's input layer, is built on it.</p>" },
+      })),
     section("In code",
       code({
         PyTorch: `import torch, torch.nn.functional as F

@@ -1,4 +1,5 @@
 import { h, s } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, stepper, bars } from "../lib/widgets.js";
 import { fmtSI, fmtBytes } from "../lib/plot.js";
@@ -75,7 +76,9 @@ export default function (root, { id }) {
   ];
 
   root.append(
-    section(null, prose(`<p>A GPT is a stack of identical <b>transformer blocks</b> between an embedding at the bottom and a readout at the top. Each block has two sub-layers: <b>attention</b> (tokens talk to each other) and an <b>MLP</b> (each token thinks on its own). Both read from and write back into a shared <b>residual stream</b>. That's the whole architecture; the rest is scale.</p>`)),
+    section(null, goal("<p>We have attention (tokens talk) and MLPs (each token thinks). We want to <b>stack many of them</b> and still train the stack on thousands of GPUs, with every token in parallel.</p>", ["a block that can be repeated 100 times", "a clear path for gradients through all of it", "no step that waits for the previous token during training"]),
+      prose(`<p>A GPT is a stack of identical <b>transformer blocks</b> between an embedding at the bottom and a readout at the top. Each block has two sub-layers: <b>attention</b> (tokens talk to each other) and an <b>MLP</b> (each token thinks on its own). Both read from and write back into a shared <b>residual stream</b>. That's the whole architecture; the rest is scale.</p>`),
+      h("div.vx-row", sticker("tensor", { title: "Mostly matrix multiplies", caption: "nearly all of a transformer's arithmetic is this one operation", px: 4 }), sticker("attn", { title: "Plus attention", caption: "the one place tokens look at each other", px: 3 }))),
     section("Walk through one block",
       h("div.lab", h("div", { style: { overflowX: "auto" } }, h("div", { style: { minWidth: "460px" } }, svg)), stepper(steps))),
     section("Size any model",
@@ -107,6 +110,16 @@ export default function (root, { id }) {
       prose("<p>Decoder-only won for general models because one objective (next token) on all text scales simply, and any task can be phrased as a continuation. Encoders still win for cheap embeddings and classification; encoder-decoders for speech recognition and some translation.</p>"),
     ),
     walk("transformer"),
+    section("Why add, not replace",
+      whyChain({
+        claim: "Each block adds its output to its input (x + attention(x)) instead of replacing it.",
+        steps: [
+          { q: "Why add instead of replace?", a: "<p>With x + f(x), the gradient of the output with respect to x is 1 + f′(x). The 1 is a direct path: even if f's gradient is tiny, the signal from the loss reaches the bottom layer intact.</p>" },
+          { q: "Why would it vanish otherwise?", a: "<p>Through a plain stack, the gradient is a product of one factor per layer. Factors a little below 1 shrink to almost nothing over 100 layers (0.9¹⁰⁰ ≈ 0.00003); a little above 1 and they explode.</p>" },
+          { q: "Why normalise before each sub-layer?", a: "<p>Adding outputs block after block makes x grow. Normalising each sub-layer's input keeps it working on vectors of a steady size, so one learning rate suits every depth.</p>" },
+        ],
+        axiom: { name: "Long products drift to 0 or infinity", html: "<p>Multiply n numbers each a little off 1 and the result is exponentially small or large: (1 ± ε)ⁿ ≈ e^(±εn). Sums don't do that. Residual connections turn the gradient's long product into a sum over paths, and that's what lets depth train.</p>" },
+      })),
     section("In code",
       code({
         PyTorch: `import torch, torch.nn as nn, torch.nn.functional as F

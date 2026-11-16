@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, toggle, bars } from "../lib/widgets.js";
 import { plane, heatmap } from "../lib/plot.js";
@@ -74,8 +75,10 @@ export default function (root, { id }) {
   }
 
   root.append(
-    section(null, prose(`<p>In “The animal didn't cross the street because <b>it</b> was too tired”, the word <i>it</i> only makes sense once you know it refers to the animal. <b>Attention</b> lets every token look at every other token and pull in what it needs. It's the core of the transformer (Vaswani et al., 2017, “Attention Is All You Need”), and it's three small steps:</p>
-<ol><li>Each token makes a <b>query</b> (what am I looking for?), a <b>key</b> (what do I contain?) and a <b>value</b> (what will I hand over?), by multiplying its vector by three learned matrices.</li><li>Score every key against the query with a dot product, divide by √d, and softmax into weights that sum to 1.</li><li>Output the weighted average of the values.</li></ol>`)),
+    section(null, goal("<p>A word's meaning depends on other words, sometimes far away (<i>it</i> → <i>the animal</i>). We want each token to <b>pull in information from whichever tokens matter</b>, chosen by content rather than position, all in parallel.</p>", ["a way to ask: which tokens matter to me?", "weights that add up to 1", "the future hidden while generating"]),
+      prose(`<p>In “The animal didn't cross the street because <b>it</b> was too tired”, the word <i>it</i> only makes sense once you know it refers to the animal. <b>Attention</b> lets every token look at every other token and pull in what it needs. It's the core of the transformer (Vaswani et al., 2017, “Attention Is All You Need”), and it's three small steps:</p>
+<ol><li>Each token makes a <b>query</b> (what am I looking for?), a <b>key</b> (what do I contain?) and a <b>value</b> (what will I hand over?), by multiplying its vector by three learned matrices.</li><li>Score every key against the query with a dot product, divide by √d, and softmax into weights that sum to 1.</li><li>Output the weighted average of the values.</li></ol>`),
+      h("div.vx-row", sticker("attn", { title: "A causal attention map", caption: "rows are queries, height is how much each attends; the dark half is the masked future", px: 4 }))),
     section("One query, four keys",
       prose("<p>Turn the query and watch the weights follow the keys it points towards. The dots are the values; the ringed dot is the output: a blend of values, weighted by attention. Lengthen the query and the softmax gets sharper, like lowering a temperature.</p>"),
       h("div.stage",
@@ -119,6 +122,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("attention"),
+    section("Why divide by √d",
+      whyChain({
+        claim: "Attention scores are divided by √d before the softmax.",
+        steps: [
+          { q: "Why scale at all?", a: "<p>A score is the dot product of two d-long vectors. If their entries are random with variance 1, the dot product has variance d. With d = 128, scores are typically around ±11.</p>" },
+          { q: "Why is a big score a problem?", a: "<p>Softmax of scores 11 and 0 gives about 0.99998 and 0.00002: nearly one-hot. Its gradient is then nearly zero, so the query and key weights stop learning.</p>" },
+          { q: "Why does √d fix it?", a: "<p>Dividing by √d brings the variance back to 1 whatever the head size. Softmax starts soft, gradients flow, and training sharpens attention only where it helps.</p>" },
+        ],
+        axiom: { name: "Variances of independent things add", html: "<p>For independent random variables, Var(X + Y) = Var(X) + Var(Y). A dot product sums d independent products, so its variance grows like d and its typical size like √d. The same fact decides how every network's weights are initialised.</p>" },
+      })),
     section("In code",
       code({
         PyTorch: `import torch, torch.nn.functional as F

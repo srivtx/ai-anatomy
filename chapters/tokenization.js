@@ -1,4 +1,5 @@
 import { h, loop } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
 import { xyChart } from "../lib/plot.js";
@@ -70,8 +71,10 @@ export default function (root, { id }) {
   }, mergesEl);
 
   root.append(
-    section(null, prose(`<p>A language model reads numbers, not letters. The <b>tokenizer</b> decides what the numbers stand for. One per character is simple but makes sequences long: attention costs grow with the square of length, and each step learns little. One per word blows up the vocabulary and can't handle typos or new words. Every modern LLM sits in between, with <b>sub-word</b> tokens learned by <b>byte-pair encoding</b> (BPE): an old compression algorithm (Gage, 1994) repurposed for GPT-2 in 2019.</p>
-<p>The algorithm fits in one sentence: <i>find the most frequent adjacent pair of tokens in the corpus, make it a new token, repeat.</i></p>`)),
+    section(null, goal("<p>A model reads numbers from a fixed list. We want a list <b>short enough</b> that each entry is seen often enough to learn, with entries <b>long enough</b> that a sentence isn't thousands of steps.</p>", ["covers any text, with no unknown words", "common words in one piece", "a vocabulary size we choose"]),
+      prose(`<p>A language model reads numbers, not letters. The <b>tokenizer</b> decides what the numbers stand for. One per character is simple but makes sequences long: attention costs grow with the square of length, and each step learns little. One per word blows up the vocabulary and can't handle typos or new words. Every modern LLM sits in between, with <b>sub-word</b> tokens learned by <b>byte-pair encoding</b> (BPE): an old compression algorithm (Gage, 1994) repurposed for GPT-2 in 2019.</p>
+<p>The algorithm fits in one sentence: <i>find the most frequent adjacent pair of tokens in the corpus, make it a new token, repeat.</i></p>`),
+      h("div.vx-row", sticker("tokens", { title: "un · believ · able", caption: "rare words split into common pieces; common words stay whole", px: 4 }))),
     section("Train a tokenizer on a short story",
       h("div.stage",
         h("div.stage-controls",
@@ -102,6 +105,16 @@ export default function (root, { id }) {
       prose("<p>Tokenization causes a surprising share of LLM oddities: trouble with arithmetic (numbers split inconsistently), spelling and reversing words, extra cost for some languages, and “glitch tokens” that appeared in the tokenizer's training data but almost never in the model's. Some labs now split digits one at a time to make arithmetic easier.</p>"),
     ),
     walk("tokenization"),
+    section("Why models can't spell",
+      whyChain({
+        claim: "Models often miscount the r's in <i>strawberry</i>.",
+        steps: [
+          { q: "Why? It's three letters.", a: "<p>The model never sees the letters. <i>strawberry</i> arrives as two or three token IDs, something like <code>str</code> <code>aw</code> <code>berry</code>. To count r's it must have learned how each token is spelled, indirectly, from context.</p>" },
+          { q: "Why not just feed it characters?", a: "<p>Sequences get about 4× longer. Attention's cost grows with the square of the length, so roughly 16× the attention work, and each step predicts less, so learning the same thing takes more steps.</p>" },
+          { q: "Why does BPE choose these pieces?", a: "<p>It merges the most frequent adjacent pair, over and over. Frequent strings become single tokens; rare ones stay split. It's a simple, greedy way to make typical text as short as possible for a fixed vocabulary size.</p>" },
+        ],
+        axiom: { name: "Source coding: frequent things deserve short codes", html: "<p>To make messages short on average, give each pattern a code of about −log₂ p bits: common patterns short, rare ones long (Shannon, 1948). A tokenizer spends its vocabulary slots on the pieces that save the most length, which is the same idea done greedily.</p>" },
+      })),
     section("In code",
       code({
         Python: `from collections import Counter
