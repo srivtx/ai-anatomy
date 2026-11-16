@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
 import { plane } from "../lib/plot.js";
@@ -94,7 +95,9 @@ export default function (root, { id }) {
   const lp = loop((dt) => { acc += dt; if (acc > Math.max(0.02, 1.2 / o.steps)) { acc = 0; if (!stepAll()) lp.stop(); draw(); } }, pl.el);
 
   root.append(
-    section(null, prose(`<p>How do you generate a new image? <b>Diffusion models</b> learn to do the reverse of something easy. Destroying data is easy: add a little Gaussian noise, then a little more, until only static is left. A diffusion model learns to undo one small step of that. Start from pure static, undo step after step, and an image condenses out of the noise. This powers Stable Diffusion, DALL·E, Imagen, Sora and most image and video generators.</p>`)),
+    section(null, goal("<p>We want to <b>draw new samples</b> that look like real images. Making one in a single shot is hard. Destroying an image with noise is easy, so learn to undo the noise a little at a time.</p>", ["a forward process that ends in pure noise", "a network that guesses the noise in a noisy image", "a loop that removes it step by step"]),
+      prose(`<p>How do you generate a new image? <b>Diffusion models</b> learn to do the reverse of something easy. Destroying data is easy: add a little Gaussian noise, then a little more, until only static is left. A diffusion model learns to undo one small step of that. Start from pure static, undo step after step, and an image condenses out of the noise. This powers Stable Diffusion, DALL·E, Imagen, Sora and most image and video generators.</p>`),
+      h("div.vx-row", sticker("noise", { title: "Noise to picture", caption: "heavy noise, half noise, clean: the model learns each small step back", px: 4 }))),
     section("Forward: data dissolves into noise",
       h("div.lab",
         h("div.canvas-box", fwd.el),
@@ -131,6 +134,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("diffusion"),
+    section("Why guessing noise can paint",
+      whyChain({
+        claim: "A diffusion model is only trained to guess the noise that was added, yet it can generate new images.",
+        steps: [
+          { q: "Why does guessing noise help generate?", a: "<p>Knowing the noise in a noisy image tells you which way to move it to look more like a real image. That direction is the <b>score</b>, ∇ log p(x). Step along it, add a little fresh noise, repeat, and you walk from static to a picture.</p>" },
+          { q: "Why many small steps, not one big one?", a: "<p>Undoing a tiny bit of noise is easy: the answer is close to a Gaussian around where you are. Undoing all of it at once means choosing one image out of every image that could be hiding in the static, a far harder problem with many right answers.</p>" },
+          { q: "Why start from pure Gaussian noise?", a: "<p>After enough noising, every image looks like the same standard Gaussian. That's trivial to sample, so it's the common starting point for the trip back.</p>" },
+        ],
+        axiom: { name: "Gaussian noise forgets where it started", html: "<p>Add independent Gaussian noise again and again (shrinking the signal a little each time) and any starting distribution ends up a standard Gaussian. Heat spreading through a metal bar follows the same equation. Diffusion models run it backwards, which works because each small step back is also nearly Gaussian.</p>" },
+      })),
     section("In code",
       code({
         "DDPM training": `def train_step(model, x0, alphas_bar):

@@ -1,4 +1,5 @@
 import { h } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button, toggle } from "../lib/widgets.js";
 
@@ -105,7 +106,9 @@ export default function (root, { id }) {
   }
 
   root.append(
-    section(null, prose(`<p>A 28 × 28 image has 784 pixels. A dense layer looking at it connects every pixel to every unit: hundreds of thousands of weights, and if the digit moves one pixel to the right everything it learned is in the wrong place. A <b>convolution</b> instead slides one small filter, say 3 × 3, across the whole image, computing the same weighted sum at every position. It has two built-in assumptions: <b>locality</b> (nearby pixels matter together) and <b>translation equivariance</b> (an edge is an edge wherever it is).</p>`)),
+    section(null, goal("<p>An image is a grid where <b>nearby pixels go together</b> and the same thing can appear anywhere. We want a layer that looks locally, reuses one detector everywhere, and builds big shapes from small ones.</p>", ["small local detectors", "the same weights at every position", "layers that see wider and wider"]),
+      prose(`<p>A 28 × 28 image has 784 pixels. A dense layer looking at it connects every pixel to every unit: hundreds of thousands of weights, and if the digit moves one pixel to the right everything it learned is in the wrong place. A <b>convolution</b> instead slides one small filter, say 3 × 3, across the whole image, computing the same weighted sum at every position. It has two built-in assumptions: <b>locality</b> (nearby pixels matter together) and <b>translation equivariance</b> (an edge is an edge wherever it is).</p>`),
+      h("div.vx-row", sticker("conv", { title: "A 3 × 3 filter", caption: "sliding over an image; here it sits on a dark-to-light edge", px: 4 }))),
     section("Draw, then convolve",
       prose("<p>Draw on the left grid (it starts with a 4). Pick a kernel or type your own weights. The middle map is the kernel's response at every position; the right map keeps the maximum of each 2 × 2 block (<b>max pooling</b>). Click a pixel on the right to see which input pixels it depends on: its <b>receptive field</b>.</p>"),
       h("div.stage",
@@ -148,6 +151,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("cnn"),
+    section("Why so few weights",
+      whyChain({
+        claim: "A conv layer with 64 filters of 3 × 3 on 64 channels has 37 thousand weights. A dense layer doing the same job on a 224 × 224 image would need about 10 trillion.",
+        steps: [
+          { q: "How does it get away with so few?", a: "<p>It makes two bets. <b>Locality</b>: a pixel's meaning depends mostly on its neighbours, so each output looks only at a 3 × 3 patch. <b>Sharing</b>: an edge is an edge anywhere, so the same 3 × 3 weights are used at every position.</p>" },
+          { q: "Why does sharing help learning, not just memory?", a: "<p>Every position is a training example for the same filter. A cat in the corner teaches the same weights as a cat in the centre. And if the image shifts, the output map shifts with it.</p>" },
+          { q: "How does it see whole objects through 3 × 3 windows?", a: "<p>Stacking. Two 3 × 3 layers see 5 × 5; ten see 21 × 21; pooling and strides double the reach at each stage. Edges become textures, textures become parts, parts become objects.</p>" },
+        ],
+        axiom: { name: "Symmetry: if a rule shouldn't depend on position, build that in", html: "<p>Physics is the same here and there, so photos have roughly the same statistics everywhere in the frame. A model that respects a real symmetry needs fewer parameters and less data, because it doesn't relearn the same thing at every position. Convolution is translation symmetry written as a layer.</p>" },
+      })),
     section("In code",
       code({
         PyTorch: `import torch.nn as nn

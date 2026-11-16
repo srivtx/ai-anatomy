@@ -1,4 +1,5 @@
 import { h, rng, loop } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, stats, predict, code, callout, section, prose, table, button, bars } from "../lib/widgets.js";
 import { plane, fmtSI } from "../lib/plot.js";
@@ -106,7 +107,9 @@ export default function (root, { id }) {
   }
 
   root.append(
-    section(null, prose(`<p>A dense model uses every parameter for every token. A <b>mixture of experts</b> (MoE) replaces each feed-forward layer with many smaller feed-forward “experts” and a <b>router</b> that sends each token to just a few of them. You get the knowledge capacity of a huge model for the compute cost of a small one. Most frontier and leading open models are now MoEs: Mixtral, DeepSeek-V3, Qwen3's largest models, Llama 4. The idea is old (Jacobs, Jordan, Nowlan and Hinton, 1991); making it work at scale is mostly about routing and balance.</p>`)),
+    section(null, goal("<p>Bigger models know more, but every parameter used costs compute on every token. We want <b>lots of parameters, with only a few of them used per token</b>.</p>", ["many expert sub-networks", "a router that picks the right ones for each token", "load spread fairly across experts"]),
+      prose(`<p>A dense model uses every parameter for every token. A <b>mixture of experts</b> (MoE) replaces each feed-forward layer with many smaller feed-forward “experts” and a <b>router</b> that sends each token to just a few of them. You get the knowledge capacity of a huge model for the compute cost of a small one. Most frontier and leading open models are now MoEs: Mixtral, DeepSeek-V3, Qwen3's largest models, Llama 4. The idea is old (Jacobs, Jordan, Nowlan and Hinton, 1991); making it work at scale is mostly about routing and balance.</p>`),
+      h("div.vx-row", sticker("experts", { title: "Two of eight", caption: "the router (purple) sends this token to two experts; the other six do nothing", px: 3 }))),
     section("Experts carve up the input space",
       prose("<p>The original mixture of experts, training live: six <b>linear</b> classifiers, each of which alone can only draw a straight line, and a softmax <b>gate</b> that decides how much to trust each one at each point. Together they learn a circle. The right panel colours each point by the expert the gate trusts most.</p>"),
       h("div.stage",
@@ -160,6 +163,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("moe"),
+    section("Why the router needs a referee",
+      whyChain({
+        claim: "Mixture-of-experts models are trained with something that keeps expert usage even.",
+        steps: [
+          { q: "Why does the router need help?", a: "<p>Early on, a few experts are slightly better, so the router sends them more tokens, so they learn faster and get better still. Left alone, most tokens go to a handful of experts and the rest never learn: wasted parameters.</p>" },
+          { q: "Why is uneven load a hardware problem too?", a: "<p>Experts live on different GPUs. If one expert gets 3× its share, its GPU does 3× the work while the others wait, and tokens past its capacity get dropped or delayed.</p>" },
+          { q: "Then why not route at random?", a: "<p>Then experts can't specialise, which was the point. The fix is a compromise: route by content, but pay a penalty when usage gets uneven. Most models add a balancing loss; DeepSeek-V3 nudges a per-expert bias instead.</p>" },
+        ],
+        axiom: { name: "Rich get richer: positive feedback runs away", html: "<p>When success brings more of what causes success, small differences grow until one side takes nearly everything (winner-take-all markets, preferential attachment). Any learner that chooses its own training data has this loop, and needs something pushing back.</p>" },
+      })),
     section("In code",
       code({
         "Top-k MoE layer": `class MoE(nn.Module):

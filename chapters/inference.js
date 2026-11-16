@@ -1,4 +1,5 @@
 import { h, rng } from "../lib/core.js";
+import { goal, whyChain, sticker } from "../lib/why.js";
 import { walk } from "../lib/walks.js";
 import { slider, segmented, stats, predict, code, callout, section, prose, table, button } from "../lib/widgets.js";
 import { xyChart, fmtBytes } from "../lib/plot.js";
@@ -73,7 +74,9 @@ export default function (root, { id }) {
   }
 
   root.append(
-    section(null, prose(`<p>Training happens once; inference happens billions of times. Generating text has two phases with opposite characters. <b>Prefill</b> processes the whole prompt in parallel: big matrix multiplies, compute-bound. <b>Decode</b> produces one token at a time, rereading all the weights and the KV cache for every token: memory-bound. Nearly every inference trick either makes decode do more useful work per byte read (batching, speculative decoding) or reads fewer bytes (quantisation, smaller KV caches).</p>`)),
+    section(null, goal("<p>A trained model sits on a GPU. We want it to answer <b>many users, fast and cheaply</b>. But generation is one token at a time, and each token needs every weight read from memory.</p>", ["don't recompute the past: cache it", "share each weight read across many users", "guess ahead when you can"]),
+      prose(`<p>Training happens once; inference happens billions of times. Generating text has two phases with opposite characters. <b>Prefill</b> processes the whole prompt in parallel: big matrix multiplies, compute-bound. <b>Decode</b> produces one token at a time, rereading all the weights and the KV cache for every token: memory-bound. Nearly every inference trick either makes decode do more useful work per byte read (batching, speculative decoding) or reads fewer bytes (quantisation, smaller KV caches).</p>`),
+      h("div.vx-row", sticker("kvcache", { title: "The KV cache", caption: "every token leaves a key (blue) and value (orange) in every layer; the newest is lit", px: 4 }))),
     section("Speculative decoding",
       prose("<p>A small, fast <b>draft</b> model guesses the next γ tokens. The big model checks all of them in <b>one</b> forward pass (checking γ tokens costs about the same as generating one, because decode is memory-bound). It keeps the longest prefix it agrees with, plus one token of its own. A clever acceptance rule makes the output distribution <b>exactly</b> the big model's.</p>"),
       h("div.lab",
@@ -127,6 +130,16 @@ export default function (root, { id }) {
       ]),
     ),
     walk("inference"),
+    section("Why one user wastes a GPU",
+      whyChain({
+        claim: "Generating tokens for one user leaves a GPU's arithmetic more than 99% idle.",
+        steps: [
+          { q: "Why?", a: "<p>Each token needs every weight once, about 2 FLOPs per weight. A 70B model in 16-bit is 140 GB. An H100 reads about 3.35 TB/s, so reading the weights takes ~42 ms, while the 140 GFLOPs of maths would take ~0.14 ms.</p>" },
+          { q: "So how do servers fix it?", a: "<p>Batching: read each weight once and use it for many users' tokens. 64 users share the same 42 ms of reading, for nearly 64× the throughput at almost the same latency. Continuous batching keeps the batch full as users come and go.</p>" },
+          { q: "Why does memory still run out?", a: "<p>Each user's KV cache grows with every token. For a 70B model with 80 layers and 8 KV heads, that's ~0.33 MB per token, so a 4,000-token chat holds ~1.3 GB. Sixty-four of those is ~84 GB of cache alone.</p>" },
+        ],
+        axiom: { name: "Moving data costs more than computing on it", html: "<p>A multiply-add on chip costs around a picojoule; fetching its operand from off-chip memory costs ~100× more, and bandwidth grows more slowly than compute with each generation. Any job that does few operations per byte, like decoding, is limited by memory, not arithmetic. (<a href='/learn?c=memory-physics'>Why memory is far away</a>.)</p>" },
+      })),
     section("In code",
       code({
         vLLM: `from vllm import LLM, SamplingParams
