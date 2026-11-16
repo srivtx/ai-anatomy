@@ -53,6 +53,7 @@ export default function (root, { id }) {
   // ---------- 2. energy per multiply-add ----------
   const en = { src: "dram", reuse: 1 };
   const ec = canvas(880, 200, "Energy of one fp32 multiply-add, split into arithmetic and data movement");
+  const e2 = canvas(800, 270, "One multiply-add's energy as a grid of 100 squares, arithmetic against data movement, and movement cost against reuse for each memory");
   const est = stats([{ label: "Arithmetic (multiply + add)" }, { label: "Fetching the two inputs" }, { label: "Share spent moving data" }]);
   function drawE() {
     const comp = E.mul32f + E.add32f, mv = (2 * E[en.src]) / en.reuse, tot = comp + mv;
@@ -162,7 +163,7 @@ export default function (root, { id }) {
         h("div.stage-controls",
           segmented({ label: "Inputs come from", options: [{ value: "dram", label: "DRAM" }, { value: "sram", label: "On-chip SRAM" }, { value: "reg", label: "Registers" }], value: en.src, onChange: (v) => { en.src = v; drawE2(); } }),
           slider({ label: "Times each fetched number is reused", min: 0, max: 3, step: 0.05, value: 0, fmt: (v) => String(Math.round(10 ** v)), onInput: (v) => { en.reuse = Math.round(10 ** v); drawE2(); } })),
-        h("div.stage-body", est.el)),
+        h("div.stage-body", h("div.wide-canvas", e2.el), est.el)),
       predict({
         chapter: id,
         question: "Inputs come from DRAM. How many times must each fetched number be reused before moving data costs less than the fp32 multiply-add itself (4.6 pJ)?",
@@ -228,6 +229,46 @@ print(20 * 2 * x.numel() * 4 / (time.time() - t) / 1e9, "GB/s")   # T4: ~250; H1
       }, "Project 60 runs the bandwidth test on a Colab GPU."),
     ),
   );
-  function drawE2() { drawE(); }
-  resetD(); drawE(); drawH(); drawL();
+  function drawE2() {
+    drawE();
+    const comp = E.mul32f + E.add32f;
+    e2.paint(() => {
+      e2.clear(); const c = e2.colors, mv = (2 * E[en.src]) / en.reuse, share = mv / (mv + comp);
+      // left: 100 squares, each 1% of the energy
+      e2.box(10, 8, 330, 254, { fill: c.surface, stroke: c.line, r: 10 });
+      e2.text("Where the energy goes: 100 squares", 24, 26, { size: 12 });
+      const nm = Math.round(share * 100);
+      for (let k = 0; k < 100; k++) {
+        const col = k < nm ? c.bad : c.good, x = 24 + (k % 10) * 21, y = 42 + Math.floor(k / 10) * 19;
+        e2.box(x, y, 17, 15, { fill: `color-mix(in srgb, ${col} ${k < nm ? 60 : 70}%, transparent)`, stroke: "transparent", r: 3 });
+      }
+      e2.box(244, 48, 12, 12, { fill: `color-mix(in srgb, ${c.bad} 60%, transparent)`, stroke: "transparent", r: 2 }); e2.text("moving", 262, 54, { size: 10.5, color: c["ink-2"] });
+      e2.text(`${nm}%`, 262, 72, { size: 14, color: c.bad });
+      e2.box(244, 100, 12, 12, { fill: `color-mix(in srgb, ${c.good} 70%, transparent)`, stroke: "transparent", r: 2 }); e2.text("arithmetic", 262, 106, { size: 10.5, color: c["ink-2"] });
+      e2.text(`${100 - nm}%`, 262, 124, { size: 14, color: c.good });
+      e2.text(`${(mv + comp) < 10 ? (mv + comp).toFixed(1) : Math.round(mv + comp)} pJ`, 244, 160, { size: 14, color: c.ink });
+      e2.text("per multiply-add", 244, 177, { size: 10, color: c["ink-3"] });
+      e2.text(`reuse × ${en.reuse}`, 244, 200, { size: 10.5, color: c["ink-3"], mono: true });
+      // right: moving cost per multiply-add against reuse, one line per memory, log-log
+      e2.box(352, 8, 438, 254, { fill: c.surface, stroke: c.line, r: 10 });
+      e2.text("Moving cost per multiply-add vs reuse", 366, 26, { size: 12 });
+      const x0 = 410, x1 = 770, y0 = 224, y1 = 44, X = (r) => x0 + (Math.log10(r) / 3) * (x1 - x0), Y = (v) => y0 - ((Math.log10(v) + 3) / 7) * (y0 - y1);
+      for (const r of [1, 10, 100, 1000]) { e2.line(X(r), y1, X(r), y0, { color: c.line, lw: 1 }); e2.text(String(r), X(r), y0 + 12, { size: 9.5, color: c["ink-3"], align: "center", mono: true }); }
+      for (const v of [0.01, 1, 100]) e2.text(v < 1 ? "0.01" : String(v), x0 - 6, Y(v), { size: 9.5, color: c["ink-3"], align: "right", mono: true });
+      e2.text("pJ", x0 - 6, y1 - 6, { size: 9.5, color: c["ink-3"], align: "right" });
+      e2.text("times each number is reused →", x1, y0 + 26, { size: 9.5, color: c["ink-3"], align: "right" });
+      e2.line(x0, Y(comp), x1, Y(comp), { color: c.good, lw: 1.5, dash: [5, 4] });
+      e2.text(`the arithmetic itself: ${comp.toFixed(1)} pJ`, X(4), Y(comp) - 10, { size: 10, color: c.good });
+      [["dram", "DRAM", c.bad], ["sram", "SRAM", c.c6], ["reg", "registers", c.c1]].forEach(([k, lab, col]) => {
+        const on = k === en.src, f = (r) => (2 * E[k]) / r;
+        e2.line(X(1), Y(f(1)), X(1000), Y(f(1000)), { color: col, lw: on ? 2.6 : 1.3 });
+        if (k === "dram") e2.text(lab, X(1) + 4, Y(f(1)) - 9, { size: 10.5, color: col });
+        else e2.text(lab, x1 - 4, Y(f(1000)) - 9, { size: 10.5, color: col, align: "right" });
+      });
+      const be = (2 * E.dram) / comp;            // reuse where DRAM movement equals the arithmetic
+      e2.dot(X(be), Y(comp), 4, c.bad); e2.text(`DRAM breaks even at ~${Math.round(be)}× reuse`, X(be) + 2, Y(comp) + 14, { size: 10, color: c.bad, align: "right" });
+      e2.dot(X(en.reuse), Y(mv), 6, c.accent); e2.text("you", X(en.reuse) + (X(en.reuse) > x1 - 60 ? -9 : 9), Y(mv) - 14, { size: 10.5, color: c.accent, align: X(en.reuse) > x1 - 60 ? "right" : "left" });
+    });
+  }
+  resetD(); drawE2(); drawH(); drawL();
 }
