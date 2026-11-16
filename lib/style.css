@@ -1609,3 +1609,24 @@ pre.code.folded { max-height: 372px; overflow-y: hidden; -webkit-mask-image: lin
 .qp-tt th, .qp-tt td { padding: 4px 10px; border-bottom: 1px solid var(--line); text-align: center; }
 .qp-tt th { font: 600 11px var(--mono); color: var(--ink-3); text-transform: uppercase; }
 .qp-tt td.ok { color: var(--good); font-weight: 700; } .qp-tt td.no { color: var(--bad); font-weight: 700; } .qp-tt td.q { color: var(--ink-3); }
+
+/* law cards (lib/why.js lawCards) */
+.laws { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 12px; margin: 14px 0; }
+.law { display: grid; gap: 8px; align-content: start; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); box-shadow: 0 3px 0 var(--line); transition: transform .15s, box-shadow .15s; }
+.law:hover { transform: translateY(-2px); box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.law-top { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: center; }
+.law-g { width: 52px; height: 40px; border-radius: 10px; background: var(--accent-soft); display: grid; place-items: center; }
+.law-g svg { width: 44px; height: 33px; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.lw-s { stroke: var(--ink-2); stroke-width: 2.2; fill: none; }
+.lw-a { stroke: var(--accent); stroke-width: 2.6; fill: none; }
+.lw-t { stroke: var(--ink-3); stroke-width: 1; fill: none; }
+.lw-e { fill: var(--warn, #e6b04a); stroke: none; }
+.lw-x { fill: var(--bad); stroke: none; }
+.law-n { font: 600 11.5px var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; }
+.law-f { font: 600 19px/1.2 var(--display); color: var(--ink); }
+.law-b { font-size: 14px; color: var(--ink-2); line-height: 1.45; }
+.law-b p { margin: 0; }
+.law-w { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; font-size: 12px; }
+.law-w span { font: 500 11px var(--mono); color: var(--ink-3); margin-right: 2px; }
+.law-w a { padding: 2px 8px; border-radius: 999px; background: var(--sunken); color: var(--ink-2); text-decoration: none; border: 1px solid var(--line); }
+.law-w a:hover { border-color: var(--accent); color: var(--accent); }
