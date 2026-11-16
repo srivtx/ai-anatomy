@@ -143,7 +143,62 @@ export default function (root, { id }) {
     sst.set(0, `${sw.toFixed(0)} mV`, sw < 75 ? "good" : sw < 100 ? "warn" : "bad");
     sst.set(1, fmtA(off), off < 1e-9 ? "good" : off < 1e-8 ? "warn" : "bad");
     sst.set(2, `${W < 10 ? W.toFixed(1) : Math.round(W)} W of heat doing nothing`, W < 20 ? "good" : W < 150 ? "warn" : "bad");
+    scv.paint(() => {
+      scv.clear(); const c = scv.colors;
+      const gateF = `color-mix(in srgb, ${c.c4} 60%, transparent)`, si = `color-mix(in srgb, ${c.c1} 30%, transparent)`, ox = c["ink-3"];
+      // 1. end view: how much of the channel the gate wraps
+      scv.box(10, 8, 240, 264, { fill: c.surface, stroke: c.line, r: 10 });
+      scv.text("End view: how the gate wraps", 24, 26, { size: 12 });
+      const cx = 130;
+      if (sc.kind === "planar") {
+        scv.box(40, 150, 180, 60, { fill: si, stroke: c.c1, lw: 1, r: 2 });
+        scv.box(70, 132, 120, 16, { fill: gateF, stroke: c.c4, lw: 1, r: 2 });
+        scv.text("gate on top only", cx, 112, { size: 10.5, align: "center", color: c["ink-2"] });
+      } else if (sc.kind === "fin") {
+        scv.box(40, 200, 180, 30, { fill: si, stroke: c.c1, lw: 1, r: 2 });
+        scv.box(cx - 40, 92, 80, 112, { fill: gateF, stroke: c.c4, lw: 1, r: 4 });
+        scv.box(cx - 14, 104, 28, 100, { fill: si, stroke: c.c1, lw: 1, r: 2 });
+        scv.text("fin", cx, 150, { size: 10, align: "center" });
+        scv.text("gate on three sides", cx, 74, { size: 10.5, align: "center", color: c["ink-2"] });
+      } else {
+        scv.box(40, 214, 180, 22, { fill: si, stroke: c.c1, lw: 1, r: 2 });
+        scv.box(cx - 56, 78, 112, 130, { fill: gateF, stroke: c.c4, lw: 1, r: 4 });
+        for (let k = 0; k < 3; k++) scv.box(cx - 44, 92 + k * 38, 88, 16, { fill: si, stroke: c.c1, lw: 1, r: 2 });
+        scv.text("gate all the way around", cx, 62, { size: 10.5, align: "center", color: c["ink-2"] });
+      }
+      [[gateF, c.c4, "gate"], [si, c.c1, "silicon channel"]].forEach(([f, st, nm], i) => { scv.box(24 + i * 70, 246, 11, 11, { fill: f, stroke: st, lw: 1, r: 2 }); scv.text(nm, 40 + i * 70, 252, { size: 10, color: c["ink-2"] }); });
+      // 2. side view: how much of the channel the drain reaches into
+      scv.box(258, 8, 260, 264, { fill: c.surface, stroke: c.line, r: 10 });
+      scv.text(`Side view: a ${sc.L} nm channel`, 272, 26, { size: 12 });
+      const reach = Math.min(1, (2 * LAMBDA[sc.kind]) / sc.L), chx = 312, chw = 152, y = 128;
+      scv.box(270, y, 40, 44, { fill: `color-mix(in srgb, ${c.c3} 45%, transparent)`, stroke: "transparent", r: 3 }); scv.text("source", 290, y + 58, { size: 10, align: "center", color: c["ink-2"] });
+      scv.box(chx + chw + 2, y, 40, 44, { fill: `color-mix(in srgb, ${c.c3} 45%, transparent)`, stroke: "transparent", r: 3 }); scv.text("drain", chx + chw + 22, y + 58, { size: 10, align: "center", color: c["ink-2"] });
+      scv.box(chx, y, chw, 44, { fill: si, stroke: "transparent", r: 0 });
+      const rw = chw * reach;
+      scv.box(chx + chw - rw, y, rw, 44, { fill: `color-mix(in srgb, ${c.bad} 45%, transparent)`, stroke: "transparent", r: 0 });
+      scv.box(chx, y - 22, chw, 18, { fill: gateF, stroke: c.c4, lw: 1, r: 2 }); scv.text("gate", chx + chw / 2, y - 13, { size: 10, align: "center" });
+      scv.line(chx, y + 76, chx + chw, y + 76, { color: ox, lw: 1 }); scv.text(`${sc.L} nm`, chx + chw / 2, y + 86, { size: 10, align: "center", color: ox, mono: true });
+      scv.text(`drain's field reaches ~${(2 * LAMBDA[sc.kind]).toFixed(0)} nm in`, 272, 56, { size: 10.5, color: c.bad });
+      scv.text(`${Math.round(reach * 100)}% of the channel is not the gate's`, 272, 74, { size: 10.5, color: reach > 0.4 ? c.bad : c["ink-2"] });
+      scv.text("red: where the drain, not the gate, sets the barrier", 272, 238, { size: 9.5, color: c["ink-3"] });
+      scv.text("(a teaching sketch, as noted below)", 272, 254, { size: 9.5, color: c["ink-3"] });
+      // 3. current against gate voltage: the steeper, the better
+      scv.box(526, 8, 264, 264, { fill: c.surface, stroke: c.line, r: 10 });
+      scv.text("Current vs gate voltage", 540, 26, { size: 12 });
+      const x0 = 576, x1 = 776, y0 = 226, y1 = 44, X = (v) => x0 + (v / 0.8) * (x1 - x0), Y = (I) => y0 - ((Math.log10(I) + 12) / 9) * (y0 - y1);
+      for (const e of [-12, -9, -6, -3]) { scv.line(x0, Y(10 ** e), x1, Y(10 ** e), { color: c.line, lw: 1 }); scv.text(e === -3 ? "1 mA" : e === -6 ? "1 µA" : e === -9 ? "1 nA" : "1 pA", x0 - 6, Y(10 ** e), { size: 9, color: c["ink-3"], align: "right", mono: true }); }
+      for (const v of [0, 0.4, 0.8]) scv.text(`${v} V`, X(v), y0 + 12, { size: 9, color: c["ink-3"], align: "center", mono: true });
+      const curve = (nn) => (v) => Math.min(1e-3, I0 * Math.exp((v - 0.3) / (nn * 0.02585)));
+      const plot = (f, col, lw, dash) => { const ctx = scv.ctx; ctx.beginPath(); for (let k = 0; k <= 80; k++) { const v = (k / 80) * 0.8, yy = Math.max(y1, Math.min(y0, Y(Math.max(1e-12, f(v))))); k ? ctx.lineTo(X(v), yy) : ctx.moveTo(X(v), yy); } ctx.setLineDash(dash || []); ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.stroke(); ctx.setLineDash([]); };
+      plot(curve(1), c.good, 1.5, [5, 4]); plot(curve(n), c.accent, 2.4);
+      scv.dot(X(0), Math.max(y1, Math.min(y0, Y(off))), 5, c.bad);
+      scv.dot(x1 - 100, y0 - 14, 4, c.bad); scv.text(`off leak: ${fmtA(off)}`, x1 - 92, y0 - 14, { size: 10, color: c.bad });
+      scv.text("ideal, 60 mV per 10×", x1, Y(curve(1)(0.12)) - 4, { size: 9.5, color: c.good, align: "right" });
+      scv.text(`yours: ${sw.toFixed(0)} mV per 10×`, x1, 254, { size: 10.5, color: c.accent, align: "right" });
+      scv.text("gate voltage →", x0, 254, { size: 9.5, color: c["ink-3"] });
+    });
   }
+  const scv = canvas(800, 280, "A shrinking transistor: how the gate wraps the channel, how far the drain's field reaches into it, and current against gate voltage");
 
   root.append(
     section(null,
@@ -202,7 +257,7 @@ export default function (root, { id }) {
         h("div.stage-controls",
           segmented({ label: "Structure", options: [{ value: "planar", label: "Planar" }, { value: "fin", label: "FinFET" }, { value: "gaa", label: "Gate-all-around" }], value: sc.kind, onChange: (v) => { sc.kind = v; drawS(); } }),
           slider({ label: "Gate length", min: 5, max: 200, step: 1, value: sc.L, fmt: (v) => `${v} nm`, onInput: (v) => { sc.L = v; drawS(); } })),
-        h("div.stage-body", sst.el)),
+        h("div.stage-body", h("div.wide-canvas", scv.el), sst.el)),
       callout("note", "This model is a teaching sketch", "<p>The leakage numbers come from a simple formula (slope degrades as e<sup>−L/2λ</sup>, with a shorter control length λ for better-wrapped gates), not from a device simulator. The direction and the size of the effect match real history: by the late planar era, leakage was a large share of a chip's power. Also note that node names like “3 nm” stopped being physical lengths long ago; real gate pitches are around 45–50 nm.</p>"),
       table(["Year", "Milestone", "Transistors on a chip"], [
         ["1947", "First transistor (point-contact, germanium), Bardeen, Brattain and Shockley at Bell Labs", "1"],
