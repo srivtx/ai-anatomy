@@ -1945,3 +1945,10 @@ details.as-table > :not(summary) { margin: 0; }
 .st-link small { display: block; color: var(--ink-2); font-size: 13.5px; line-height: 1.5; margin-top: 2px; }
 .st-link-go { font: 700 13px/1 var(--mono); color: var(--accent); }
 @media (max-width: 600px) { .st-link { grid-template-columns: 48px 1fr; } .st-link-m svg { width: 48px; } .st-link-go { display: none; } }
+.lab-tr th small { display: block; font-weight: 400; color: var(--ink-3); font-size: 11px; line-height: 1.35; margin-top: 2px; }
+.lab-tr td[data-ok="1"] { color: var(--good); }
+.lab-tr td:not([data-ok="1"]):last-child { color: var(--bad); }
+.st-side { overflow-x: hidden; }
+.lab-t { table-layout: fixed; }
+.lab-t th:first-child { width: 34%; }
+.lab-tr th:first-child { width: 52%; }
