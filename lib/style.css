@@ -2172,3 +2172,13 @@ details.as-table > :not(summary) { margin: 0; }
 .st-eyerow .st-bookbtn { margin: 0; padding: 4px 10px; border-width: 1.5px; box-shadow: 0 2px 0 var(--ink); font-size: 12px; }
 .st-eyerow .st-bookbtn b { font-size: 13px; }
 .st-tl li[data-on="1"] small { margin-top: 4px; }
+
+/* ----- Studio round 5: the scan inside a head ----- */
+.st-scan { display: flex; gap: 6px; align-items: flex-end; margin-top: 8px; }
+.st-scan span { flex: 1; min-width: 0; display: grid; grid-template-rows: 46px auto auto; justify-items: center; gap: 2px; }
+.st-scan i { align-self: end; width: 70%; height: var(--h); min-height: 3px; border-radius: 4px 4px 0 0; background: var(--accent); border: 2px solid var(--ink); border-bottom-width: 0; transition: height .35s cubic-bezier(.2,.9,.3,1.2); }
+.st-scan b { font: 700 11px/1 var(--mono); color: var(--ink); }
+.st-scan small { font-size: 11px; color: var(--ink-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-scan span[data-off] i { background: repeating-linear-gradient(45deg, var(--line) 0 3px, transparent 3px 6px); height: 100%; border-color: var(--line); opacity: .7; }
+.st-scan span[data-off] b, .st-scan span[data-off] small { color: var(--ink-3); }
+@media (prefers-reduced-motion: reduce) { .st-scan i { transition: none; } }
