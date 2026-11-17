@@ -139,6 +139,14 @@ if (!only || only === "studio") {
     if (w.length !== 10 || w.some((x) => x !== "mat")) throw new Error(`at temperature 0.1 expected 10 x mat, got ${w}`);
   });
   for (const lv of ["long", "experts"]) await visit(`/studio?mode=learn&lv=${lv}`, `studio level ${lv}`);
+  await visit("/studio?m=llama8", "studio loss curve and memory map", async (p) => {
+    await p.click('.st-tabs button:has-text("Predict")');
+    await p.hover(".st-lc-plot", { position: { x: 150, y: 60 } }); await p.hover(".st-lc-plot", { position: { x: 200, y: 70 } }); await p.waitForTimeout(100);
+    if (await p.$eval(".st-lc-tip", (e) => e.hidden)) throw new Error("loss curve hover shows no tooltip");
+    await p.click('.st-tabs button:has-text("Speed")');
+    if ((await p.$$(".sp-mem-g i")).length !== 80) throw new Error("memory map is not 80 squares");
+  });
+  await visit("/studio?mode=ch&c=homegpu", "studio challenge homegpu");
   await visit("/studio?mode=learn&lv=mlp", "studio guess and mix-up", async (p) => {
     await p.click(".st-guess-o button >> nth=1"); if (!(await p.$(".st-guess-why"))) throw new Error("guess did not reveal");
     await p.click(".st-myth summary");

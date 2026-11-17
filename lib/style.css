@@ -2234,3 +2234,49 @@ details.as-table > :not(summary) { margin: 0; }
 .st-pb-k li { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); }
 .st-pb-k i { width: 10px; height: 10px; border-radius: 3px; border: 1.5px solid var(--ink); }
 .st-pb-k b { font: 600 11.5px/1 var(--mono); color: var(--ink); }
+
+/* ----- Studio round 6: recap cards ----- */
+.st-recap { margin: 10px 0; display: grid; gap: 6px; }
+.st-recap ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.st-recap li { display: grid; align-content: start; gap: 4px; padding: 10px 9px; border-radius: 10px; background: var(--bg); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); animation: st-rc-in .45s cubic-bezier(.2,.9,.3,1.3) both; animation-delay: calc(var(--i) * 110ms); }
+.st-recap li:nth-child(1) { background: color-mix(in srgb, #7b61ff 14%, var(--bg)); }
+.st-recap li:nth-child(2) { background: color-mix(in srgb, #22b8a0 14%, var(--bg)); }
+.st-recap li:nth-child(3) { background: color-mix(in srgb, #ff8a3d 14%, var(--bg)); }
+.st-recap b { font: 800 17px/1.05 var(--display, inherit); letter-spacing: -.01em; color: var(--ink); }
+.st-recap small { font-size: 11.5px; line-height: 1.3; color: var(--ink-2); }
+@keyframes st-rc-in { from { transform: translateY(8px) rotate(-2deg) scale(.92); opacity: 0; } }
+@media (max-width: 420px) { .st-recap ol { grid-template-columns: 1fr; } .st-recap li { grid-template-columns: 74px 1fr; align-items: center; } }
+
+/* ----- loss curve ----- */
+.st-lc-plot { position: relative; touch-action: none; }
+.st-lc-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.st-lc-svg .grid { stroke: var(--line); stroke-width: 1; }
+.st-lc-svg .floor { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; }
+.st-lc-svg .optl { stroke: #f4b400; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.st-lc-svg .ax { font: 500 9.5px var(--mono); fill: var(--ink-3); }
+.st-lc-svg .now { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+.st-lc-svg .base { fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-dasharray: 5 3; }
+.st-lc-svg .dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2.5; }
+.st-lc-svg .cross { stroke: var(--ink-3); stroke-width: 1; }
+.st-lc-svg .hdot { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
+.st-lc-tip { position: absolute; top: 2px; transform: translateX(-50%); pointer-events: none; display: grid; gap: 2px; padding: 5px 8px; border-radius: 8px; background: var(--ink); color: var(--bg); font: 500 11px/1.3 var(--mono); white-space: nowrap; z-index: 2; }
+.st-lc-tip span { display: flex; align-items: center; gap: 5px; }
+.st-lc-k { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink-2); margin-top: 4px; }
+.st-lc-k span { display: flex; align-items: center; gap: 6px; }
+.st-lc i.lc-now, .st-lc i.lc-base, .st-lc i.lc-opt { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid var(--accent); }
+.st-lc i.lc-base { border-top: 2px dashed var(--ink-3); }
+.st-lc i.lc-opt { border-top: 2px dashed #f4b400; }
+.st-lc-tip i.lc-base { border-top-color: currentColor; opacity: .7; }
+
+/* ----- GPU memory map ----- */
+.sp-mem { display: grid; gap: 6px; margin: 4px 0 6px; }
+.sp-mem-g { display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; padding: 4px; border-radius: 8px; border: 2px solid var(--ink); background: var(--ink); }
+.sp-mem-g i { aspect-ratio: 1; border-radius: 2px; background: var(--sunken); animation: sp-mem-in .3s ease-out both; animation-delay: calc(var(--i) * 6ms); }
+.sp-mem-g i[data-k="w"] { background: #7b61ff; box-shadow: inset 0 2px 0 rgba(255,255,255,.25); }
+.sp-mem-g i[data-k="k"] { background: #22b8a0; box-shadow: inset 0 2px 0 rgba(255,255,255,.25); }
+.sp-mem-g i[data-k="k2"] { background: #1a8f7c; box-shadow: inset 0 2px 0 rgba(255,255,255,.2); }
+.sp-mem-g i[data-k="x"] { background: repeating-linear-gradient(45deg, #f0524f 0 2px, transparent 2px 5px); }
+.sp-leg i.sp-free { background: var(--sunken); border: 1px solid var(--line); }
+@keyframes sp-mem-in { from { transform: scale(.3); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .st-recap li, .sp-mem-g i { animation: none; } }
+.st-lc-tip[hidden] { display: none; }
