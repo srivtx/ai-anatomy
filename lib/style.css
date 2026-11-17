@@ -2204,3 +2204,19 @@ details.as-table > :not(summary) { margin: 0; }
 .st-twin { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; font-size: 13px; cursor: pointer; flex-wrap: wrap; }
 .st-twin input { accent-color: var(--accent); width: 16px; height: 16px; }
 .st-twin small { color: var(--ink-3); }
+
+/* ----- Studio round 5: where it fits ----- */
+.st-fits { margin: 10px 0 4px; display: grid; gap: 6px; }
+.st-fits ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.st-fits li { display: grid; justify-items: center; gap: 1px; padding: 6px 2px 5px; border-radius: 9px; border: 1.5px solid var(--line); background: var(--bg); text-align: center; }
+.st-fits li b { font-size: 11px; line-height: 1.15; }
+.st-fits li small { font: 700 10px/1.2 var(--mono); padding: 1px 5px; border-radius: 5px; margin-top: 2px; }
+.st-fits-i { color: var(--ink-3); line-height: 0; }
+.st-fits li[data-fit="16"] { border-color: color-mix(in srgb, var(--green, #2e9e5b) 55%, var(--line)); }
+.st-fits li[data-fit="16"] .st-fits-i, .st-fits li[data-fit="16"] small { color: var(--green, #2e9e5b); }
+.st-fits li[data-fit="8"] .st-fits-i, .st-fits li[data-fit="8"] small { color: #c98a00; }
+.st-fits li[data-fit="4"] .st-fits-i, .st-fits li[data-fit="4"] small { color: #e0761f; }
+.st-fits li[data-fit="0"] { opacity: .55; border-style: dashed; }
+.st-fits li[data-fit="0"] small { color: var(--ink-3); text-decoration: line-through; }
+.st-fits li[data-fit]:not([data-fit="0"]) small { background: color-mix(in srgb, currentColor 12%, transparent); }
+.st-fits-k { font-size: 11.5px; color: var(--ink-3); line-height: 1.4; }

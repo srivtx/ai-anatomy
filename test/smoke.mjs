@@ -114,6 +114,7 @@ if (!only || only === "studio") {
   await visit("/studio?m=gpt2", "studio time machine and stickers", async (p) => {
     await p.click(".st-tl li >> nth=1 >> button"); await p.waitForTimeout(500);
     if (!(await p.$(".st-jump .st-chg li"))) throw new Error("timeline jump shows no changes");
+    if ((await p.$$(".st-fits li")).length !== 5) throw new Error("fits strip missing");
     await p.click(".st-pinbtn"); await p.click(".st-blocks button >> nth=0"); await p.waitForTimeout(200);
     if (!(await p.$(".st-cmpt tbody tr"))) throw new Error("no compare table");
     if (!(await p.$$eval(".st-label", (a) => a.some((e) => e.textContent.startsWith("Pinned:"))))) throw new Error("pinned design not drawn in 3D");
