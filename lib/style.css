@@ -2280,3 +2280,24 @@ details.as-table > :not(summary) { margin: 0; }
 @keyframes sp-mem-in { from { transform: scale(.3); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .st-recap li, .sp-mem-g i { animation: none; } }
 .st-lc-tip[hidden] { display: none; }
+
+/* ----- Studio round 6: review flashcards ----- */
+.st-revbtn { margin-left: 2px; font: 600 12px/1 var(--mono); padding: 6px 9px; border-radius: 8px; border: 2px solid var(--ink); background: var(--bg); color: var(--ink); box-shadow: 2px 2px 0 var(--ink); cursor: pointer; }
+.st-revbtn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.st-review .rv-in { width: min(420px, calc(100vw - 32px)); background: var(--surface); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 8px 0 var(--ink); padding: 18px 20px; display: grid; gap: 12px; }
+.rv-card { position: relative; height: 210px; border: 0; padding: 0; background: none; cursor: pointer; perspective: 900px; font: inherit; color: inherit; }
+.rv-f, .rv-b { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 18px; text-align: center; border-radius: 14px; border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); backface-visibility: hidden; transition: transform .5s cubic-bezier(.3,1.4,.5,1); }
+.rv-f { background: color-mix(in srgb, #7b61ff 16%, var(--bg)); }
+.rv-b { background: color-mix(in srgb, #22b8a0 18%, var(--bg)); transform: rotateY(180deg); }
+.rv-card[data-flip] .rv-f { transform: rotateY(-180deg); }
+.rv-card[data-flip] .rv-b { transform: rotateY(0); }
+.rv-f b, .rv-b b { font: 800 40px/1 var(--display, inherit); letter-spacing: -.02em; }
+.rv-f span, .rv-b span { font-size: 14px; color: var(--ink-2); max-width: 30ch; }
+.rv-f small, .rv-b small { font: 600 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.rv-f em { font: 500 11px var(--mono); color: var(--accent); font-style: normal; }
+.rv-act { justify-content: center; gap: 8px; }
+.rv-hint { text-align: center; }
+.rv-end { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 6px 0; }
+.rv-end span { width: 72px; }
+@media (prefers-reduced-motion: reduce) { .rv-f, .rv-b { transition: none; } }
+.st-lvrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; }

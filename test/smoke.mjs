@@ -147,6 +147,14 @@ if (!only || only === "studio") {
     if ((await p.$$(".sp-mem-g i")).length !== 80) throw new Error("memory map is not 80 squares");
   });
   await visit("/studio?mode=ch&c=homegpu", "studio challenge homegpu");
+  await visit("/studio?mode=learn&lv=scale", "studio review flashcards", async (p) => {
+    await p.evaluate(() => localStorage.setItem("studio-progress-v1", JSON.stringify({ "lv:lookup": 1 })));
+    await p.reload({ waitUntil: "networkidle" }); await p.waitForTimeout(400);
+    await p.click(".st-revbtn");
+    for (let i = 0; i < 3; i++) { await p.click(".rv-card"); await p.click(".rv-act .primary"); }
+    if (!(await p.$(".rv-end"))) throw new Error("review did not finish after 3 cards");
+    await p.evaluate(() => localStorage.removeItem("studio-progress-v1"));
+  });
   await visit("/studio?mode=learn&lv=mlp", "studio guess and mix-up", async (p) => {
     await p.click(".st-guess-o button >> nth=1"); if (!(await p.$(".st-guess-why"))) throw new Error("guess did not reveal");
     await p.click(".st-myth summary");
