@@ -2199,3 +2199,8 @@ details.as-table > :not(summary) { margin: 0; }
 .st-smp-hist span[data-last] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .st-smp-k { font: 500 11px/1.4 var(--mono); color: var(--ink-3); }
 @media (prefers-reduced-motion: reduce) { .st-smp-s b.pop { animation: none; } }
+
+/* ----- Studio round 5: the pinned design in 3D ----- */
+.st-twin { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; font-size: 13px; cursor: pointer; flex-wrap: wrap; }
+.st-twin input { accent-color: var(--accent); width: 16px; height: 16px; }
+.st-twin small { color: var(--ink-3); }

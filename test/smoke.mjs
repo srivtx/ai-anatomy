@@ -116,6 +116,7 @@ if (!only || only === "studio") {
     if (!(await p.$(".st-jump .st-chg li"))) throw new Error("timeline jump shows no changes");
     await p.click(".st-pinbtn"); await p.click(".st-blocks button >> nth=0"); await p.waitForTimeout(200);
     if (!(await p.$(".st-cmpt tbody tr"))) throw new Error("no compare table");
+    if (!(await p.$$eval(".st-label", (a) => a.some((e) => e.textContent.startsWith("Pinned:"))))) throw new Error("pinned design not drawn in 3D");
     if (!(await p.$(".st-log .st-chg li"))) throw new Error("no change log");
     await p.click(".st-cmp button >> nth=0"); await p.waitForTimeout(200);
     await p.click(".st-tlh .btn"); await p.waitForTimeout(1500); await p.click(".st-tlh .btn");
