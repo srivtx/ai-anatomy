@@ -2220,3 +2220,17 @@ details.as-table > :not(summary) { margin: 0; }
 .st-fits li[data-fit="0"] small { color: var(--ink-3); text-decoration: line-through; }
 .st-fits li[data-fit]:not([data-fit="0"]) small { background: color-mix(in srgb, currentColor 12%, transparent); }
 .st-fits-k { font-size: 11.5px; color: var(--ink-3); line-height: 1.4; }
+
+/* ----- Studio round 5: where the parameters live ----- */
+.st-pb { margin-top: 12px; display: grid; gap: 7px; }
+.st-pb-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.st-pb-h small { font: 600 11.5px/1 var(--mono); }
+.st-pb-bar { display: flex; gap: 2px; height: 18px; border-radius: 6px; overflow: hidden; border: 2px solid var(--ink); background: var(--ink); }
+.st-pb-bar span { min-width: 3px; }
+.st-pb-bar.thin { height: 10px; border-width: 1.5px; }
+.st-pb-used { display: grid; gap: 4px; }
+.st-pb-used small { font-size: 11.5px; color: var(--ink-2); }
+.st-pb-k { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.st-pb-k li { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); }
+.st-pb-k i { width: 10px; height: 10px; border-radius: 3px; border: 1.5px solid var(--ink); }
+.st-pb-k b { font: 600 11.5px/1 var(--mono); color: var(--ink); }
