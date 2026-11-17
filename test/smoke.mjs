@@ -126,6 +126,17 @@ if (!only || only === "studio") {
     if ((await p.$eval(".st-tabs [aria-selected='true']", (e) => e.textContent)).indexOf("Predict") < 0) throw new Error("key 2 did not open Predict");
   });
   for (const m of ["gpt3", "llama2"]) await visit(`/studio?m=${m}`, `studio ${m}`);
+  await visit("/studio?m=gpt2&at=b1/attn/h1", "studio head scan", async (p) => {
+    await p.click(".st-play"); await p.keyboard.press("Space"); await p.keyboard.press("Period"); await p.waitForTimeout(200);
+    if ((await p.$$(".st-scan span")).length !== 5) throw new Error("scan bars missing");
+  });
+  await visit("/studio?m=gpt2&at=head", "studio pick the next word", async (p) => {
+    await p.$eval(".st-smp input[type=range]", (e) => { e.value = 0.1; e.dispatchEvent(new Event("input")); });
+    await p.click(".st-smp-b button >> nth=1"); await p.waitForTimeout(200);
+    const w = await p.$$eval(".st-smp-hist span", (a) => a.map((e) => e.textContent));
+    if (w.length !== 10 || w.some((x) => x !== "mat")) throw new Error(`at temperature 0.1 expected 10 x mat, got ${w}`);
+  });
+  for (const lv of ["long", "experts"]) await visit(`/studio?mode=learn&lv=${lv}`, `studio level ${lv}`);
   await visit("/studio?mode=learn&lv=mlp", "studio guess and mix-up", async (p) => {
     await p.click(".st-guess-o button >> nth=1"); if (!(await p.$(".st-guess-why"))) throw new Error("guess did not reveal");
     await p.click(".st-myth summary");
