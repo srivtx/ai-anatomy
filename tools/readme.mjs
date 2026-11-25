@@ -2,6 +2,9 @@
 import { writeFileSync } from "node:fs";
 import { LEVELS, PHASES, PROJECTS } from "../lib/catalog.js";
 import { WALKED } from "../lib/walklist.js";
+import { MODES, chaptersOf } from "../lib/paths.js";
+import { THREADS } from "../lib/ask/index.js";
+const modes = MODES.map((m) => `| **${m.name}** | ${m.who} | ~${m.hours} h | ${m.stations ? chaptersOf(m, LEVELS).length + " chapters" : "all"}${m.ask ? ` + ${m.stations.flatMap((s) => s.ask || []).length} conversations` : ""} |`).join("\n");
 const chapters = LEVELS.flatMap((l) => l.chapters).filter((c) => c.live).length;
 const lv = LEVELS.map((l, i) => `**${i}. ${l.name}**: ${l.chapters.map((c) => c.title).join(" · ")}`).join("\n\n");
 const ph = PHASES.map((p) => `| ${p.name} | ${p.projects.length} | ${p.projects.map((x) => x.title).join(", ")} |`).join("\n");
@@ -21,6 +24,16 @@ Every chapter runs a live simulation in plain JavaScript (no build step, no serv
 | **Different networks, same mind.** Two seeds look unrelated until their neurons are re-ordered. | **How machines see (and don't).** Puzzles a child solves that vision-language models still miss. |
 | ![pass@k before and after RL](docs/img/rl-narrows.png) | ![Thirty generations of models trained on models](docs/img/self-consumption.png) |
 | **What RL really does to a model.** pass@1 rises while pass@k falls: RL sharpens more than it teaches. | **Models eating their own outputs.** Each generation forgets more of the tail of the distribution. |
+
+## Start where you are
+
+Nobody learns ${chapters} chapters at once. [\`/paths\`](paths.html) offers seven learning modes, each a route through the same course for one goal, drawn as a metro line, with the Colab projects that fit it. Pick one and the rest of the site follows it: chapters say whether they're on your path, *Next* follows your route, the quiz can draw only from it, and the roadmap marks its projects.
+
+| Mode | For | Time | Stops |
+|---|---|---|---|
+${modes}
+
+[\`/ask\`](ask.html) is **Ask Neuro**, a Socratic path for complete beginners: ${THREADS.length} short conversations in very easy English, from “what does it mean to learn?” to agents and why models make things up. Neuro asks, you answer, and every idea comes with a small picture to play with: label spam, paint pixels, fit a line, roll a ball downhill, wire a neuron into an AND gate, fail at XOR with one line, watch blame flow backwards, tokenise your own sentence, explore a word map, race a CPU against a GPU, judge two answers, step an agent through its loop. Wrong answers get a hint and a second try; every conversation ends with a recap and the new words.
 
 ## The Architecture Studio
 

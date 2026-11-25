@@ -15,6 +15,22 @@ Every chapter runs a live simulation in plain JavaScript (no build step, no serv
 | ![pass@k before and after RL](docs/img/rl-narrows.png) | ![Thirty generations of models trained on models](docs/img/self-consumption.png) |
 | **What RL really does to a model.** pass@1 rises while pass@k falls: RL sharpens more than it teaches. | **Models eating their own outputs.** Each generation forgets more of the tail of the distribution. |
 
+## Start where you are
+
+Nobody learns 104 chapters at once. [`/paths`](paths.html) offers seven learning modes, each a route through the same course for one goal, drawn as a metro line, with the Colab projects that fit it. Pick one and the rest of the site follows it: chapters say whether they're on your path, *Next* follows your route, the quiz can draw only from it, and the roadmap marks its projects.
+
+| Mode | For | Time | Stops |
+|---|---|---|---|
+| **From zero** | You've never studied machine learning. Maybe you don't code yet. | ~8 h | 5 chapters + 18 conversations |
+| **Essentials** | You want to work in AI. You want what the industry actually uses, nothing extra. | ~22 h | 22 chapters |
+| **Builder** | You build products with models: chat apps, agents, search over your own documents. | ~14 h | 16 chapters |
+| **Researcher** | You want to push the frontier, read papers critically and run your own experiments. | ~30 h | 24 chapters |
+| **Hardware & systems** | You want to know why AI runs on GPUs, from electrons up to training on thousands of them. | ~16 h | 17 chapters |
+| **One-week sprint** | An interview or a new job is coming up and you have a week. | ~7 h | 12 chapters |
+| **Everything** | You want the whole course, in order. | ~90 h | all |
+
+[`/ask`](ask.html) is **Ask Neuro**, a Socratic path for complete beginners: 18 short conversations in very easy English, from “what does it mean to learn?” to agents and why models make things up. Neuro asks, you answer, and every idea comes with a small picture to play with: label spam, paint pixels, fit a line, roll a ball downhill, wire a neuron into an AND gate, fail at XOR with one line, watch blame flow backwards, tokenise your own sentence, explore a word map, race a CPU against a GPU, judge two answers, step an agent through its loop. Wrong answers get a hint and a second try; every conversation ends with a recap and the new words.
+
 ## The Architecture Studio
 
 [`/studio`](studio.html) is a real transformer in 3D, drawn at its true proportions, that you open level by level (model › block › attention › one head) and change part by part. It has three modes:
