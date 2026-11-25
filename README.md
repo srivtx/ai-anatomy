@@ -1,6 +1,6 @@
 # AI Anatomy
 
-How machines learn, from one neuron to the frontier. 104 interactive chapters that train real models in your browser, and 65 Colab projects where you build each idea yourself.
+How machines learn, from one neuron to the frontier. 104 interactive chapters that train real models in your browser, and 66 Colab projects where you build each idea yourself.
 
 ![The home page](docs/img/home.png)
 
@@ -75,7 +75,7 @@ Five panels: **Inspect** (what a part is and why it's there), **Predict** (what 
 | New architectures and thinking longer | 12 | Selective scan from scratch, Recurrent depth: think longer at test time, The looped transformer, Test-time training layers, Where am I? Positions and length, Shrinking the KV cache, A diffusion language model, Speculative decoding, Your first Triton kernels, Distil, prune and quantise, Model merging and task arithmetic, Where the GPU memory goes |
 | Agents, interpretability and research | 6 | Agent loop and Ralph loop with Claude, Superposition and sparse autoencoders, Grokking modular addition, Ablation lab: what matters in a small GPT, Data vs model size, Catastrophic forgetting |
 | Lab notebook | 5 | GPU kernels step by step, Hyperparameters that transfer: μP, A scaling ladder, A sleeper-agent model organism, Reward hacking and the monitor |
-| Capstones | 3 | Train a reasoning model with GRPO, GPT-2 speedrun: Muon vs AdamW, Find the features inside GPT-2 |
+| Capstones | 4 | Train a reasoning model with GRPO, GPT-2 speedrun: Muon vs AdamW, Find the features inside GPT-2, Read and steer GPT-2 |
 | Hidden curriculum | 12 | Does RL teach, or only sharpen?, Model collapse with a real language model, Error bars on evals, with real models, How long should a model think?, Test what a model says about itself, Can a model teach itself?, The cooldown, measured, Emergence or mirage?, Testing my conjectures, One-way facts and confident guesses, From electrons to CUDA, measured, Studio lab: test your design |
 
 Every notebook runs end to end on a CPU in a quick mode (`QUICK=1`), with offline fallbacks when Hugging Face or an API key isn't available. The expected results quoted on the site were measured from these notebooks; where a run needs a GPU we didn't have, the result is labelled as a prediction.
