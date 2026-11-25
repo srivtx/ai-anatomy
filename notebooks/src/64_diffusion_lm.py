@@ -13,7 +13,8 @@
 # ones, and weight the loss by 1/t. That weighted loss is an upper bound on the negative log-likelihood, so the
 # two models can be compared on the same scale. Chapters: **Diffusion and flow matching**, **Next-token prediction**.
 #
-# **Hardware:** CPU, about 6 minutes (QUICK under 2); a T4 is faster. **You're done when** you have the loss
+# **Hardware:** a free Colab T4 (Runtime → Change runtime type). It also runs on a CPU, but slowly: on a 2-core
+# CPU the full run took over 40 minutes in my test. QUICK mode takes about 3 minutes on a CPU. **You're done when** you have the loss
 # comparison, samples at 4 to 128 rounds with their quality scores, and an infilled line.
 
 # %%
@@ -123,7 +124,7 @@ print(f"AR        NLL      {ar_val:.3f} nats/char")
 print(f"diffusion bound ≤ {dm_val:.3f} nats/char   (gap {dm_val - ar_val:+.3f})")
 
 # %% [markdown]
-# At this size the diffusion model is clearly behind on likelihood: it must learn to predict *any* subset of
+# Expect the diffusion model to be clearly behind on likelihood at this size: it must learn to predict *any* subset of
 # tokens from *any* other subset, a much bigger job than “next from previous”. Published results find the gap
 # shrinks with scale but has not closed for likelihood; the case for diffusion LMs is speed and flexibility.
 #

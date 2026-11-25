@@ -15,7 +15,8 @@
 # that makes MLA cheap at inference: the up-projection can be **absorbed** into the query, so keys never need to
 # be rebuilt. Chapters: **Fast inference**, **Attention**, **Long context**.
 #
-# **Hardware:** CPU, about 6 minutes (QUICK under 2). **You're done when** you have the loss-vs-cache table and
+# **Hardware:** a free Colab T4 (Runtime → Change runtime type). It also runs on a CPU, but slowly: on a 2-core
+# CPU the full run took over 40 minutes in my test. QUICK mode takes about 3 minutes on a CPU. **You're done when** you have the loss-vs-cache table and
 # the absorbed-MLA check prints ✅.
 
 # %%
@@ -173,9 +174,10 @@ plt.title("What each design pays in loss for its cache")
 plt.show()
 
 # %% [markdown]
-# At this size the differences in loss are small, while the cache shrinks 4-8×. That is the whole argument for
-# GQA, and why nearly every open model since 2023 uses it. Be careful with the MLA row: at this scale it's
-# within noise of the others, and the claim that MLA *beats* MHA (made in the DeepSeek-V2 paper) is about large
+# Expect the differences in loss to be small at this size (check yours against the table), while the cache
+# shrinks 4-8×. That is the whole argument for
+# GQA, and why nearly every open model since 2023 uses it. Be careful with the MLA row: at this scale, run two seeds before
+# reading anything into its gap to the others, and the claim that MLA *beats* MHA (made in the DeepSeek-V2 paper) is about large
 # models with a decoupled RoPE path that we've left out.
 #
 # ## 3. The trick that makes MLA cheap: absorb the up-projection
