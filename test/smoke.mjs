@@ -52,6 +52,21 @@ async function pokeAll(page) {
   await page.waitForTimeout(1200);
 }
 
+if (!only || only === "paths" || only === "ask") {
+  // learning modes: every mode's detail view; Ask Neuro: play every conversation to the end
+  const { MODES } = await import("../lib/paths.js");
+  for (const m of MODES) await visit(`/paths?m=${m.id}`, `paths ${m.id}`, async (p) => { await p.click(".md-card[aria-checked=false]").catch(() => {}); });
+  const { THREADS } = await import("../lib/ask/index.js");
+  for (const t of THREADS) await visit(`/ask?t=${t.id}`, `ask ${t.id}`, async (p) => {
+    for (let i = 0; i < 200; i++) {
+      if (await p.$(".ask-end")) return;
+      const el = (await p.$(".ask-opt:not(:disabled)")) || (await p.$(".ask-skip")) || (await p.$(".ask-guess .btn")) || (await p.$(".ask-next"));
+      if (el) await el.click(); else await p.waitForTimeout(50);
+    }
+    throw new Error("conversation never finished");
+  }).catch((e) => { failed++; console.log(`FAIL ask ${t.id} ${e.message}`); });
+}
+
 if (!only || only === "studio") {
   // the 3D studio: every level of every model, plus clicking, double-clicking, keys and the toolbar
   const studio = async (p) => {
