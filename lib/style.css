@@ -2641,3 +2641,6 @@ a.cchip { text-decoration: none; }
 @media (max-width: 860px) { .st-grid { grid-template-columns: 1fr; } }
 
 .rm-chip.path { text-decoration: none; color: var(--ink); background: color-mix(in srgb, var(--mc) 16%, var(--surface)); border-color: color-mix(in srgb, var(--mc) 50%, var(--line)); }
+.cchip.ask { color: var(--ink); background: color-mix(in srgb, var(--c3) 14%, var(--surface)); border-color: color-mix(in srgb, var(--c3) 50%, var(--line)); }
+.hero-new { font-size: 14.5px !important; margin-top: 14px !important; color: var(--ink-3) !important; }
+.hero-new a { font-weight: 600; }
