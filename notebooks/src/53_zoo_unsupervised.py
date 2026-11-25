@@ -7,15 +7,26 @@
 # **You're done when** all checks print ✅ with SOLUTIONS = False. CPU, ~25 minutes.
 
 # %%
-import os, numpy as np, matplotlib.pyplot as plt
+import os
+import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs, make_moons, load_digits
+
 SOLUTIONS = os.environ.get("SOLUTIONS") == "1"
 rng = np.random.default_rng(0)
+
+
 def check(name, got, want, tol=1e-3):
-    if got is None or got is Ellipsis: print(f"⏳ {name}: not done yet"); return False
-    try: ok = np.allclose(np.asarray(got, float), np.asarray(want, float), atol=tol)
-    except Exception: ok = got == want
-    print(("✅ " if ok else "❌ ") + name + ("" if ok else f": got {got}, expected {want}")); return ok
+    if got is None or got is Ellipsis:
+        print(f"⏳ {name}: not done yet")
+        return False
+    try:
+        ok = np.allclose(np.asarray(got, float), np.asarray(want, float), atol=tol)
+    except Exception:
+        ok = got == want
+    print(("✅ " if ok else "❌ ") + name + ("" if ok else f": got {got}, expected {want}"))
+    return ok
+
 
 # %% [markdown]
 # ## 1. k-means: “k centres, each point joins the nearest”
@@ -24,18 +35,35 @@ def check(name, got, want, tol=1e-3):
 
 # %%
 X, true = make_blobs(600, centers=4, cluster_std=0.9, random_state=3)
+
+
 def kmeans(X, k, iters=50, seed=0):
     C = X[np.random.default_rng(seed).choice(len(X), k, replace=False)]
     for _ in range(iters):
         if SOLUTIONS:
             assign = ((X[:, None] - C[None]) ** 2).sum(-1).argmin(1)
-            C = np.array([X[assign == j].mean(0) if np.any(assign == j) else C[j] for j in range(k)])
-        else: return None, None  # Exercise 1: assign step, then update step
+            C = np.array(
+                [X[assign == j].mean(0) if np.any(assign == j) else C[j] for j in range(k)]
+            )
+        else:
+            return None, None  # Exercise 1: assign step, then update step
     return assign, C
+
+
 assign, C = kmeans(X, 4)
 from sklearn.metrics import adjusted_rand_score
-check("exercise 1: k-means recovers the blobs (ARI > 0.9)", None if assign is None else bool(adjusted_rand_score(true, assign) > 0.9), True)
-if assign is not None: plt.scatter(*X.T, c=assign, s=6); plt.scatter(*C.T, c="red", marker="x", s=120); plt.title("k-means, k = 4"); plt.show()
+
+check(
+    "exercise 1: k-means recovers the blobs (ARI > 0.9)",
+    None if assign is None else bool(adjusted_rand_score(true, assign) > 0.9),
+    True,
+)
+
+if assign is not None:
+    plt.scatter(*X.T, c=assign, s=6)
+    plt.scatter(*C.T, c="red", marker="x", s=120)
+    plt.title("k-means, k = 4")
+    plt.show()
 
 # %% [markdown]
 # ### Choosing k: the elbow
@@ -43,8 +71,13 @@ if assign is not None: plt.scatter(*X.T, c=assign, s=6); plt.scatter(*C.T, c="re
 
 # %%
 from sklearn.cluster import KMeans
+
 inertia = [KMeans(k, n_init=5, random_state=0).fit(X).inertia_ for k in range(1, 10)]
-plt.plot(range(1, 10), inertia, "o-"); plt.xlabel("k"); plt.ylabel("inertia"); plt.title("the elbow is at k = 4"); plt.show()
+plt.plot(range(1, 10), inertia, "o-")
+plt.xlabel("k")
+plt.ylabel("inertia")
+plt.title("the elbow is at k = 4")
+plt.show()
 
 # %% [markdown]
 # ## 2. Where k-means fails, and what to use instead
@@ -56,14 +89,29 @@ plt.plot(range(1, 10), inertia, "o-"); plt.xlabel("k"); plt.ylabel("inertia"); p
 # %%
 from sklearn.cluster import DBSCAN, AgglomerativeClustering
 from sklearn.mixture import GaussianMixture
+
 M, _ = make_moons(400, noise=0.06, random_state=0)
 S = np.r_[rng.normal([0, 0], [3, 0.4], (200, 2)), rng.normal([0, 3], [0.4, 1.5], (200, 2))]
 fig, ax = plt.subplots(2, 4, figsize=(15, 6.5))
+
 for row, data, name in [(0, M, "moons"), (1, S, "stretched")]:
-    for a, (alg, lab) in zip(ax[row], [("k-means", KMeans(2, n_init=5, random_state=0).fit_predict(data)), ("DBSCAN", DBSCAN(eps=0.2 if name == "moons" else 0.6).fit_predict(data)),
-                                      ("agglomerative (single link)", AgglomerativeClustering(2, linkage="single").fit_predict(data)), ("Gaussian mixture", GaussianMixture(2, random_state=0).fit(data).predict(data))]):
-        a.scatter(*data.T, c=lab, s=5, cmap="tab10"); a.set_title(f"{alg} on {name}", fontsize=9)
-plt.tight_layout(); plt.show()
+    for a, (alg, lab) in zip(
+        ax[row],
+        [
+            ("k-means", KMeans(2, n_init=5, random_state=0).fit_predict(data)),
+            ("DBSCAN", DBSCAN(eps=0.2 if name == "moons" else 0.6).fit_predict(data)),
+            (
+                "agglomerative (single link)",
+                AgglomerativeClustering(2, linkage="single").fit_predict(data),
+            ),
+            ("Gaussian mixture", GaussianMixture(2, random_state=0).fit(data).predict(data)),
+        ],
+    ):
+        a.scatter(*data.T, c=lab, s=5, cmap="tab10")
+        a.set_title(f"{alg} on {name}", fontsize=9)
+
+plt.tight_layout()
+plt.show()
 
 # %% [markdown]
 # ## 3. PCA: “the directions with the most spread”
@@ -71,18 +119,31 @@ plt.tight_layout(); plt.show()
 # right singular vectors from an SVD. Project onto the top few to compress, visualise, or denoise.
 
 # %%
-digits = load_digits(); D = digits.data
+digits = load_digits()
+D = digits.data
+
+
 def pca(X, k):
     if SOLUTIONS:
-        Xc = X - X.mean(0); U, s, Vt = np.linalg.svd(Xc, full_matrices=False)
-        return Xc @ Vt[:k].T, (s ** 2 / np.sum(s ** 2))[:k]
-    ...  # Exercise 2: return (projected data of shape [n, k], explained-variance ratio of each of the k components)
+        Xc = X - X.mean(0)
+        U, s, Vt = np.linalg.svd(Xc, full_matrices=False)
+        return Xc @ Vt[:k].T, (s**2 / np.sum(s**2))[:k]
+    # Exercise 2: return (projected data of shape [n, k], explained-variance ratio of each of the k components)
+    ...
+
+
 out = pca(D, 2)
 from sklearn.decomposition import PCA
+
 ref = PCA(2).fit(D).explained_variance_ratio_
 check("exercise 2: explained variance matches scikit-learn", None if out is None else out[1], ref)
+
 if out is not None:
-    plt.scatter(*out[0].T, c=digits.target, cmap="tab10", s=6); plt.colorbar(); plt.title("digits: 64 dimensions → 2 with PCA"); plt.show()
+    plt.scatter(*out[0].T, c=digits.target, cmap="tab10", s=6)
+    plt.colorbar()
+    plt.title("digits: 64 dimensions → 2 with PCA")
+    plt.show()
+
 cum = np.cumsum(PCA().fit(D).explained_variance_ratio_)
 print("components needed for 90% of the variance:", int(np.searchsorted(cum, 0.9) + 1), "of 64")
 
@@ -91,14 +152,19 @@ print("components needed for 90% of the variance:", int(np.searchsorted(cum, 0.9
 # Keep k components, map back to 64 pixels, and measure the reconstruction error. How many components do you need
 # for a mean squared error below 1.0?
 
+
 # %%
 def components_needed(threshold=1.0):
     if SOLUTIONS:
         for k in range(1, 65):
             p = PCA(k).fit(D)
-            if np.mean((p.inverse_transform(p.transform(D)) - D) ** 2) < threshold: return k
+            if np.mean((p.inverse_transform(p.transform(D)) - D) ** 2) < threshold:
+                return k
     ...
-k = components_needed(); print("components for MSE < 1:", k)
+
+
+k = components_needed()
+print("components for MSE < 1:", k)
 check("exercise 3: between 20 and 40 components", None if k is None else bool(20 <= k <= 40), True)
 
 # %% [markdown]
@@ -108,9 +174,12 @@ check("exercise 3: between 20 and 40 components", None if k is None else bool(20
 
 # %%
 from sklearn.manifold import TSNE
+
 n = 600 if os.environ.get("QUICK") == "1" else 1797
 emb = TSNE(2, perplexity=30, random_state=0, init="pca").fit_transform(D[:n])
-plt.scatter(*emb.T, c=digits.target[:n], cmap="tab10", s=6); plt.title("t-SNE of the digits: clusters PCA couldn't separate"); plt.show()
+plt.scatter(*emb.T, c=digits.target[:n], cmap="tab10", s=6)
+plt.title("t-SNE of the digits: clusters PCA couldn't separate")
+plt.show()
 
 # %% [markdown]
 # ## 5. Anomaly detection
@@ -118,22 +187,47 @@ plt.scatter(*emb.T, c=digits.target[:n], cmap="tab10", s=6); plt.title("t-SNE of
 
 # %%
 from sklearn.ensemble import IsolationForest
-normal = rng.normal(0, 1, (500, 2)); odd = rng.uniform(-6, 6, (20, 2)); A = np.r_[normal, odd]
+
+normal = rng.normal(0, 1, (500, 2))
+odd = rng.uniform(-6, 6, (20, 2))
+A = np.r_[normal, odd]
 flag = IsolationForest(contamination=0.04, random_state=0).fit_predict(A) == -1
 print(f"flagged {flag.sum()} points; {flag[500:].sum()} of the 20 planted anomalies caught")
-plt.scatter(*A.T, c=np.where(flag, "red", "gray"), s=8); plt.title("isolation forest: red = flagged"); plt.show()
+plt.scatter(*A.T, c=np.where(flag, "red", "gray"), s=8)
+plt.title("isolation forest: red = flagged")
+plt.show()
 
 # %% [markdown]
 # ### Exercise 4: match the tool to the job
 # Return a dict with values from "kmeans", "dbscan", "gmm", "pca", "tsne", "isolation_forest".
 
+
 # %%
 def ex4():
-    if SOLUTIONS: return {"segment_customers_into_5_groups": "kmeans", "find_odd_transactions": "isolation_forest", "compress_features_before_a_model": "pca",
-                          "clusters_of_any_shape_with_noise": "dbscan", "soft_probabilities_of_membership": "gmm", "a_pretty_2d_map_of_embeddings": "tsne"}
+    if SOLUTIONS:
+        return {
+            "segment_customers_into_5_groups": "kmeans",
+            "find_odd_transactions": "isolation_forest",
+            "compress_features_before_a_model": "pca",
+            "clusters_of_any_shape_with_noise": "dbscan",
+            "soft_probabilities_of_membership": "gmm",
+            "a_pretty_2d_map_of_embeddings": "tsne",
+        }
     ...
-check("exercise 4", ex4(), {"segment_customers_into_5_groups": "kmeans", "find_odd_transactions": "isolation_forest", "compress_features_before_a_model": "pca",
-                            "clusters_of_any_shape_with_noise": "dbscan", "soft_probabilities_of_membership": "gmm", "a_pretty_2d_map_of_embeddings": "tsne"})
+
+
+check(
+    "exercise 4",
+    ex4(),
+    {
+        "segment_customers_into_5_groups": "kmeans",
+        "find_odd_transactions": "isolation_forest",
+        "compress_features_before_a_model": "pca",
+        "clusters_of_any_shape_with_noise": "dbscan",
+        "soft_probabilities_of_membership": "gmm",
+        "a_pretty_2d_map_of_embeddings": "tsne",
+    },
+)
 
 # %% [markdown]
 # | Method | Finds | You choose | Watch out for |

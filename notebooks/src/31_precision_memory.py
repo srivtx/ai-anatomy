@@ -11,30 +11,55 @@
 # same update as one big batch.
 
 # %%
-import os, math, torch, torch.nn as nn, torch.nn.functional as F
+import os
+import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
+
 QUICK = os.environ.get("QUICK") == "1"
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 torch.manual_seed(0)
 d, L, T, B, V = (128, 2, 64, 4, 1000) if QUICK else (512, 6, 256, 8, 8000)
 
+
 class Block(nn.Module):
     def __init__(self, d):
-        super().__init__(); self.n1, self.n2 = nn.LayerNorm(d), nn.LayerNorm(d)
-        self.qkv, self.o = nn.Linear(d, 3 * d), nn.Linear(d, d); self.up, self.down = nn.Linear(d, 4 * d), nn.Linear(4 * d, d)
+        super().__init__()
+        self.n1, self.n2 = nn.LayerNorm(d), nn.LayerNorm(d)
+        self.qkv, self.o = nn.Linear(d, 3 * d), nn.Linear(d, d)
+        self.up, self.down = nn.Linear(d, 4 * d), nn.Linear(4 * d, d)
+
     def forward(self, x):
-        Bb, Tt, D = x.shape; q, k, v = self.qkv(self.n1(x)).view(Bb, Tt, 3, 8, D // 8).permute(2, 0, 3, 1, 4)
-        a = torch.softmax((q @ k.transpose(-1, -2)) / math.sqrt(D // 8) + torch.triu(torch.full((Tt, Tt), -1e9, device=x.device), 1), -1) @ v
+        Bb, Tt, D = x.shape
+        q, k, v = self.qkv(self.n1(x)).view(Bb, Tt, 3, 8, D // 8).permute(2, 0, 3, 1, 4)
+        a = (
+            torch.softmax(
+                (q @ k.transpose(-1, -2)) / math.sqrt(D // 8)
+                + torch.triu(torch.full((Tt, Tt), -1e9, device=x.device), 1),
+                -1,
+            )
+            @ v
+        )
         x = x + self.o(a.transpose(1, 2).reshape(Bb, Tt, D))
         return x + self.down(F.gelu(self.up(self.n2(x))))
+
+
 class GPT(nn.Module):
     def __init__(self, ckpt=False):
-        super().__init__(); self.ckpt = ckpt
-        self.emb = nn.Embedding(V, d); self.blocks = nn.ModuleList(Block(d) for _ in range(L)); self.head = nn.Linear(d, V)
+        super().__init__()
+        self.ckpt = ckpt
+        self.emb = nn.Embedding(V, d)
+        self.blocks = nn.ModuleList(Block(d) for _ in range(L))
+        self.head = nn.Linear(d, V)
+
     def forward(self, x):
         h = self.emb(x)
-        for b in self.blocks: h = checkpoint(b, h, use_reentrant=False) if self.ckpt else b(h)
+        for b in self.blocks:
+            h = checkpoint(b, h, use_reentrant=False) if self.ckpt else b(h)
         return self.head(h)
+
 
 # %% [markdown]
 # ## Predict, then measure
@@ -42,33 +67,61 @@ class GPT(nn.Module):
 # Activations per layer, roughly: B·T·d·(34 bytes·…) for the linear layers plus B·heads·T²·(~10 bytes) for
 # attention scores in fp32 (Korthikanti et al., 2022 give the exact accounting).
 
+
 # %%
 class SavedBytes:
     """Counts the bytes autograd saves for the backward pass (= activation memory), de-duplicating shared storage."""
+
     def __enter__(self):
         self.seen, self.bytes = set(), 0
+
         def pack(t):
             key = (t.untyped_storage().data_ptr(), t.dtype)
-            if key not in self.seen: self.seen.add(key); self.bytes += t.untyped_storage().nbytes()
+            if key not in self.seen:
+                self.seen.add(key)
+                self.bytes += t.untyped_storage().nbytes()
             return t
-        self.ctx = torch.autograd.graph.saved_tensors_hooks(pack, lambda t: t); self.ctx.__enter__(); return self
-    def __exit__(self, *a): self.ctx.__exit__(*a)
 
-model = GPT().to(dev); P = sum(p.numel() for p in model.parameters())
+        self.ctx = torch.autograd.graph.saved_tensors_hooks(pack, lambda t: t)
+        self.ctx.__enter__()
+        return self
+
+    def __exit__(self, *a):
+        self.ctx.__exit__(*a)
+
+
+model = GPT().to(dev)
+P = sum(p.numel() for p in model.parameters())
 x = torch.randint(0, V, (B, T), device=dev)
-with SavedBytes() as sb: loss = F.cross_entropy(model(x).flatten(0, 1), x.flatten())
+
+with SavedBytes() as sb:
+    loss = F.cross_entropy(model(x).flatten(0, 1), x.flatten())
+
 act_measured = sb.bytes
 heads = 8
-act_formula = L * (B * T * d * 4 * (2 + 3 + 1 + 1 + 2 + 4 + 4 + 1) + B * heads * T * T * 4 * 2) + B * T * V * 4 * 2
-print(f"parameters: {P / 1e6:.2f}M → weights {P * 4 / 2**20:.0f} MB, grads {P * 4 / 2**20:.0f} MB, Adam state {P * 8 / 2**20:.0f} MB")
-print(f"activations: formula {act_formula / 2**20:.0f} MB, measured {act_measured / 2**20:.0f} MB ({act_measured / act_formula - 1:+.0%})")
+act_formula = (
+    L * (B * T * d * 4 * (2 + 3 + 1 + 1 + 2 + 4 + 4 + 1) + B * heads * T * T * 4 * 2)
+    + B * T * V * 4 * 2
+)
+print(
+    f"parameters: {P / 1e6:.2f}M → weights {P * 4 / 2**20:.0f} MB, grads {P * 4 / 2**20:.0f} MB, Adam state {P * 8 / 2**20:.0f} MB"
+)
+print(
+    f"activations: formula {act_formula / 2**20:.0f} MB, measured {act_measured / 2**20:.0f} MB ({act_measured / act_formula - 1:+.0%})"
+)
 
 if dev == "cuda":
-    torch.cuda.reset_peak_memory_stats(); model = GPT().to(dev); opt = torch.optim.Adam(model.parameters())
+    torch.cuda.reset_peak_memory_stats()
+    model = GPT().to(dev)
+    opt = torch.optim.Adam(model.parameters())
     base = torch.cuda.memory_allocated()
-    loss = F.cross_entropy(model(x).flatten(0, 1), x.flatten()); loss.backward(); opt.step()
-    print(f"GPU peak after one step: {(torch.cuda.max_memory_allocated() - base + P * 4) / 2**20:.0f} MB "
-          f"vs formula {(16 * P + act_formula) / 2**20:.0f} MB")
+    loss = F.cross_entropy(model(x).flatten(0, 1), x.flatten())
+    loss.backward()
+    opt.step()
+    print(
+        f"GPU peak after one step: {(torch.cuda.max_memory_allocated() - base + P * 4) / 2**20:.0f} MB "
+        f"vs formula {(16 * P + act_formula) / 2**20:.0f} MB"
+    )
 
 # %% [markdown]
 # ## Fix 1: activation checkpointing
@@ -76,19 +129,30 @@ if dev == "cuda":
 # layer, at the cost of a second forward pass (~33% more compute).
 
 # %%
-ck = GPT(ckpt=True).to(dev); ck.load_state_dict(model.state_dict())
-with SavedBytes() as sb2: F.cross_entropy(ck(x).flatten(0, 1), x.flatten())
-print(f"activations with checkpointing: {sb2.bytes / 2**20:.0f} MB (was {act_measured / 2**20:.0f} MB)")
+ck = GPT(ckpt=True).to(dev)
+ck.load_state_dict(model.state_dict())
+
+with SavedBytes() as sb2:
+    F.cross_entropy(ck(x).flatten(0, 1), x.flatten())
+
+print(
+    f"activations with checkpointing: {sb2.bytes / 2**20:.0f} MB (was {act_measured / 2**20:.0f} MB)"
+)
 
 # %% [markdown]
 # ## Fix 2: gradient accumulation gives the same update as a big batch
 
 # %%
-m1, m2 = GPT().to(dev), GPT().to(dev); m2.load_state_dict(m1.state_dict())
+m1, m2 = GPT().to(dev), GPT().to(dev)
+m2.load_state_dict(m1.state_dict())
 big = torch.randint(0, V, (4 * B, T), device=dev)
 F.cross_entropy(m1(big).flatten(0, 1), big.flatten()).backward()
+
 for chunk in big.chunk(4):
-    (F.cross_entropy(m2(chunk).flatten(0, 1), chunk.flatten()) / 4).backward()        # divide by the number of micro-batches
+    (
+        F.cross_entropy(m2(chunk).flatten(0, 1), chunk.flatten()) / 4
+    ).backward()  # divide by the number of micro-batches
+
 diff = max((a.grad - b.grad).abs().max().item() for a, b in zip(m1.parameters(), m2.parameters()))
 print(f"max gradient difference, big batch vs 4 accumulated micro-batches: {diff:.2e}")
 
@@ -101,10 +165,16 @@ print(f"max gradient difference, big batch vs 4 accumulated micro-batches: {diff
 # %%
 g = torch.logspace(-10, -2, 9)
 print("gradient    fp16        bf16        fp16 after ×65536 loss scale (then unscaled)")
+
 for v in g:
-    print(f"{v.item():.0e}   {v.half().item():<10.3g}  {v.bfloat16().item():<10.3g}  {((v * 65536).half().float() / 65536).item():.3g}")
+    print(
+        f"{v.item():.0e}   {v.half().item():<10.3g}  {v.bfloat16().item():<10.3g}  {((v * 65536).half().float() / 65536).item():.3g}"
+    )
+
 small = torch.full((1000,), 1e-8)
-print(f"share of 1e-8 gradients lost: fp16 {(small.half() == 0).float().mean():.0%}, bf16 {(small.bfloat16() == 0).float().mean():.0%}")
+print(
+    f"share of 1e-8 gradients lost: fp16 {(small.half() == 0).float().mean():.0%}, bf16 {(small.bfloat16() == 0).float().mean():.0%}"
+)
 
 # %% [markdown]
 # **What to expect.** Weights+gradients+Adam cost 16 bytes per parameter in fp32 (mixed precision with an fp32

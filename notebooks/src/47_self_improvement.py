@@ -12,27 +12,57 @@
 # edge-of-ability problem pool, plus the supervised upper bound.
 
 # %%
-import os, copy, numpy as np, torch, torch.nn as nn, torch.nn.functional as F, matplotlib.pyplot as plt
+import os
+import copy
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
+
 QUICK = os.environ.get("QUICK") == "1"
-torch.manual_seed(0); rng = np.random.default_rng(0)
-D = 4                                    # digits per number
+torch.manual_seed(0)
+rng = np.random.default_rng(0)
+D = 4  # digits per number
 ROUNDS = 3 if QUICK else 12
 POOL = 1500 if QUICK else 4000
+
 
 def carries(a, b):
     c = n = 0
     for _ in range(D):
-        s = a % 10 + b % 10 + c; c = s // 10; n += c; a //= 10; b //= 10
+        s = a % 10 + b % 10 + c
+        c = s // 10
+        n += c
+        a //= 10
+        b //= 10
     return n
+
+
 def make(n, maxc=None, exact=None, allowed=None):
     """n random problems, optionally filtered by number of carries."""
     A, B = [], []
     while len(A) < n:
-        a, b = rng.integers(0, 10 ** D, 2); k = carries(a, b)
-        if (maxc is None or k <= maxc) and (exact is None or k == exact) and (allowed is None or k in allowed): A.append(a); B.append(b)
+        a, b = rng.integers(0, 10**D, 2)
+        k = carries(a, b)
+        if (
+            (maxc is None or k <= maxc)
+            and (exact is None or k == exact)
+            and (allowed is None or k in allowed)
+        ):
+            A.append(a)
+            B.append(b)
     return np.array(A), np.array(B)
-digits = lambda x, n: [(x // 10 ** i) % 10 for i in range(n)]
-enc = lambda A, B: F.one_hot(torch.tensor(np.array([digits(a, D) + digits(b, D) for a, b in zip(A, B)])), 10).float().flatten(1)
+
+
+digits = lambda x, n: [(x // 10**i) % 10 for i in range(n)]
+enc = (
+    lambda A, B: F.one_hot(
+        torch.tensor(np.array([digits(a, D) + digits(b, D) for a, b in zip(A, B)])), 10
+    )
+    .float()
+    .flatten(1)
+)
 target = lambda A, B: torch.tensor(np.array([digits(a + b, D + 1) for a, b in zip(A, B)]))
 
 # %% [markdown]
@@ -40,21 +70,48 @@ target = lambda A, B: torch.tensor(np.array([digits(a + b, D + 1) for a, b in zi
 # An MLP reads both numbers and outputs a distribution over each of the 5 answer digits. Sampling an answer
 # means sampling each digit. Difficulty is the number of carries: 0 to 4.
 
+
 # %%
 class Adder(nn.Module):
     def __init__(self, h=256):
-        super().__init__(); self.net = nn.Sequential(nn.Linear(D * 2 * 10, h), nn.ReLU(), nn.Linear(h, h), nn.ReLU(), nn.Linear(h, (D + 1) * 10))
-    def forward(self, x): return self.net(x).view(-1, D + 1, 10)
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(D * 2 * 10, h),
+            nn.ReLU(),
+            nn.Linear(h, h),
+            nn.ReLU(),
+            nn.Linear(h, (D + 1) * 10),
+        )
+
+    def forward(self, x):
+        return self.net(x).view(-1, D + 1, 10)
+
+
 def fit(m, X, Y, epochs=30, lr=2e-3):
     opt = torch.optim.Adam(m.parameters(), lr)
     for _ in range(epochs):
         p = torch.randperm(len(X))
         for i in range(0, len(X), 128):
-            j = p[i:i + 128]; loss = F.cross_entropy(m(X[j]).flatten(0, 1), Y[j].flatten()); opt.zero_grad(); loss.backward(); opt.step()
+            j = p[i : i + 128]
+            loss = F.cross_entropy(m(X[j]).flatten(0, 1), Y[j].flatten())
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
     return m
+
+
 TEST = {k: make(400, exact=k) for k in range(D + 1)}
+
+
 def by_carries(m):
-    with torch.no_grad(): return np.array([(m(enc(*TEST[k])).argmax(-1) == target(*TEST[k])).all(1).float().mean().item() for k in range(D + 1)])
+    with torch.no_grad():
+        return np.array(
+            [
+                (m(enc(*TEST[k])).argmax(-1) == target(*TEST[k])).all(1).float().mean().item()
+                for k in range(D + 1)
+            ]
+        )
+
 
 A0, B0 = make(3000, maxc=1)
 base = fit(Adder(), enc(A0, B0), target(A0, B0), epochs=20 if QUICK else 80)
@@ -66,29 +123,50 @@ print("base model, exact accuracy by number of carries:", by_carries(base).round
 # plus a little of the original easy data (an anchor). `leak` is the chance the checker accepts a wrong answer.
 # `edge=True` builds each round's pool from the carry levels where the model is between 5% and 80% accurate.
 
+
 # %%
 def expert_iteration(m, K=1, leak=0.0, edge=False, rounds=ROUNDS):
     hist = [by_carries(m)]
     for r in range(rounds):
         if edge:
-            acc = hist[-1]; allowed = {k for k in range(D + 1) if 0.05 <= acc[k] <= 0.8} or {int(np.argmax(acc < 0.8))}
+            acc = hist[-1]
+            allowed = {k for k in range(D + 1) if 0.05 <= acc[k] <= 0.8} or {
+                int(np.argmax(acc < 0.8))
+            }
             A, B = make(POOL, allowed=allowed)
         else:
             A, B = make(POOL)
         X, Y = enc(A, B), target(A, B)
-        with torch.no_grad(): probs = m(X).softmax(-1)
-        solved = torch.zeros(len(X), dtype=torch.bool); wrong = torch.zeros(len(X), dtype=torch.bool); chosen = torch.zeros_like(Y)
+        with torch.no_grad():
+            probs = m(X).softmax(-1)
+        solved = torch.zeros(len(X), dtype=torch.bool)
+        wrong = torch.zeros(len(X), dtype=torch.bool)
+        chosen = torch.zeros_like(Y)
         for _ in range(K):
-            s = torch.distributions.Categorical(probs).sample(); ok = (s == Y).all(1)
-            new = ok & ~solved & ~wrong; chosen[new] = s[new]; solved |= new
+            s = torch.distributions.Categorical(probs).sample()
+            ok = (s == Y).all(1)
+            new = ok & ~solved & ~wrong
+            chosen[new] = s[new]
+            solved |= new
             if leak:
-                slip = ~ok & ~solved & ~wrong & (torch.rand(len(X)) < leak); chosen[slip] = s[slip]; wrong |= slip
+                slip = ~ok & ~solved & ~wrong & (torch.rand(len(X)) < leak)
+                chosen[slip] = s[slip]
+                wrong |= slip
         keep = solved | wrong
         Ae, Be = make(800, maxc=1)
-        fit(m, torch.cat([X[keep], enc(Ae, Be)]), torch.cat([chosen[keep], target(Ae, Be)]), epochs=8, lr=1e-3)
+        fit(
+            m,
+            torch.cat([X[keep], enc(Ae, Be)]),
+            torch.cat([chosen[keep], target(Ae, Be)]),
+            epochs=8,
+            lr=1e-3,
+        )
         hist.append(by_carries(m))
-        print(f"round {r + 1:2d}: kept {keep.float().mean():.0%} (wrong {wrong.float().mean():.0%})  accuracy by carries {hist[-1].round(2)}")
+        print(
+            f"round {r + 1:2d}: kept {keep.float().mean():.0%} (wrong {wrong.float().mean():.0%})  accuracy by carries {hist[-1].round(2)}"
+        )
     return np.array(hist)
+
 
 # %% [markdown]
 # **My predictions, written before running** (~65% confident each):
@@ -99,8 +177,16 @@ def expert_iteration(m, K=1, leak=0.0, edge=False, rounds=ROUNDS):
 
 # %%
 runs = {}
-for name, kw in [("K = 1", dict(K=1)), ("K = 16", dict(K=16)), ("K = 16, leaky checker (10%)", dict(K=16, leak=0.1)), ("K = 16, problems at the edge", dict(K=16, edge=True))]:
-    print("\n" + name); torch.manual_seed(1); runs[name] = expert_iteration(copy.deepcopy(base), **kw)
+
+for name, kw in [
+    ("K = 1", dict(K=1)),
+    ("K = 16", dict(K=16)),
+    ("K = 16, leaky checker (10%)", dict(K=16, leak=0.1)),
+    ("K = 16, problems at the edge", dict(K=16, edge=True)),
+]:
+    print("\n" + name)
+    torch.manual_seed(1)
+    runs[name] = expert_iteration(copy.deepcopy(base), **kw)
 
 # %% [markdown]
 # ## 3. The upper bound: real labels for every problem
@@ -108,20 +194,38 @@ for name, kw in [("K = 1", dict(K=1)), ("K = 16", dict(K=16)), ("K = 16, leaky c
 
 # %%
 sup = copy.deepcopy(base)
+
 for r in range(ROUNDS):
-    A, B = make(POOL); Ae, Be = make(800, maxc=1)
-    fit(sup, torch.cat([enc(A, B), enc(Ae, Be)]), torch.cat([target(A, B), target(Ae, Be)]), epochs=8, lr=1e-3)
+    A, B = make(POOL)
+    Ae, Be = make(800, maxc=1)
+    fit(
+        sup,
+        torch.cat([enc(A, B), enc(Ae, Be)]),
+        torch.cat([target(A, B), target(Ae, Be)]),
+        epochs=8,
+        lr=1e-3,
+    )
+
 runs["supervised (upper bound)"] = np.array([by_carries(base)] * ROUNDS + [by_carries(sup)])
 print("supervised:", by_carries(sup).round(2))
 
 # %%
 fig, axs = plt.subplots(1, 3, figsize=(15, 4))
+
 for k, ax in zip([1, 2, 3], axs):
     for name, hist in runs.items():
-        if name.startswith("supervised"): ax.axhline(hist[-1][k], ls="--", c="gray", label=name)
-        else: ax.plot(hist[:, k], "o-", ms=3, label=name)
-    ax.set_title(f"{k} carr{'y' if k == 1 else 'ies'}"); ax.set_xlabel("round"); ax.set_ylim(0, 1)
-axs[0].set_ylabel("exact-match accuracy"); axs[0].legend(fontsize=8); plt.tight_layout(); plt.show()
+        if name.startswith("supervised"):
+            ax.axhline(hist[-1][k], ls="--", c="gray", label=name)
+        else:
+            ax.plot(hist[:, k], "o-", ms=3, label=name)
+    ax.set_title(f"{k} carr{'y' if k == 1 else 'ies'}")
+    ax.set_xlabel("round")
+    ax.set_ylim(0, 1)
+
+axs[0].set_ylabel("exact-match accuracy")
+axs[0].legend(fontsize=8)
+plt.tight_layout()
+plt.show()
 print({n: h[-1].round(2).tolist() for n, h in runs.items()})
 
 # %% [markdown]

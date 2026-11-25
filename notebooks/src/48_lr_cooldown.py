@@ -11,19 +11,68 @@
 # late-data conjecture with its numbers.
 
 # %%
-import os, math, inspect, urllib.request, numpy as np, torch, torch.nn as nn, torch.nn.functional as F, matplotlib.pyplot as plt
-import argparse, textwrap, json.decoder, json.encoder, csv, calendar, difflib, heapq, shlex, string, pprint, fractions, statistics
+import os
+import math
+import inspect
+import urllib.request
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
+import argparse
+import textwrap
+import json.decoder
+import json.encoder
+import csv
+import calendar
+import difflib
+import heapq
+import shlex
+import string
+import pprint
+import fractions
+import statistics
+
 QUICK = os.environ.get("QUICK") == "1"
-torch.manual_seed(0); np.random.seed(0)
+torch.manual_seed(0)
+np.random.seed(0)
 url = "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt"
-if not os.path.exists("shakespeare.txt"): urllib.request.urlretrieve(url, "shakespeare.txt")
-A_text = open("shakespeare.txt").read()                       # corpus A: Shakespeare
-B_text = "\n".join(inspect.getsource(m) for m in [argparse, textwrap, json.decoder, json.encoder, csv, calendar, difflib, heapq, shlex, string, pprint, fractions, statistics])  # corpus B: Python code
-chars = sorted(set(A_text) | set(B_text)); stoi = {c: i for i, c in enumerate(chars)}; V = len(chars)
-def tensor(t): return torch.tensor([stoi[c] for c in t])
+
+if not os.path.exists("shakespeare.txt"):
+    urllib.request.urlretrieve(url, "shakespeare.txt")
+
+A_text = open("shakespeare.txt").read()  # corpus A: Shakespeare
+B_text = "\n".join(
+    inspect.getsource(m)
+    for m in [
+        argparse,
+        textwrap,
+        json.decoder,
+        json.encoder,
+        csv,
+        calendar,
+        difflib,
+        heapq,
+        shlex,
+        string,
+        pprint,
+        fractions,
+        statistics,
+    ]
+)  # corpus B: Python code
+chars = sorted(set(A_text) | set(B_text))
+stoi = {c: i for i, c in enumerate(chars)}
+V = len(chars)
+
+
+def tensor(t):
+    return torch.tensor([stoi[c] for c in t])
+
+
 A, B = tensor(A_text), tensor(B_text)
-A_tr, A_va = A[: int(0.9 * len(A))], A[int(0.9 * len(A)):]
-B_tr, B_va = B[: int(0.9 * len(B))], B[int(0.9 * len(B)):]
+A_tr, A_va = A[: int(0.9 * len(A))], A[int(0.9 * len(A)) :]
+B_tr, B_va = B[: int(0.9 * len(B))], B[int(0.9 * len(B)) :]
 print(f"Shakespeare {len(A):,} chars, Python {len(B):,} chars, vocabulary {V}")
 CTX, STEPS, BS = 32, (600 if QUICK else 3000), 64
 
@@ -31,38 +80,90 @@ CTX, STEPS, BS = 32, (600 if QUICK else 3000), 64
 # ## A small model and a training loop with a schedule and a data mix
 # An MLP over the last 32 characters. `mix(step)` gives the share of each batch drawn from corpus A.
 
+
 # %%
 class CharMLP(nn.Module):
     def __init__(self, d=24, h=512):
-        super().__init__(); self.emb = nn.Embedding(V, d); self.net = nn.Sequential(nn.Linear(CTX * d, h), nn.GELU(), nn.Linear(h, h), nn.GELU(), nn.Linear(h, V))
-    def forward(self, x): return self.net(self.emb(x).flatten(1))
+        super().__init__()
+        self.emb = nn.Embedding(V, d)
+        self.net = nn.Sequential(
+            nn.Linear(CTX * d, h), nn.GELU(), nn.Linear(h, h), nn.GELU(), nn.Linear(h, V)
+        )
+
+    def forward(self, x):
+        return self.net(self.emb(x).flatten(1))
+
+
 def batch(src, n, g):
-    if n == 0: return torch.zeros(0, CTX, dtype=torch.long), torch.zeros(0, dtype=torch.long)
+    if n == 0:
+        return torch.zeros(0, CTX, dtype=torch.long), torch.zeros(0, dtype=torch.long)
     ix = torch.randint(0, len(src) - CTX - 1, (n,), generator=g)
-    return torch.stack([src[i:i + CTX] for i in ix]), src[ix + CTX]
+    return torch.stack([src[i : i + CTX] for i in ix]), src[ix + CTX]
+
+
 def get(n, a_share, g):
-    na = int(round(n * a_share)); xa, ya = batch(A_tr, na, g); xb, yb = batch(B_tr, n - na, g)
+    na = int(round(n * a_share))
+    xa, ya = batch(A_tr, na, g)
+    xb, yb = batch(B_tr, n - na, g)
     return torch.cat([xa, xb]), torch.cat([ya, yb])
+
+
 @torch.no_grad()
 def val(m, src, n=2000):
-    g = torch.Generator().manual_seed(123); x, y = batch(src, n, g); return F.cross_entropy(m(x), y).item()
+    g = torch.Generator().manual_seed(123)
+    x, y = batch(src, n, g)
+    return F.cross_entropy(m(x), y).item()
+
+
 def lr_at(kind, t, T, decay=0.2, start=None):
     w = max(1, T // 50)
-    if t < w: return (t + 1) / w
-    if kind == "constant": return 1.0
-    if kind == "cosine": return 0.5 * (1 + math.cos(math.pi * (t - w) / (T - w)))
-    if kind == "linear": return 1 - (t - w) / (T - w)
-    if kind == "wsd": s = int(T * (1 - decay)); return 1.0 if t < s else max(0.0, (T - t) / (T - s))
-def train(kind="cosine", mix=lambda t: 0.5, T=STEPS, peak=3e-3, seed=0, model=None, opt=None, t0=0, every=50, keep=()):
-    torch.manual_seed(seed); g = torch.Generator().manual_seed(seed)
-    m = model or CharMLP(); opt = opt or torch.optim.AdamW(m.parameters(), lr=peak, weight_decay=0.1)
+    if t < w:
+        return (t + 1) / w
+    if kind == "constant":
+        return 1.0
+    if kind == "cosine":
+        return 0.5 * (1 + math.cos(math.pi * (t - w) / (T - w)))
+    if kind == "linear":
+        return 1 - (t - w) / (T - w)
+    if kind == "wsd":
+        s = int(T * (1 - decay))
+        return 1.0 if t < s else max(0.0, (T - t) / (T - s))
+
+
+def train(
+    kind="cosine",
+    mix=lambda t: 0.5,
+    T=STEPS,
+    peak=3e-3,
+    seed=0,
+    model=None,
+    opt=None,
+    t0=0,
+    every=50,
+    keep=(),
+):
+    torch.manual_seed(seed)
+    g = torch.Generator().manual_seed(seed)
+    m = model or CharMLP()
+    opt = opt or torch.optim.AdamW(m.parameters(), lr=peak, weight_decay=0.1)
     curve, saved = [], {}
     for t in range(t0, T):
-        for gr in opt.param_groups: gr["lr"] = peak * lr_at(kind, t, T)
-        x, y = get(BS, mix(t), g); loss = F.cross_entropy(m(x), y); opt.zero_grad(); loss.backward(); opt.step()
-        if (t + 1) % every == 0 or t + 1 == T: curve.append((t + 1, 0.5 * (val(m, A_va, 500) + val(m, B_va, 500))))
-        if t + 1 in keep: saved[t + 1] = ({k: v.clone() for k, v in m.state_dict().items()}, {k: v for k, v in opt.state_dict().items()})
+        for gr in opt.param_groups:
+            gr["lr"] = peak * lr_at(kind, t, T)
+        x, y = get(BS, mix(t), g)
+        loss = F.cross_entropy(m(x), y)
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+        if (t + 1) % every == 0 or t + 1 == T:
+            curve.append((t + 1, 0.5 * (val(m, A_va, 500) + val(m, B_va, 500))))
+        if t + 1 in keep:
+            saved[t + 1] = (
+                {k: v.clone() for k, v in m.state_dict().items()},
+                {k: v for k, v in opt.state_dict().items()},
+            )
     return m, np.array(curve), saved
+
 
 # %% [markdown]
 # ## 1. Four schedules, same everything else
@@ -71,11 +172,23 @@ def train(kind="cosine", mix=lambda t: 0.5, T=STEPS, peak=3e-3, seed=0, model=No
 
 # %%
 results = {}
+
 for kind in ["constant", "cosine", "linear", "wsd"]:
-    m, curve, saved = train(kind, keep=(STEPS // 4, STEPS // 2, 3 * STEPS // 4) if kind == "constant" else ())
-    results[kind] = (curve, saved); print(f"{kind:9s} final loss {curve[-1, 1]:.4f}")
-for k, (c, _) in results.items(): plt.plot(c[:, 0], c[:, 1], label=k)
-plt.xlabel("step"); plt.ylabel("validation loss (avg of both corpora)"); plt.ylim(None, results["constant"][0][len(results["constant"][0]) // 5, 1]); plt.legend(); plt.title("learning-rate schedules"); plt.show()
+    m, curve, saved = train(
+        kind, keep=(STEPS // 4, STEPS // 2, 3 * STEPS // 4) if kind == "constant" else ()
+    )
+    results[kind] = (curve, saved)
+    print(f"{kind:9s} final loss {curve[-1, 1]:.4f}")
+
+for k, (c, _) in results.items():
+    plt.plot(c[:, 0], c[:, 1], label=k)
+
+plt.xlabel("step")
+plt.ylabel("validation loss (avg of both corpora)")
+plt.ylim(None, results["constant"][0][len(results["constant"][0]) // 5, 1])
+plt.legend()
+plt.title("learning-rate schedules")
+plt.show()
 
 # %% [markdown]
 # ## 2. Branch cooldowns off the constant run
@@ -85,14 +198,32 @@ plt.xlabel("step"); plt.ylabel("validation loss (avg of both corpora)"); plt.yli
 
 # %%
 branches = {}
+
 for at, (state, ostate) in results["constant"][1].items():
-    T_b = int(at * 1.2); m = CharMLP(); m.load_state_dict(state); opt = torch.optim.AdamW(m.parameters(), lr=3e-3, weight_decay=0.1); opt.load_state_dict(ostate)
+    T_b = int(at * 1.2)
+    m = CharMLP()
+    m.load_state_dict(state)
+    opt = torch.optim.AdamW(m.parameters(), lr=3e-3, weight_decay=0.1)
+    opt.load_state_dict(ostate)
     _, cb, _ = train("wsd", T=T_b, model=m, opt=opt, t0=at)
     ref = train("cosine", T=T_b)[1][-1, 1]
-    branches[at] = (cb, ref); print(f"branch at {at}: cooled to {cb[-1, 1]:.4f}; cosine run of {T_b} steps: {ref:.4f} ({100 * (cb[-1, 1] / ref - 1):+.1f}%)")
-c = results["constant"][0]; plt.plot(c[:, 0], c[:, 1], c="gray", label="constant")
-for at, (cb, ref) in branches.items(): plt.plot(cb[:, 0], cb[:, 1], label=f"cooldown from step {at}"); plt.scatter([cb[-1, 0]], [ref], marker="x", c="k")
-plt.xlabel("step"); plt.ylabel("validation loss"); plt.legend(); plt.title("branched cooldowns (x = cosine run of the same length)"); plt.show()
+    branches[at] = (cb, ref)
+    print(
+        f"branch at {at}: cooled to {cb[-1, 1]:.4f}; cosine run of {T_b} steps: {ref:.4f} ({100 * (cb[-1, 1] / ref - 1):+.1f}%)"
+    )
+
+c = results["constant"][0]
+plt.plot(c[:, 0], c[:, 1], c="gray", label="constant")
+
+for at, (cb, ref) in branches.items():
+    plt.plot(cb[:, 0], cb[:, 1], label=f"cooldown from step {at}")
+    plt.scatter([cb[-1, 0]], [ref], marker="x", c="k")
+
+plt.xlabel("step")
+plt.ylabel("validation loss")
+plt.legend()
+plt.title("branched cooldowns (x = cosine run of the same length)")
+plt.show()
 
 # %% [markdown]
 # ## 3. The late-data conjecture
@@ -108,16 +239,32 @@ plt.xlabel("step"); plt.ylabel("validation loss"); plt.legend(); plt.title("bran
 # was learning fastest.
 
 # %%
-mixes = {"even": lambda t: 0.5, "early-A": lambda t: 0.7 if t < STEPS // 2 else 0.3, "cool-A": lambda t: 1.0 if t >= int(STEPS * 0.8) else 0.375}
+mixes = {
+    "even": lambda t: 0.5,
+    "early-A": lambda t: 0.7 if t < STEPS // 2 else 0.3,
+    "cool-A": lambda t: 1.0 if t >= int(STEPS * 0.8) else 0.375,
+}
 gap = {}
+
 for name, mix in mixes.items():
     vals = []
     for seed in ([0] if QUICK else [0, 1, 2]):
-        m, _, _ = train("wsd", mix=mix, seed=seed); vals.append((val(m, A_va), val(m, B_va)))
-    la, lb = np.mean(vals, 0); gap[name] = lb - la; print(f"{name:8s} loss A {la:.4f}  loss B {lb:.4f}")
+        m, _, _ = train("wsd", mix=mix, seed=seed)
+        vals.append((val(m, A_va), val(m, B_va)))
+    la, lb = np.mean(vals, 0)
+    gap[name] = lb - la
+    print(f"{name:8s} loss A {la:.4f}  loss B {lb:.4f}")
+
 pref = {k: gap[k] - gap["even"] for k in mixes}
 print("preference for Shakespeare relative to even:", {k: round(v, 4) for k, v in pref.items()})
-print("verdict:", "conjecture holds" if pref["cool-A"] >= pref["early-A"] else "conjecture fails: early data mattered more")
+print(
+    "verdict:",
+    (
+        "conjecture holds"
+        if pref["cool-A"] >= pref["early-A"]
+        else "conjecture fails: early data mattered more"
+    ),
+)
 
 # %% [markdown]
 # **What I measured** (full run, CPU, 3,000 steps; 3 seeds for part 3):

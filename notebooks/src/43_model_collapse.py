@@ -11,13 +11,26 @@
 # generations for all three regimes, plus the temperature experiment.
 
 # %%
-import os, math, random, re, urllib.request, collections, numpy as np, matplotlib.pyplot as plt
+import os
+import math
+import random
+import re
+import urllib.request
+import collections
+import numpy as np
+import matplotlib.pyplot as plt
+
 QUICK = os.environ.get("QUICK") == "1"
-random.seed(0); np.random.seed(0)
+random.seed(0)
+np.random.seed(0)
 url = "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt"
-if not os.path.exists("shakespeare.txt"): urllib.request.urlretrieve(url, "shakespeare.txt")
+
+if not os.path.exists("shakespeare.txt"):
+    urllib.request.urlretrieve(url, "shakespeare.txt")
+
 words = re.findall(r"[a-z']+|[.,!?;:]", open("shakespeare.txt").read().lower())
-cut = int(len(words) * 0.9); real_train, held_out = words[:cut], words[cut:]
+cut = int(len(words) * 0.9)
+real_train, held_out = words[:cut], words[cut:]
 N = 60_000 if QUICK else 200_000
 GENS = 4 if QUICK else 10
 print(f"{len(words):,} words; training corpus per generation: {N:,}")
@@ -26,20 +39,28 @@ print(f"{len(words):,} words; training corpus per generation: {N:,}")
 # ## A trigram model with interpolated smoothing
 # Small enough to retrain in seconds, rich enough to have a long tail of rare words and phrases.
 
+
 # %%
 class Trigram:
     def __init__(self, toks):
-        self.c1 = collections.Counter(toks); self.c2 = collections.Counter(zip(toks, toks[1:])); self.c3 = collections.Counter(zip(toks, toks[1:], toks[2:]))
-        self.n = len(toks); self.V = len(self.c1)
+        self.c1 = collections.Counter(toks)
+        self.c2 = collections.Counter(zip(toks, toks[1:]))
+        self.c3 = collections.Counter(zip(toks, toks[1:], toks[2:]))
+        self.n = len(toks)
+        self.V = len(self.c1)
         self.next = collections.defaultdict(collections.Counter)
-        for (a, b, c), k in self.c3.items(): self.next[(a, b)][c] += k
+        for (a, b, c), k in self.c3.items():
+            self.next[(a, b)][c] += k
+
     def logprob(self, a, b, c, V_real):
         p1 = (self.c1[c] + 0.1) / (self.n + 0.1 * V_real)
         p2 = self.c2[(b, c)] / self.c1[b] if self.c1[b] else 0
         p3 = self.c3[(a, b, c)] / self.c2[(a, b)] if self.c2[(a, b)] else 0
         return math.log(0.5 * p3 + 0.3 * p2 + 0.2 * p1)
+
     def sample(self, n, temp=1.0):
         import bisect
+
         cache, starts = {}, list(self.c2)
         out = list(random.choice(starts))
         while len(out) < n:
@@ -47,41 +68,85 @@ class Trigram:
             if ctx not in cache:
                 nxt = self.next.get(ctx)
                 if nxt:
-                    toks, w = zip(*nxt.items()); cdf = np.cumsum(np.array(w, float) ** (1 / temp)); cache[ctx] = (toks, (cdf / cdf[-1]).tolist())
-                else: cache[ctx] = None
+                    toks, w = zip(*nxt.items())
+                    cdf = np.cumsum(np.array(w, float) ** (1 / temp))
+                    cache[ctx] = (toks, (cdf / cdf[-1]).tolist())
+                else:
+                    cache[ctx] = None
             hit = cache[ctx]
-            if hit is None: out += random.choice(starts); continue
-            toks, cdf = hit; out.append(toks[min(bisect.bisect(cdf, random.random()), len(toks) - 1)])
+            if hit is None:
+                out += random.choice(starts)
+                continue
+            toks, cdf = hit
+            out.append(toks[min(bisect.bisect(cdf, random.random()), len(toks) - 1)])
         return out[:n]
 
+
 V_REAL = len(set(words))
+
+
 def report(model, sample):
-    ppl = math.exp(-np.mean([model.logprob(a, b, c, V_REAL) for a, b, c in zip(held_out, held_out[1:], held_out[2:])][:20000]))
+    ppl = math.exp(
+        -np.mean(
+            [
+                model.logprob(a, b, c, V_REAL)
+                for a, b, c in zip(held_out, held_out[1:], held_out[2:])
+            ][:20000]
+        )
+    )
     grams4 = len(set(zip(sample, sample[1:], sample[2:], sample[3:])))
     return dict(ppl=ppl, words=len(set(sample)), grams4=grams4)
+
 
 # %% [markdown]
 # ## Ten generations, three regimes
 
+
 # %%
 def generations(mode, temp=1.0, fresh=0.1):
-    data = real_train[:N]; model = Trigram(data); out = []
+    data = real_train[:N]
+    model = Trigram(data)
+    out = []
     for g in range(GENS + 1):
         synth = model.sample(N, temp)
         out.append(report(model, synth))
-        if mode == "replace": data = synth
-        elif mode == "accumulate": data = data + synth
-        else: data = synth[: int(N * (1 - fresh))] + real_train[random.randrange(0, cut - N):][: int(N * fresh)]
+        if mode == "replace":
+            data = synth
+        elif mode == "accumulate":
+            data = data + synth
+        else:
+            data = (
+                synth[: int(N * (1 - fresh))]
+                + real_train[random.randrange(0, cut - N) :][: int(N * fresh)]
+            )
         model = Trigram(data)
     return out
 
+
 results = {m: generations(m) for m in ["replace", "accumulate", "mix"]}
 fig, ax = plt.subplots(1, 3, figsize=(15, 4))
+
 for m, rows in results.items():
-    for a, key, title in zip(ax, ["ppl", "words", "grams4"], ["held-out perplexity (lower is better)", "distinct words in a sample", "distinct 4-grams in a sample"]):
-        a.plot([r[key] for r in rows], "o-", label=m); a.set_title(title); a.set_xlabel("generation")
-ax[0].legend(); plt.show()
-for m, rows in results.items(): print(f"{m:10s} gen 0 → {GENS}: ppl {rows[0]['ppl']:.0f} → {rows[-1]['ppl']:.0f}, words {rows[0]['words']} → {rows[-1]['words']}, 4-grams {rows[0]['grams4']:,} → {rows[-1]['grams4']:,}")
+    for a, key, title in zip(
+        ax,
+        ["ppl", "words", "grams4"],
+        [
+            "held-out perplexity (lower is better)",
+            "distinct words in a sample",
+            "distinct 4-grams in a sample",
+        ],
+    ):
+        a.plot([r[key] for r in rows], "o-", label=m)
+        a.set_title(title)
+        a.set_xlabel("generation")
+
+ax[0].legend()
+plt.show()
+
+for m, rows in results.items():
+    print(
+        f"{m:10s} gen 0 → {GENS}: ppl {rows[0]['ppl']:.0f} → {rows[-1]['ppl']:.0f}, words {rows[0]['words']} → {rows[-1]['words']}, 4-grams {rows[0]['grams4']:,} → {rows[-1]['grams4']:,}"
+    )
 
 # %% [markdown]
 # ## Temperature: how deployed sampling speeds collapse
@@ -91,7 +156,9 @@ for m, rows in results.items(): print(f"{m:10s} gen 0 → {GENS}: ppl {rows[0]['
 # %%
 for t in ([0.7, 1.0] if QUICK else [0.6, 0.8, 1.0]):
     rows = generations("replace", temp=t)
-    print(f"temperature {t}: words {rows[0]['words']} → {rows[-1]['words']}, ppl {rows[0]['ppl']:.0f} → {rows[-1]['ppl']:.0f}")
+    print(
+        f"temperature {t}: words {rows[0]['words']} → {rows[-1]['words']}, ppl {rows[0]['ppl']:.0f} → {rows[-1]['ppl']:.0f}"
+    )
 
 # %% [markdown]
 # ## My prediction, written before running
@@ -101,7 +168,10 @@ for t in ([0.7, 1.0] if QUICK else [0.6, 0.8, 1.0]):
 
 # %%
 r = results["replace"]
-print("relative loss of 4-gram diversity: %.0f%%; relative rise in perplexity: %.0f%%" % (100 * (1 - r[-1]["grams4"] / r[0]["grams4"]), 100 * (r[-1]["ppl"] / r[0]["ppl"] - 1)))
+print(
+    "relative loss of 4-gram diversity: %.0f%%; relative rise in perplexity: %.0f%%"
+    % (100 * (1 - r[-1]["grams4"] / r[0]["grams4"]), 100 * (r[-1]["ppl"] / r[0]["ppl"] - 1))
+)
 
 # %% [markdown]
 # **What I measured** (full run, CPU, 1 minute), and where my prediction was wrong:

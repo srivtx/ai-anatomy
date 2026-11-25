@@ -11,10 +11,17 @@
 # without padding.
 
 # %%
-import os, torch
+import os
+import torch
+
 GPU = torch.cuda.is_available()
-if not GPU: os.environ["TRITON_INTERPRET"] = "1"
-import triton, triton.language as tl
+
+if not GPU:
+    os.environ["TRITON_INTERPRET"] = "1"
+
+import triton
+import triton.language as tl
+
 dev = "cuda" if GPU else "cpu"
 
 # %% [markdown]
@@ -76,31 +83,68 @@ torch::Tensor tr(torch::Tensor A, int pad) {
   return O;
 }
 """
+
 if GPU:
     from torch.utils.cpp_extension import load_inline
-    ext = load_inline("kernels34", cpp_sources="torch::Tensor mm(torch::Tensor A, torch::Tensor B, int which);\ntorch::Tensor tr(torch::Tensor A, int pad);",
-                      cuda_sources=CUDA_SRC, functions=["mm", "tr"], extra_cuda_cflags=["-O3"], verbose=False)
+
+    ext = load_inline(
+        "kernels34",
+        cpp_sources="torch::Tensor mm(torch::Tensor A, torch::Tensor B, int which);\ntorch::Tensor tr(torch::Tensor A, int pad);",
+        cuda_sources=CUDA_SRC,
+        functions=["mm", "tr"],
+        extra_cuda_cflags=["-O3"],
+        verbose=False,
+    )
 
 # %% [markdown]
 # ## Triton, autotuned
 # The same tiling idea, but Triton picks the tile sizes and pipelining from a list of candidates by timing them.
 
 # %%
-configs = [triton.Config({"BM": bm, "BN": bn, "BK": bk}, num_warps=w, num_stages=s)
-           for bm, bn, bk, w, s in [(64, 64, 32, 4, 3), (128, 64, 32, 4, 3), (128, 128, 32, 8, 3), (64, 128, 32, 4, 4)]] if GPU else [triton.Config({"BM": 32, "BN": 32, "BK": 32})]
+configs = (
+    [
+        triton.Config({"BM": bm, "BN": bn, "BK": bk}, num_warps=w, num_stages=s)
+        for bm, bn, bk, w, s in [
+            (64, 64, 32, 4, 3),
+            (128, 64, 32, 4, 3),
+            (128, 128, 32, 8, 3),
+            (64, 128, 32, 4, 4),
+        ]
+    ]
+    if GPU
+    else [triton.Config({"BM": 32, "BN": 32, "BK": 32})]
+)
+
+
 @triton.autotune(configs=configs, key=["M", "N", "K"])
 @triton.jit
 def tmm(a, b, c, M, N, K, BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr):
-    rm = tl.program_id(0) * BM + tl.arange(0, BM); rn = tl.program_id(1) * BN + tl.arange(0, BN); rk = tl.arange(0, BK)
+    rm = tl.program_id(0) * BM + tl.arange(0, BM)
+    rn = tl.program_id(1) * BN + tl.arange(0, BN)
+    rk = tl.arange(0, BK)
     acc = tl.zeros((BM, BN), dtype=tl.float32)
     for k in range(0, K, BK):
-        A = tl.load(a + rm[:, None] * K + (k + rk)[None, :], mask=(rm[:, None] < M) & ((k + rk)[None, :] < K), other=0.0)
-        B = tl.load(b + (k + rk)[:, None] * N + rn[None, :], mask=((k + rk)[:, None] < K) & (rn[None, :] < N), other=0.0)
+        A = tl.load(
+            a + rm[:, None] * K + (k + rk)[None, :],
+            mask=(rm[:, None] < M) & ((k + rk)[None, :] < K),
+            other=0.0,
+        )
+        B = tl.load(
+            b + (k + rk)[:, None] * N + rn[None, :],
+            mask=((k + rk)[:, None] < K) & (rn[None, :] < N),
+            other=0.0,
+        )
         acc += tl.dot(A, B)
     tl.store(c + rm[:, None] * N + rn[None, :], acc, mask=(rm[:, None] < M) & (rn[None, :] < N))
+
+
 def triton_mm(A, B):
-    M, K = A.shape; N = B.shape[1]; C = torch.empty(M, N, device=A.device, dtype=torch.float32)
-    tmm[lambda m: (triton.cdiv(M, m["BM"]), triton.cdiv(N, m["BN"]))](A, B, C, M, N, K); return C
+    M, K = A.shape
+    N = B.shape[1]
+    C = torch.empty(M, N, device=A.device, dtype=torch.float32)
+    tmm[lambda m: (triton.cdiv(M, m["BM"]), triton.cdiv(N, m["BN"]))](A, B, C, M, N, K)
+    return C
+
 
 n = 64 if not GPU else 4096
 A, B = torch.randn(n, n, device=dev), torch.randn(n, n, device=dev)
@@ -109,31 +153,54 @@ print("Triton matmul max error:", (triton_mm(A, B) - A @ B).abs().max().item())
 # %% [markdown]
 # ## Time everything
 
+
 # %%
 def time_ms(f, reps=10):
-    f(); torch.cuda.synchronize(); s, e = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
+    f()
+    torch.cuda.synchronize()
+    s, e = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
     s.record()
-    for _ in range(reps): f()
-    e.record(); torch.cuda.synchronize(); return s.elapsed_time(e) / reps
+    for _ in range(reps):
+        f()
+    e.record()
+    torch.cuda.synchronize()
+    return s.elapsed_time(e) / reps
+
 
 if GPU:
-    flops = 2 * n ** 3; rows = []
+    flops = 2 * n**3
+    rows = []
     ref = A @ B
-    for name, f in [("CUDA naive", lambda: ext.mm(A, B, 0)), ("CUDA coalesced", lambda: ext.mm(A, B, 1)), ("CUDA shared-memory tiled", lambda: ext.mm(A, B, 2)),
-                    ("Triton autotuned (fp32 in, tf32 dot)", lambda: triton_mm(A, B)), ("torch.matmul fp32", lambda: A @ B),
-                    ("torch.matmul fp16 (tensor cores)", lambda: A.half() @ B.half())]:
-        err = (f().float() - ref).abs().max().item(); ms = time_ms(f, 3 if "naive" in name else 10)
+    for name, f in [
+        ("CUDA naive", lambda: ext.mm(A, B, 0)),
+        ("CUDA coalesced", lambda: ext.mm(A, B, 1)),
+        ("CUDA shared-memory tiled", lambda: ext.mm(A, B, 2)),
+        ("Triton autotuned (fp32 in, tf32 dot)", lambda: triton_mm(A, B)),
+        ("torch.matmul fp32", lambda: A @ B),
+        ("torch.matmul fp16 (tensor cores)", lambda: A.half() @ B.half()),
+    ]:
+        err = (f().float() - ref).abs().max().item()
+        ms = time_ms(f, 3 if "naive" in name else 10)
         rows.append((name, ms, flops / ms / 1e9, err))
     print(f"{'kernel':40s} {'ms':>9s} {'GFLOPS':>9s} {'max err':>9s}")
-    for r in rows: print(f"{r[0]:40s} {r[1]:9.2f} {r[2]:9.0f} {r[3]:9.1e}")
+    for r in rows:
+        print(f"{r[0]:40s} {r[1]:9.2f} {r[2]:9.0f} {r[3]:9.1e}")
     X = torch.randn(8192, 8192, device=dev)
     t0, t1 = time_ms(lambda: ext.tr(X, 0)), time_ms(lambda: ext.tr(X, 1))
     assert torch.equal(ext.tr(X, 1), X.T)
-    print(f"transpose 8192²: tile[32][32] {t0:.2f} ms, padded tile[32][33] {t1:.2f} ms → bank conflicts cost {t0 / t1:.1f}×")
+    print(
+        f"transpose 8192²: tile[32][32] {t0:.2f} ms, padded tile[32][33] {t1:.2f} ms → bank conflicts cost {t0 / t1:.1f}×"
+    )
 else:
     print("No GPU: CUDA kernels skipped. On a T4, expect (fp32, 4096²) roughly:")
-    for name, g in [("CUDA naive", "300–600"), ("CUDA coalesced", "1,000–2,000"), ("CUDA shared-memory tiled", "2,000–3,000"),
-                    ("Triton autotuned", "60–80% of torch"), ("torch.matmul fp32", "4,000–5,000"), ("torch.matmul fp16", "25,000–40,000")]:
+    for name, g in [
+        ("CUDA naive", "300–600"),
+        ("CUDA coalesced", "1,000–2,000"),
+        ("CUDA shared-memory tiled", "2,000–3,000"),
+        ("Triton autotuned", "60–80% of torch"),
+        ("torch.matmul fp32", "4,000–5,000"),
+        ("torch.matmul fp16", "25,000–40,000"),
+    ]:
         print(f"   {name:28s} {g} GFLOPS")
 
 # %% [markdown]

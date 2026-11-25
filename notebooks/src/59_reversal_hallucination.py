@@ -14,37 +14,57 @@
 # **Hardware:** CPU, about 4 minutes. **You're done when** all three checks print ✅.
 
 # %%
-import os, random, numpy as np, torch, torch.nn as nn, torch.nn.functional as F
+import os
+import random
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 QUICK = os.environ.get("QUICK") == "1"
-torch.manual_seed(0); np.random.seed(0); random.seed(0)
+torch.manual_seed(0)
+np.random.seed(0)
+random.seed(0)
+
 
 class TinyLM(nn.Module):
     """A 2-layer causal transformer over very short sequences of whole-word tokens."""
+
     def __init__(self, V, d=64, L=4, layers=2):
         super().__init__()
         self.tok, self.pos = nn.Embedding(V, d), nn.Embedding(L, d)
-        layer = nn.TransformerEncoderLayer(d, 4, 4 * d, dropout=0.0, batch_first=True, norm_first=True)
+        layer = nn.TransformerEncoderLayer(
+            d, 4, 4 * d, dropout=0.0, batch_first=True, norm_first=True
+        )
         self.body, self.out = nn.TransformerEncoder(layer, layers), nn.Linear(d, V)
         self.register_buffer("mask", nn.Transformer.generate_square_subsequent_mask(L))
+
     def forward(self, x):
         T = x.shape[1]
         h = self.tok(x) + self.pos(torch.arange(T))
         return self.out(self.body(h, mask=self.mask[:T, :T], is_causal=True))
 
+
 def train(model, seqs, steps, lr=3e-3, bs=256):
     """Plain next-token training on every position, like a language model."""
-    opt = torch.optim.AdamW(model.parameters(), lr, weight_decay=0.01); data = torch.tensor(seqs)
+    opt = torch.optim.AdamW(model.parameters(), lr, weight_decay=0.01)
+    data = torch.tensor(seqs)
     for t in range(steps):
-        for g in opt.param_groups: g["lr"] = lr * min(1, (t + 1) / 100) * (1 - t / steps)
+        for g in opt.param_groups:
+            g["lr"] = lr * min(1, (t + 1) / 100) * (1 - t / steps)
         x = data[torch.randint(0, len(data), (bs,))]
         loss = F.cross_entropy(model(x[:, :-1]).flatten(0, 1), x[:, 1:].flatten())
-        opt.zero_grad(); loss.backward(); opt.step()
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
     return model
+
 
 @torch.no_grad()
 def answer(model, prompts):
     """Probabilities for the token that follows each 2-token prompt."""
     return model(torch.tensor(prompts))[:, -1].softmax(-1)
+
 
 # %% [markdown]
 # ## Part 1: the reversal curse
@@ -54,15 +74,19 @@ def answer(model, prompts):
 
 # %%
 N = 100
-PARENT, CHILD = 2 * N, 2 * N + 1; V1 = 2 * N + 2
-pairs = [(i, N + i) for i in range(N)]                       # person i is the parent of person N + i
-forward = [[a, PARENT, b] for a, b in pairs]                 # "a parent b"
-reverse = [[b, CHILD, a] for a, b in pairs]                  # "b child a"
-seen_rev, held_rev = reverse[: N // 2], reverse[N // 2:]
+PARENT, CHILD = 2 * N, 2 * N + 1
+V1 = 2 * N + 2
+pairs = [(i, N + i) for i in range(N)]  # person i is the parent of person N + i
+forward = [[a, PARENT, b] for a, b in pairs]  # "a parent b"
+reverse = [[b, CHILD, a] for a, b in pairs]  # "b child a"
+seen_rev, held_rev = reverse[: N // 2], reverse[N // 2 :]
 STEPS1 = 1500 if QUICK else 3000
 
+
 def acc(model, facts):
-    p = answer(model, [f[:2] for f in facts]); return (p.argmax(-1) == torch.tensor([f[2] for f in facts])).float().mean().item()
+    p = answer(model, [f[:2] for f in facts])
+    return (p.argmax(-1) == torch.tensor([f[2] for f in facts])).float().mean().item()
+
 
 torch.manual_seed(1)
 m1 = train(TinyLM(V1), forward + seen_rev, STEPS1)
@@ -90,30 +114,41 @@ print("✅ the reversal curse, and its fix" if ok1 else "❌ check part 1 (try m
 
 # %%
 P, Y = 400, 50
-BORN = P + Y; V2 = P + Y + 1
+BORN = P + Y
+V2 = P + Y + 1
 year = np.random.randint(0, Y, P)
-reps = np.repeat([1, 2, 4, 8], P // 4); np.random.shuffle(reps)
+reps = np.repeat([1, 2, 4, 8], P // 4)
+np.random.shuffle(reps)
 facts = [[p, BORN, P + int(year[p])] for p in range(P)]
 seqs = [facts[p] for p in range(P) for _ in range(reps[p])]
+
 # the facts compete with plenty of other text, so no single fact is drilled into the model
-filler = [[P + random.randrange(Y), P + random.randrange(Y), P + random.randrange(Y)] for _ in range(len(seqs) * 3)]
+filler = [
+    [P + random.randrange(Y), P + random.randrange(Y), P + random.randrange(Y)]
+    for _ in range(len(seqs) * 3)
+]
 torch.manual_seed(3)
-STEPS2 = 800   # a fixed budget: enough for facts seen often, not for facts seen once
+STEPS2 = 800  # a fixed budget: enough for facts seen often, not for facts seen once
 m3 = train(TinyLM(V2, d=48), seqs + filler, STEPS2, lr=2e-3)
 p3 = answer(m3, [f[:2] for f in facts])
-conf, guess = p3[:, P:P + Y].max(-1)
-right = (guess.numpy() == year)
+conf, guess = p3[:, P : P + Y].max(-1)
+right = guess.numpy() == year
 print(f"{'times seen':>10} {'accuracy':>9} {'confidence when wrong':>22}")
+
 for r in [1, 2, 4, 8]:
-    g = reps == r; w = g & ~right
-    print(f"{r:>10} {right[g].mean():>9.0%} {f'{conf.numpy()[w].mean():.2f}' if w.any() else '(none wrong)':>22}")
+    g = reps == r
+    w = g & ~right
+    print(
+        f"{r:>10} {right[g].mean():>9.0%} {f'{conf.numpy()[w].mean():.2f}' if w.any() else '(none wrong)':>22}"
+    )
 
 # %% [markdown]
 # The chapter's claim, from Kalai and colleagues (2025): for facts with no pattern to them, the hallucination rate
 # is at least about the share of facts seen exactly once (the "singleton rate"). Here's that comparison.
 
 # %%
-singleton = (reps == 1).mean(); err = 1 - right.mean()
+singleton = (reps == 1).mean()
+err = 1 - right.mean()
 print(f"singleton rate {singleton:.0%}, overall error {err:.0%}")
 ok2 = right[reps == 1].mean() < right[reps == 8].mean() - 0.3 and err >= singleton * 0.5
 print("✅ rarely seen facts are the ones it gets wrong" if ok2 else "❌ check part 2")
@@ -126,13 +161,22 @@ print("✅ rarely seen facts are the ones it gets wrong" if ok2 else "❌ check 
 
 # %%
 c, rt = conf.numpy(), right.astype(float)
+
+
 def score(t, penalty):
-    ans = c >= t; return (rt[ans].sum() - penalty * (1 - rt[ans]).sum()) / len(c), 1 - ans.mean()
+    ans = c >= t
+    return (rt[ans].sum() - penalty * (1 - rt[ans]).sum()) / len(c), 1 - ans.mean()
+
+
 print(f"{'threshold':>9} {'binary':>7} {'penalised':>10} {'abstains':>9}")
+
 for t in [0.0, 0.2, 0.4, 0.5, 0.6, 0.8]:
-    b, ab = score(t, 0); pz, _ = score(t, 1)
+    b, ab = score(t, 0)
+    pz, _ = score(t, 1)
     print(f"{t:>9.1f} {b:>7.3f} {pz:>10.3f} {ab:>9.0%}")
-best_b = max(np.linspace(0, 1, 101), key=lambda t: score(t, 0)[0]); best_p = max(np.linspace(0, 1, 101), key=lambda t: score(t, 1)[0])
+
+best_b = max(np.linspace(0, 1, 101), key=lambda t: score(t, 0)[0])
+best_p = max(np.linspace(0, 1, 101), key=lambda t: score(t, 1)[0])
 print(f"best threshold under binary grading: {best_b:.2f}; under penalised grading: {best_p:.2f}")
 
 # %% [markdown]
@@ -144,9 +188,11 @@ print(f"best threshold under binary grading: {best_b:.2f}; under penalised gradi
 # %%
 bins = [0, 0.2, 0.35, 0.5, 0.7, 1.01]
 print(f"{'confidence':>12} {'answers':>8} {'actually right':>15}")
+
 for lo, hi in zip(bins, bins[1:]):
     g = (c >= lo) & (c < hi)
-    if g.any(): print(f"{lo:>5.2f}–{min(hi, 1):<5.2f} {g.sum():>8} {rt[g].mean():>15.0%}")
+    if g.any():
+        print(f"{lo:>5.2f}–{min(hi, 1):<5.2f} {g.sum():>8} {rt[g].mean():>15.0%}")
 
 # %% [markdown]
 # Answers given with 0.35–0.5 confidence are right about two times in three, so answering them still pays: the
@@ -157,7 +203,11 @@ for lo, hi in zip(bins, bins[1:]):
 
 # %%
 ok3 = best_b <= 0.05 and best_p >= 0.2
-print("✅ binary grading rewards guessing; penalised grading rewards knowing when to stop" if ok3 else "❌ check part 3")
+print(
+    "✅ binary grading rewards guessing; penalised grading rewards knowing when to stop"
+    if ok3
+    else "❌ check part 3"
+)
 
 # %% [markdown]
 # ## Stretch goals
