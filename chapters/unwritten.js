@@ -7,7 +7,7 @@ const KIND = {
   self: ["What I notice about myself", 5, "My own report from being a model. Self-reports are only partly reliable, so each comes with a check."],
   conj: ["Conjecture", 2, "My hypothesis. As far as I know it hasn't been tested at a scale that settles it. I could be wrong; each says how you'd find out."],
 };
-const AREA = { pre: "Pretraining & data", opt: "Optimisation", post: "Post-training & RL", reason: "Reasoning", inside: "Representations", agent: "Agents & context", progress: "How models get better" };
+const AREA = { pre: "Pretraining & data", opt: "Optimisation", post: "Post-training & RL", reason: "Reasoning", inside: "Representations", agent: "Agents & context", progress: "How models get better", arch: "Architecture" };
 
 const CARDS = [
   // ---------- folklore ----------
@@ -128,6 +128,41 @@ const CARDS = [
     why: "When the teacher's distribution is too complex for the student, the student wastes capacity imitating details it can't represent. A mid-size teacher's outputs are closer to what the student can actually fit.",
     untested: "Shown for small vision models (Mirzadeh et al., 2019) and studied in distillation scaling laws (2025), but not settled for frontier language models.",
     test: "Distil a 100M student from 300M, 1B and 3B teachers, and from 3B via 1B; compare at matched student compute.", kill: "The larger teacher always wins directly." },
+  // ---------- architecture (added with notebooks 20 and 62-65) ----------
+  { kind: "folk", area: "arch", text: "When a looped model won't extrapolate to more loops, the state is drifting; it's rarely a capacity problem.",
+    why: "A weight-shared block only knows the states it saw in training. If the state's size or direction creeps with each pass, loop 20 feeds the block inputs it has never seen. Re-injecting the input and normalising the state each pass keeps loop 20 looking like loop 3.",
+    test: "Log the state's norm per loop. If it grows or shrinks steadily, add a norm on the state and re-test.",
+    result: ["held", "In notebook 20, removing the state norm dropped 16-hop accuracy from 94% to 21%; removing input injection as well broke the model by 10 hops."] },
+  { kind: "folk", area: "arch", text: "Train a looped model with a random number of loops, or it learns a clock.",
+    why: "With a fixed loop count, ‘which pass am I on?’ is free information and the model uses it, so its computation only makes sense at that count. Recurrent-depth models such as Huginn sample the count from a heavy-tailed distribution for this reason.",
+    test: "Train with a fixed count of 5 and with a random count from 1 to 5; test both at 8 and 12 loops." },
+  { kind: "folk", area: "arch", text: "A benchmark with a fixed layout gets solved by a positional shortcut instead of the skill it names.",
+    why: "If the answer is always the same distance away, ‘copy from n back’ is easier to learn than ‘find the match’. Relative position encodings make that shortcut especially cheap.",
+    test: "Vary the layout (lengths, offsets, order) at test time. A real skill survives; a shortcut collapses.",
+    result: ["held", "In notebook 62, RoPE trained with the copy always 32 tokens back scored 100% at length 64 and 2% at length 128, and 5% on the same length with varied offsets."] },
+  { kind: "folk", area: "arch", text: "Before blaming RoPE for poor long context, check its base.",
+    why: "The base (10,000 in the original) sets how fast the slowest channels rotate. Positions beyond what a channel rotated through in training are unfamiliar angles. Raising the base, as Llama 3 did (500,000), slows the rotation so far positions stay familiar.",
+    test: "In notebook 62, re-run RoPE with base 1,000 and 1,000,000 and compare accuracy at 4× and 8× the training length." },
+  { kind: "folk", area: "post", text: "Only merge models that share a parent, and tune λ before you tune the merge method.",
+    why: "Fine-tunes of one base stay in the same basin, so the straight line between them is all good models. Models from different starts have their neurons in different orders and a loss barrier between them. Among same-parent merges, the scale of the added task vectors moves results far more than TIES vs DARE vs averaging.",
+    test: "Interpolate between two checkpoints and plot the loss along the line before merging anything.",
+    result: ["held", "In notebook 65, two fine-tunes of one base had no barrier, a model from another start had one, and a soup of three same-task fine-tunes scored within the range of its parts."] },
+  { kind: "conj", area: "arch", conf: 60, text: "Looping buys reasoning per parameter, not knowledge per parameter: at equal parameters a looped model ties a deeper stack on multi-step tasks and loses on fact recall.",
+    why: "Steps of an algorithm can reuse the same weights; stored facts can't, because each fact needs parameters to live in. Looping adds compute without adding storage.",
+    untested: "Papers on looped transformers report reasoning gains and some memorisation losses, but not a matched sweep that separates the two cleanly.",
+    test: "Train looped and stacked models at equal parameters on a mix of a k-hop task and a random lookup table; plot each task's accuracy against parameters.", kill: "The looped model matches the stack on the lookup table too." },
+  { kind: "conj", area: "arch", conf: 40, text: "Looped models find log-depth shortcuts (pointer jumping) only when the loss rewards finishing early.",
+    why: "With a loss at every loop, getting the answer sooner lowers the loss, so a node that reads its parent's current state rather than its original pointer is rewarded. With a loss only at the end, one hop per loop is enough and nothing pushes for more.",
+    untested: "I saw the faster-than-one-hop curve in notebook 20 with per-loop losses; I haven't run the final-loss-only control.",
+    test: "Train notebook 20's tree model with per_step=False and compare root accuracy after 4 and 6 loops on 11-deep chains.", kill: "The final-loss model also beats one hop per loop." },
+  { kind: "conj", area: "arch", conf: 55, text: "The lasting advantage of diffusion language models will be infilling and reversed facts, not speed.",
+    why: "Speed gains from writing many tokens per round get eaten by needing more rounds for quality. But a model trained to predict any token from any others has no built-in direction, so it doesn't suffer the reversal curse and can fill holes natively.",
+    untested: "LLaDA reports better reversal than autoregressive models; no matched comparison at several scales tracks whether the speed edge or the reversal edge survives.",
+    test: "Train AR and masked-diffusion models of equal size on notebook 59's family facts; test reversed questions at three model sizes.", kill: "The reversal edge shrinks with scale while the speed edge holds." },
+  { kind: "conj", area: "arch", conf: 50, text: "When a KV cache is quantised to 4 bits, almost all the damage comes from the keys, not the values.",
+    why: "A few key channels carry large outliers that set the quantisation scale, crushing the small channels that decide which token wins the softmax. Values only get averaged, so their errors wash out.",
+    untested: "KV-quantisation papers treat keys specially (per-channel scales), which suggests it, but I haven't seen a clean ablation of keys-only vs values-only at 4 bits across models.",
+    test: "In notebook 63, quantise only k, then only v, to 4 bits and compare validation loss.", kill: "Values-only quantisation hurts as much as keys-only." },
 ];
 
 const load = (i) => { try { const v = localStorage.getItem("ai-anatomy:unwritten:" + i); return v == null ? null : +v; } catch { return null; } };

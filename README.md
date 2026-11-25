@@ -1,6 +1,6 @@
 # AI Anatomy
 
-How machines learn, from one neuron to the frontier. 104 interactive chapters that train real models in your browser, and 60 Colab projects where you build each idea yourself.
+How machines learn, from one neuron to the frontier. 104 interactive chapters that train real models in your browser, and 65 Colab projects where you build each idea yourself.
 
 ![The home page](docs/img/home.png)
 
@@ -72,7 +72,7 @@ Five panels: **Inspect** (what a part is and why it's there), **Predict** (what 
 | Representations and generation | 5 | Autoencoder and VAE on MNIST, Diffusion and flow matching, GANs and mode collapse, Graph neural network from scratch, Hopfield networks to attention |
 | Build a GPT | 4 | Byte-level BPE tokenizer, GPT from scratch, Measure your own scaling law, Mixture-of-experts layer |
 | Post-training | 6 | SFT with LoRA written by hand, REINFORCE to PPO on CartPole, Q-learning to DQN, AlphaZero on tic-tac-toe, Reward model and DPO, GRPO from scratch |
-| New architectures and thinking longer | 7 | Selective scan from scratch, Recurrent depth: think longer at test time, Test-time training layers, Speculative decoding, Your first Triton kernels, Distil, prune and quantise, Where the GPU memory goes |
+| New architectures and thinking longer | 12 | Selective scan from scratch, Recurrent depth: think longer at test time, The looped transformer, Test-time training layers, Where am I? Positions and length, Shrinking the KV cache, A diffusion language model, Speculative decoding, Your first Triton kernels, Distil, prune and quantise, Model merging and task arithmetic, Where the GPU memory goes |
 | Agents, interpretability and research | 6 | Agent loop and Ralph loop with Claude, Superposition and sparse autoencoders, Grokking modular addition, Ablation lab: what matters in a small GPT, Data vs model size, Catastrophic forgetting |
 | Lab notebook | 5 | GPU kernels step by step, Hyperparameters that transfer: μP, A scaling ladder, A sleeper-agent model organism, Reward hacking and the monitor |
 | Capstones | 3 | Train a reasoning model with GRPO, GPT-2 speedrun: Muon vs AdamW, Find the features inside GPT-2 |
