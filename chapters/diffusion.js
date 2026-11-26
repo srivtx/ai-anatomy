@@ -84,8 +84,12 @@ export default function (root, { id }) {
   }
   function draw() {
     pl.clear(); pl.axes();
-    for (const p of data) pl.dot(pl.X(p.x[0]), pl.Y(p.x[1]), 2, pl.colors.line);
+    for (const p of data) pl.dot(pl.X(p.x[0]), pl.Y(p.x[1]), 2.2, parts.length ? pl.colors.line : pl.colors["ink-3"]);
     const ctx = pl.ctx;
+    if (!parts.length) { // before the first run: show the target and say what will happen
+      ctx.save(); ctx.font = "500 13px " + getComputedStyle(document.body).fontFamily; ctx.textAlign = "center"; ctx.fillStyle = pl.colors["ink-2"];
+      ctx.fillText("The data's shape. Press Generate: noise will condense onto it.", pl.W / 2, pl.H - 18); ctx.restore();
+    }
     for (const path of paths) { ctx.beginPath(); path.forEach(([x, y], i) => (i ? ctx.lineTo(pl.X(x), pl.Y(y)) : ctx.moveTo(pl.X(x), pl.Y(y)))); ctx.strokeStyle = pl.colors.c4; ctx.lineWidth = 1.2; ctx.stroke(); }
     for (const x of parts) pl.dot(pl.X(x[0]), pl.Y(x[1]), 2.6, pl.colors.accent);
     st.set(0, `${k} / ${o.steps}`); st.set(1, String(k * (o.guide ? 2 : 1)));
