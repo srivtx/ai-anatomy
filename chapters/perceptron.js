@@ -35,7 +35,7 @@ export default function (root, { id }) {
   }
   function draw() {
     pl.clear();
-    if (algo === "logistic") pl.field((x, y) => sigmoid(w[0] * x + w[1] * y + b), { res: 60, alpha: 0.5 });
+    if (algo === "logistic") pl.field((x, y) => sigmoid(w[0] * x + w[1] * y + b), { res: 60, alpha: 0.5, contours: [0.5] });
     else pl.field((x, y) => (w[0] * x + w[1] * y + b > 0 ? 0.85 : 0.15), { res: 120, alpha: 0.35 });
     pl.axes();
     // the boundary w·x + b = 0 and the weight vector

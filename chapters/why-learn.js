@@ -31,7 +31,7 @@ export default function (root, { id }) {
     fit.curve((x) => w * x + b, { color: fit.colors.accent, lw: 2.5 });
     fit.scatter(DATA.map((p) => ({ x: [p.x, p.y] })), { color: fit.colors.ink, r: 3.5 });
     land.clear();
-    land.field((ww, bb) => L(loss(ww, bb)) / maxL, { res: 70, a: land.colors.surface, mid: land.colors.c1, b: land.colors.c6, alpha: 0.55 });
+    land.field((ww, bb) => L(loss(ww, bb)) / maxL, { res: 70, a: land.colors.surface, mid: land.colors.c1, b: land.colors.c6, alpha: 0.55, contours: 9 });
     land.dot(land.X(W_STAR), land.Y(B_STAR), 6, land.colors.good);
     const ctx = land.ctx;
     ctx.beginPath();

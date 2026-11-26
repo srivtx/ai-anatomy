@@ -45,7 +45,7 @@ export default function (root, { id }) {
   let lastAcc = 0;
   function draw() {
     pl.clear();
-    pl.field((x, y) => sigmoid(net.forward([x, y])[0]), { res: 64, alpha: 0.55 });
+    pl.field((x, y) => sigmoid(net.forward([x, y])[0]), { res: 64, alpha: 0.55, contours: [0.5] });
     pl.axes();
     pl.scatter(data, { r: 3.5 });
     thumbPlanes.forEach((t, k) => {

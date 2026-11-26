@@ -68,7 +68,7 @@ export default function (root, { id }) {
   function draw() {
     const f = LANDS[landId].f;
     pl.clear();
-    pl.field((x, y) => Math.log(1 + f(x, y) - range[0]) / Math.log(1 + range[1] - range[0]), { res: 80, a: pl.colors.surface, mid: pl.colors.c1, b: pl.colors.c6, alpha: 0.45 });
+    pl.field((x, y) => Math.log(1 + f(x, y) - range[0]) / Math.log(1 + range[1] - range[0]), { res: 80, a: pl.colors.surface, mid: pl.colors.c1, b: pl.colors.c6, alpha: 0.45, contours: 10 });
     const ctx = pl.ctx;
     for (const rn of runners) {
       const col = pl.colors[rn.color.slice(6, -1)];

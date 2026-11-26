@@ -91,7 +91,7 @@ export default function (root, { id }) {
     const m = model();
     const acc = (set) => set.filter((p) => (m.predict(p.x) > 0.5) === !!p.y).length / set.length;
     pl.clear();
-    pl.field((x, y) => m.predict([x, y]), { res: o.algo === "knn" ? 46 : 70, alpha: 0.55 });
+    pl.field((x, y) => m.predict([x, y]), { res: o.algo === "knn" ? 46 : 70, alpha: 0.55, contours: [0.5] });
     pl.scatter(train, { r: 3.5 });
     const a1 = acc(train), a2 = acc(test);
     st.set(0, `${(a1 * 100).toFixed(1)}%`); st.set(1, `${(a2 * 100).toFixed(1)}%`, a1 - a2 > 0.08 ? "warn" : a2 > 0.9 ? "good" : "");
