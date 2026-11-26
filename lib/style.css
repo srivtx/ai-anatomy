@@ -2562,14 +2562,21 @@ details.as-table > :not(summary) { margin: 0; }
 .av-cls.c1 { fill: var(--c2); }
 .av-node { fill: var(--surface); stroke: var(--ink-2); stroke-width: 2.5; transition: fill .3s; }
 .av-node.hot { fill: color-mix(in srgb, var(--bad) 25%, var(--surface)); stroke: var(--bad); }
-.av-back { stroke: var(--bad); stroke-width: 3; marker-end: none; stroke-dasharray: 6 4; }
+.av-back { fill: none; stroke: var(--bad); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 6 5; animation: av-dash 1s linear infinite; }
+.av-back.head { stroke-dasharray: none; animation: none; }
+@keyframes av-dash { to { stroke-dashoffset: 11; } }
+.av-fwd { stroke: var(--ink-3); stroke-width: 3; stroke-linecap: round; }
+.av-tag2 { transition: opacity .3s; }
+.av-tag2 rect { fill: var(--bad-bg); stroke: var(--bad); stroke-width: 1.5; }
+.av-tag2 text { font: 700 11px var(--mono); fill: var(--bad); }
+.av-want { font: 600 11px var(--mono); fill: var(--good); }
 .av-test { fill: var(--c2); }
 .av-bars { display: grid; gap: 6px; }
 .av-bars > div { display: grid; grid-template-columns: 130px 1fr 60px; gap: 10px; align-items: center; font-size: 13.5px; }
 .av-bars b, .av-nwr b { font: 600 12.5px var(--mono); text-align: right; }
 .av-bar { height: 10px; border-radius: 9px; background: var(--sunken); overflow: hidden; display: block; }
 .av-bar i { display: block; height: 100%; background: var(--c1); border-radius: 9px; transition: width .25s; }
-.av-bar.t i { background: var(--c2); }
+.av-bar.t i { background: var(--c3); }
 
 .av-text { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); font-size: 16px; }
 .av-toks { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -2604,8 +2611,8 @@ div.av-in { fill: none; stroke: none; cursor: default; }
 .av-wrow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .av-wrow b { font-size: 13.5px; }
 .av-wg { display: grid; gap: 2px; margin: 8px 0; }
-.av-wg.cpu { grid-template-columns: repeat(2, 34px); }
-.av-wg.cpu i { height: 34px; border-radius: 6px; background: var(--c1); }
+.av-wg.cpu { grid-template-columns: repeat(2, 1fr); gap: 8px; width: min(100%, 220px); }
+.av-wg.cpu i { aspect-ratio: 1; border-radius: 16px; background: radial-gradient(circle at 30% 25%, color-mix(in srgb, #fff 35%, var(--c1)), var(--c1) 60%); box-shadow: inset 0 -5px 0 color-mix(in srgb, var(--c1) 70%, #000); }
 .av-wg.gpu { grid-template-columns: repeat(16, 1fr); }
 .av-wg.gpu i { aspect-ratio: 1; border-radius: 2px; background: var(--c3); }
 .av-wg.busy i { animation: av-blink .5s steps(2) infinite; }
@@ -2744,3 +2751,10 @@ body *::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .sf { -webkit-mask-image: var(--sfx), var(--sfy); mask-image: var(--sfx), var(--sfy); -webkit-mask-composite: source-in; mask-composite: intersect; }
 [data-drag] { cursor: grab; }
 [data-drag].dragging { cursor: grabbing; user-select: none; }
+
+/* the page's own scrollbar: kept (it's how long pages are read) but thin and in the site's colours */
+html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ink-3) 45%, transparent) transparent; }
+html::-webkit-scrollbar { width: 10px; }
+html::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-3) 40%, transparent); border-radius: 10px; border: 3px solid var(--bg); }
+html::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--ink-3) 65%, transparent); }
