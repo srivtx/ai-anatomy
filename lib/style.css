@@ -2422,11 +2422,11 @@ details.as-table > :not(summary) { margin: 0; }
 .ask-head .lede { font-size: 18px; color: var(--ink-2); max-width: 58ch; margin: 12px 0 0; }
 .ask-head-m .ask-face { width: 110px; height: 110px; border-radius: 28px; padding: 14px; background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--c3) 30%, var(--surface)), var(--surface)); border: 2px solid color-mix(in srgb, var(--c3) 45%, var(--line)); box-shadow: 0 6px 0 color-mix(in srgb, var(--c3) 30%, transparent); }
 .ask-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 26px; align-items: start; padding-bottom: 70px; }
-.ask-rail { position: sticky; top: 14px; display: grid; gap: 14px; max-height: calc(100vh - 28px); overflow: auto; scrollbar-width: thin; padding-right: 4px; }
+.ask-rail { position: sticky; top: 14px; display: grid; gap: 12px; max-height: calc(100vh - 28px); overflow: auto; overscroll-behavior: contain; padding: 2px 4px 10px 2px; }
 .ask-rs small { display: flex; align-items: center; gap: 7px; font: 600 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 6px 4px; }
 .ask-rs small i { width: 8px; height: 8px; border-radius: 3px; background: var(--zc); flex: none; }
 .ask-rs ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-.ask-rl { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; text-decoration: none; color: var(--ink-2); font-size: 14px; line-height: 1.3; }
+.ask-rl { display: flex; align-items: center; gap: 10px; padding: 5px 8px; border-radius: 10px; text-decoration: none; color: var(--ink-2); font-size: 14px; line-height: 1.3; }
 .ask-rl:hover { background: var(--sunken); color: var(--ink); }
 .ask-rl[aria-current="true"] { background: color-mix(in srgb, var(--zc, var(--c3)) 14%, var(--surface)); color: var(--ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--zc, var(--c3)); }
 .ask-rn { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; font: 600 11.5px var(--mono); background: var(--sunken); color: var(--ink-2); }
@@ -2735,3 +2735,12 @@ a.cchip { text-decoration: none; }
 .aj-n { position: absolute; right: 16px; top: 10px; font: 500 12px var(--mono); color: var(--ink-3); }
 .aj-n b { color: var(--ink); font-size: 14px; }
 @media (max-width: 600px) { .aj-me { width: 24px; height: 24px; transform: translate(-50%, calc(-100% - 8px)); } .aj-stone text, .aj-zone text { display: none; } .aj-stone circle { stroke-width: 4; } .aj-n { position: static; display: block; text-align: right; padding: 0 6px 4px; } }
+
+/* ======================== no visible scrollbars inside the page ========================
+   The page itself keeps its scrollbar. Every box that scrolls inside it hides its bar, and
+   scrollfade.js fades the edge that has more to show (and lets the mouse drag wide strips). */
+body * { scrollbar-width: none; -ms-overflow-style: none; }
+body *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.sf { -webkit-mask-image: var(--sfx), var(--sfy); mask-image: var(--sfx), var(--sfy); -webkit-mask-composite: source-in; mask-composite: intersect; }
+[data-drag] { cursor: grab; }
+[data-drag].dragging { cursor: grabbing; user-select: none; }
