@@ -901,13 +901,13 @@ svg.px { display: block; width: 100%; height: auto; image-rendering: pixelated; 
 .can-i.ghost { opacity: .35; }
 .cash-i { width: 64px; }
 .fl-i { width: 30px; }
-.garden-wrap { grid-area: garden; position: relative; margin-top: 18px; }
+.garden-wrap { grid-area: garden; position: relative; margin-top: 4px; padding-bottom: 14px; }
 .garden { display: grid; grid-template-columns: repeat(var(--n, 16), minmax(0, 1fr)); gap: 2px; align-items: end; padding: 0 6px; border-bottom: 10px solid #8a5a3b; border-radius: 0 0 6px 6px; box-shadow: inset 0 -6px 0 #b07a50; }
 .plot { display: grid; justify-items: center; text-decoration: none; color: var(--ink-3); font: 600 12px var(--pixel); transition: transform .15s; }
 .plot > div { width: 100%; max-width: 48px; }
-.plot span { order: -1; margin-bottom: 2px; }
+.plot span { order: 1; height: 0; transform: translateY(14px); line-height: 1; }
 .plot:hover { transform: translateY(-3px); color: var(--ink); }
-.garden-hint { margin: 8px 0 0; font: 500 13px var(--pixel); color: var(--ink-3); }
+.garden-hint { margin: 24px 0 0; font: 500 13px var(--pixel); color: var(--ink-3); }
 .bubble a { white-space: nowrap; }
 @media (max-width: 900px) {
   .bench { grid-template-columns: minmax(0, 1fr); grid-template-areas: "text" "scene" "side" "garden"; padding: 20px 16px 18px; }
