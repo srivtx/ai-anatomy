@@ -2722,7 +2722,7 @@ a.cchip { text-decoration: none; }
 .aj-zone rect { fill: color-mix(in srgb, var(--zc) 8%, transparent); stroke: color-mix(in srgb, var(--zc) 22%, transparent); stroke-width: 1; stroke-dasharray: 4 5; }
 .aj-zone text { font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; fill: color-mix(in srgb, var(--zc) 70%, var(--ink-2)); }
 .aj-road { fill: none; stroke: color-mix(in srgb, var(--ink-3) 18%, var(--sunken)); stroke-width: 15; stroke-linecap: round; }
-.aj-walked { fill: none; stroke: color-mix(in srgb, var(--c3) 45%, var(--surface)); stroke-width: 15; stroke-linecap: round; }
+.aj-walked { fill: none; stroke: color-mix(in srgb, var(--zc, var(--c3)) 45%, var(--surface)); stroke-width: 15; stroke-linecap: round; }
 .aj-dash { fill: none; stroke: var(--surface); stroke-width: 2; stroke-dasharray: 7 9; opacity: .9; }
 .aj-stone { cursor: pointer; }
 .aj-stone circle { fill: var(--surface); stroke: color-mix(in srgb, var(--zc) 60%, var(--ink-3)); stroke-width: 2.5; transition: r .2s; }
