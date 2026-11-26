@@ -2786,3 +2786,5 @@ html::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--ink-3
 
 /* a figure on its own in a chapter (not inside a simulation) sits centred in the column */
 section.block > .canvas-box { margin-inline: auto; box-shadow: 0 10px 30px -24px color-mix(in srgb, var(--ink) 45%, transparent); }
+.graph-svg { display: block; width: 100%; height: auto; border-radius: 12px; background: radial-gradient(circle, color-mix(in srgb, var(--ink-3) 20%, transparent) 1px, transparent 1.3px) 0 0 / 18px 18px, var(--bg); }
+.graph-svg .g-edge { stroke: color-mix(in srgb, var(--ink-3) 55%, transparent); stroke-width: 2.2; }

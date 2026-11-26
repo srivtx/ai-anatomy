@@ -21,7 +21,7 @@ export default function (root, { id }) {
   // label the best-connected member of each group
   const hub = (g) => [...Array(G.n).keys()].filter((i) => G.truth[i] === g).sort((a, b) => G.nbrs[b].filter((j) => G.truth[j] === g).length - G.nbrs[b].filter((j) => G.truth[j] !== g).length * 3 - (G.nbrs[a].filter((j) => G.truth[j] === g).length - G.nbrs[a].filter((j) => G.truth[j] !== g).length * 3))[0];
   let known = new Map([[hub(0), 0], [hub(1), 1]]), K = 0, selfLoop = true, H = [];
-  const svg = s("svg", { viewBox: "0 0 760 420", role: "img", "aria-label": "A graph of two friend groups; colour shows each node's current belief" });
+  const svg = s("svg", { viewBox: "0 0 760 420", class: "graph-svg", role: "img", "aria-label": "A graph of two friend groups; colour shows each node's current belief" });
   const st = stats([{ label: "Message-passing layers" }, { label: "Accuracy on unlabelled nodes" }, { label: "Spread of node states" }]);
   function propagate() {
     // h0: one-hot for labelled nodes, zeros for the rest. Each layer: average over neighbours (+ self).
@@ -40,14 +40,14 @@ export default function (root, { id }) {
     const cur = H[H.length - 1], cs = getComputedStyle(document.documentElement), C0 = cs.getPropertyValue("--c2").trim(), C1 = cs.getPropertyValue("--c1").trim();
     svg.replaceChildren();
     const P = (i) => [G.pos[i][0] * 760, G.pos[i][1] * 420];
-    for (const [a, b] of G.edges) { const [x1, y1] = P(a), [x2, y2] = P(b); svg.append(s("line", { x1, y1, x2, y2, class: "wire" })); }
+    for (const [a, b] of G.edges) { const [x1, y1] = P(a), [x2, y2] = P(b); svg.append(s("line", { x1, y1, x2, y2, class: "wire g-edge" })); }
     let ok = 0, tot = 0;
     for (let i = 0; i < G.n; i++) {
       const [x, y] = P(i), [a, b] = cur[i], m = a + b, t = m > 1e-9 ? b / m : 0.5, conf = Math.min(1, m * 3);
       const fill = m < 1e-9 ? "var(--sunken)" : `color-mix(in srgb, color-mix(in srgb, ${C1} ${Math.round(t * 100)}%, ${C0}) ${Math.round(25 + conf * 75)}%, var(--surface))`;
       const g = s("g", { style: "cursor:pointer", onclick: () => { const v = known.get(i); if (v === undefined) known.set(i, 0); else if (v === 0) known.set(i, 1); else known.delete(i); draw(); } });
-      g.append(s("circle", { cx: x, cy: y, r: known.has(i) ? 15 : 12, style: `fill:${fill};stroke:${known.has(i) ? "var(--ink)" : "var(--line)"};stroke-width:${known.has(i) ? 3 : 1.5}` }));
-      g.append(s("text", { x, y: y + 4, "text-anchor": "middle", class: "node-sub", style: "fill:var(--ink);font-size:10px", text: known.has(i) ? (known.get(i) ? "B" : "A") : String(i) }));
+      g.append(s("circle", { cx: x, cy: y, r: known.has(i) ? 17 : 14, style: `fill:${fill};stroke:${known.has(i) ? "var(--ink)" : "color-mix(in srgb, var(--ink-3) 70%, transparent)"};stroke-width:${known.has(i) ? 3 : 2}` }));
+      g.append(s("text", { x, y: y + 4, "text-anchor": "middle", class: "node-sub", style: "fill:var(--ink);font-size:11px;font-weight:700", text: known.has(i) ? (known.get(i) ? "B" : "A") : String(i) }));
       svg.append(g);
       if (!known.has(i)) { tot++; if (m > 1e-9 && (b > a ? 1 : 0) === G.truth[i]) ok++; }
     }
