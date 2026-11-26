@@ -58,9 +58,9 @@ export default function (root, { id }) {
   }
 
   // 3. pruning
-  const pruneChart = xyChart({ height: 220, xLabel: "fraction of weights removed (smallest first)", yLabel: "test accuracy", xDomain: [0, 1], yDomain: [0.4, 1] });
+  const pruneChart = xyChart({ height: 220, xLabel: "fraction of weights removed (smallest first)", yLabel: "test accuracy", xDomain: [0, 1], yDomain: [0.4, 1], empty: "First train the teacher above (Train teacher and students), then prune it here." });
   function drawPrune() {
-    if (!teacher) return;
+    if (!teacher) { pruneChart.el.querySelector(".xy-empty")?.animate([{ transform: "translateX(0)" }, { transform: "translateX(-6px)" }, { transform: "translateX(6px)" }, { transform: "translateX(0)" }], { duration: 300 }); return; }
     const all = teacher.W.flatMap((W) => [...W].map(Math.abs)).sort((a, b) => a - b), pts = [];
     for (let f = 0; f <= 0.98; f += 0.04) {
       const th = all[Math.floor(f * (all.length - 1))], saved = teacher.W.map((W) => Float64Array.from(W));
