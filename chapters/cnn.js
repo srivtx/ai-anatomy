@@ -56,11 +56,11 @@ function pixelCanvas(n, label) {
 export default function (root, { id }) {
   let img = seedImage(), kname = "Vertical edges", K = KERNELS[kname].map((r) => [...r]), relu = true, sel = null;
   const inC = pixelCanvas(N, "Your drawing, 28 by 28 pixels"), fC = pixelCanvas(N - 2, "Feature map after the convolution"), pC = pixelCanvas((N - 2) / 2, "Feature map after 2 by 2 max pooling");
-  const kGrid = h("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 58px)", gap: "4px" } });
+  const kGrid = h("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 58px))", gap: "4px" } });
   const st = stats([{ label: "Weights in this conv layer" }, { label: "Weights in a dense layer doing the same map" }]);
   function kernelInputs() {
     kGrid.replaceChildren(...K.flatMap((row, j) => row.map((v, i) => {
-      const inp = h("input", { type: "number", step: "0.5", value: +v.toFixed(3), "aria-label": `Kernel weight row ${j + 1} column ${i + 1}`, style: { width: "58px", padding: "6px", borderRadius: "8px", border: "1px solid var(--line)", background: "var(--surface)", font: "13px var(--mono)" } });
+      const inp = h("input", { type: "number", step: "0.5", value: +v.toFixed(3), "aria-label": `Kernel weight row ${j + 1} column ${i + 1}`, style: { width: "100%", minWidth: "0", padding: "6px", borderRadius: "8px", border: "1px solid var(--line)", background: "var(--surface)", font: "13px var(--mono)" } });
       inp.addEventListener("input", () => { K[j][i] = +inp.value || 0; draw(); });
       return inp;
     })));
