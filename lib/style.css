@@ -2491,6 +2491,16 @@ details.as-table > :not(summary) { margin: 0; }
 /* pictures inside Neuro's messages */
 .av { margin-top: 12px; padding: 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); display: grid; gap: 10px; }
 .av-svg { width: 100%; height: auto; max-height: 300px; display: block; }
+.ask-viz .av-svg { max-width: 600px; margin-inline: auto; padding: 8px; border-radius: 14px; background: radial-gradient(circle, color-mix(in srgb, var(--ink-3) 22%, transparent) 1px, transparent 1.3px) 0 0 / 16px 16px, var(--bg); border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+/* sliders in Neuro's pictures: a thin track, filled up to a round thumb */
+.av input[type="range"], .ask-guess input[type="range"] { -webkit-appearance: none; appearance: none; height: 22px; background: transparent; cursor: pointer; --tc: var(--zc, var(--accent)); }
+.av input[type="range"]::-webkit-slider-runnable-track, .ask-guess input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 9px; background: linear-gradient(90deg, var(--tc) var(--p, 50%), var(--sunken) var(--p, 50%)); }
+.av input[type="range"]::-moz-range-track, .ask-guess input[type="range"]::-moz-range-track { height: 6px; border-radius: 9px; background: linear-gradient(90deg, var(--tc) var(--p, 50%), var(--sunken) var(--p, 50%)); }
+.av input[type="range"]::-webkit-slider-thumb, .ask-guess input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -7px; border-radius: 50%; background: var(--surface); border: 3px solid var(--tc); box-shadow: 0 2px 0 color-mix(in srgb, var(--tc) 40%, transparent); transition: transform .12s; }
+.av input[type="range"]::-moz-range-thumb, .ask-guess input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--tc); }
+.av input[type="range"]:active::-webkit-slider-thumb, .ask-guess input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.15); }
+.av input[type="range"]:focus-visible, .ask-guess input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 9px; }
+.av-ctl > .btn, .av-ctl > button { justify-self: start; }
 .av-axis { stroke: var(--ink-3); stroke-width: 1.2; }
 .av-lab { font: 500 11px var(--mono); fill: var(--ink-3); }
 .av-dot { fill: var(--c1); stroke: var(--surface); stroke-width: 2; }
@@ -2525,10 +2535,12 @@ details.as-table > :not(summary) { margin: 0; }
 .av-sum { fill: var(--surface); stroke: var(--ink-2); stroke-width: 2; }
 .av-nt { font: 700 15px var(--display); fill: var(--ink); pointer-events: none; }
 .av-bulb { fill: color-mix(in srgb, #ffd23f calc(var(--o) * 100%), var(--sunken)); stroke: var(--ink-3); stroke-width: 2; filter: drop-shadow(0 0 calc(var(--o) * 14px) #ffd23f); }
-.av-tt { display: grid; grid-template-columns: repeat(4, auto); gap: 2px 18px; justify-content: start; font: 500 13px var(--mono); }
+.av-tt { display: grid; grid-template-columns: repeat(4, auto); justify-content: start; font: 500 13px var(--mono); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); width: fit-content; }
+.av-tt > span { padding: 5px 14px; border-top: 1px solid var(--line); display: flex; align-items: center; }
+.av-tt > .av-th { border-top: 0; background: var(--sunken); }
 .av-th { color: var(--ink-3); font-size: 11px; text-transform: uppercase; }
-.av-tt .good { color: var(--good); font-weight: 700; }
-.av-tt .bad { color: var(--bad); font-weight: 700; }
+.av-tt .good { color: var(--good); font-weight: 700; background: var(--good-bg); }
+.av-tt .bad { color: var(--bad); font-weight: 700; background: var(--bad-bg); }
 
 .av-cls.c0 { fill: var(--c1); }
 .av-cls.c1 { fill: var(--c2); }
@@ -2567,7 +2579,7 @@ details.as-table > :not(summary) { margin: 0; }
 .av-w { border: 1.5px solid var(--line); border-radius: 8px; padding: 4px 9px; font-size: 15px; cursor: pointer; background: color-mix(in srgb, var(--c2) calc(var(--a, 0) * 100%), var(--surface)); color: var(--ink); }
 .av-w.on { border-color: var(--ink); background: var(--ink); color: var(--surface); }
 
-.av-tower { display: grid; gap: 4px; max-width: 340px; }
+.av-tower { display: grid; gap: 4px; width: min(100%, 380px); margin-inline: auto; }
 .av-blk { display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; border-radius: 9px; background: color-mix(in srgb, var(--c6) calc(14% + var(--i) * 3%), var(--surface)); border: 1px solid color-mix(in srgb, var(--c6) 40%, var(--line)); font-size: 13.5px; font-weight: 600; animation: ask-in .25s both; }
 .av-blk small { font: 500 11px var(--mono); color: var(--ink-3); }
 .av-in, .av-out { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); text-align: center; padding: 4px; }
